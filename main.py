@@ -446,6 +446,18 @@ def chi_search(fname, length=10, blim=(2., 4.), klim=(1., 10.), l=0., dm_effort=
             else:            
                 chival[index] = tmod.chi
         
+        # Save chi, beta, kappa values to file
+        f_chi = np.copy(chival)
+        f_beta = np.repeat(brange, length)
+        f_kappa = np.tile(krange, length)
+        f_save = np.vstack((f_chi, f_beta, f_kappa)).T
+        fcomment = '#Results of "chi_search" called with the following inputs:\n' +\
+                    '#length={}, blim=({}, {}), klim=({}, {}), lambda={}, effort={}, dm_method={}, chi_method={}\n'.format(
+                        length, np.min(blim), np.max(blim), np.min(klim), np.max(klim), l, dm_effort, dm_method, chi_method) +\
+                    '#Lowest chi^2 was with beta = {} & k = {}\n'.format(beta_low, kappa_low)
+        np.savetxt(fname=fdir+fname, X=f_save, header='chi  beta    kappa', delimiter='   ', comments=fcomment)
+        print('Data saved in {}'.format(fdir+fname))
+
         # Convert NaNs to 1e6 because otherwise it's dumb (number not important)
         chival_nonan = np.nan_to_num(chival, nan=1e6)
         lowest = np.argmin(chival_nonan)
@@ -464,8 +476,7 @@ def chi_search(fname, length=10, blim=(2., 4.), klim=(1., 10.), l=0., dm_effort=
         # Print results of function call
         print('The lowest chi^2 value is {:.3f} for beta = {:.3f} & mu = {:.3f} in the range {:.0f} < beta < {:.0f} and {:.0f} < mu < {:.0f}\n\t'
             '{:.1f} % of models had a chi^2 value of NaN. \n'
-            'Data saved in "{}"'
-            ''.format(chi_low, beta_low, kappa_low, np.min(blim), np.max(blim), np.min(klim), np.max(klim), nan_ratio, fdir+fname))
+            ''.format(chi_low, beta_low, kappa_low, np.min(blim), np.max(blim), np.min(klim), np.max(klim), nan_ratio))
 
 
         # Plot heat map of chi values
@@ -491,16 +502,6 @@ def chi_search(fname, length=10, blim=(2., 4.), klim=(1., 10.), l=0., dm_effort=
         else:
             pass
 
-        # Save chi, beta, kappa values to file
-        f_chi = np.copy(chival)
-        f_beta = np.repeat(brange, length)
-        f_kappa = np.tile(krange, length)
-        f_save = np.vstack((f_chi, f_beta, f_kappa)).T
-        fcomment = '#Results of "chi_search" called with the following inputs:\n' +\
-                    '#length={}, blim=({}, {}), klim=({}, {}), lambda={}, effort={}, dm_method={}, chi_method={}\n'.format(
-                        length, np.min(blim), np.max(blim), np.min(klim), np.max(klim), l, dm_effort, dm_method, chi_method) +\
-                    '#Lowest chi^2 was with beta = {} & k = {}\n'.format(beta_low, kappa_low)
-        np.savetxt(fname=fdir+fname, X=f_save, header='chi  beta    kappa', delimiter='   ', comments=fcomment)
 
         # Compute optimal model based on chi results
         model_optimized = model(lam=l, beta=beta_low, kappa=kappa_low)
