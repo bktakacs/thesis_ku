@@ -588,3 +588,5 @@ matter = model(lam=0.)
 # plt.xlabel(r'$a$')
 # plt.ylabel(r'$\ddot{a}/\ddot{a}_{\mathrm{M}}$')
 # plt.show()
+
+# i made a git repository for this stuff!
