@@ -318,7 +318,7 @@ def chi2_comp(parameter, space, beta=3., kappa=0., lam=lam0, dm_effort=False, dm
 
 
 def chi_search(fname, length=10, blim=(2., 4.), klim=(1., 10.), l=0., dm_effort=False, dm_method='int', chi_method='formula', 
-               plot=True, round=1, scale=LogNorm(), fdir='../Data/model_data/'):
+               plot=True, round=1, scale=LogNorm(), fdir='../../Data/model_data/'):
     """
     chi_search() function. Calculates chi^2 value for models with different combinations (beta, kappa).
     User must input file name for stored data upon calling function.
