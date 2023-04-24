@@ -317,7 +317,7 @@ def chi2_comp(parameter, space, beta=3., kappa=0., lam=lam0, dm_effort=False, dm
     return model_optimized
 
 
-def chi_search(length=10, blim=(2., 4.), klim=(1., 10.), l=0., dm_effort=False, dm_method='int', chi_method='formula', 
+def chi_search(fname, length=10, blim=(2., 4.), klim=(1., 10.), l=0., dm_effort=False, dm_method='int', chi_method='formula', 
                plot=True, round=1, scale=LogNorm(), fdir='../Data/model_data/'):
     """
     chi_search() function. Calculates chi^2 value for models with different combinations (beta, kappa).
@@ -347,12 +347,12 @@ def chi_search(length=10, blim=(2., 4.), klim=(1., 10.), l=0., dm_effort=False, 
     # matter = model(lam=0.)
 
     # Take user inputted file name for saving data
-    fname = input('Input file name for saved data (ignore .txt):\t')
-    fname = fname + '.txt'
-    if len(fname) < 5:
-        raise Exception('fname required')
-    else:
-        pass
+    # fname = input('Input file name for saved data (ignore .txt):\t')
+    # fname = fname + '.txt'
+    # if len(fname) < 5:
+    #     raise Exception('fname required')
+    # else:
+    #     pass
 
     brange = np.linspace(np.min(blim), np.max(blim), length)
     krange = np.linspace(np.min(klim), np.max(klim), length)
