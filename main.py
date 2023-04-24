@@ -139,7 +139,7 @@ class model():
         self.dm_tay = dm_z_o4(z=z_sn, q=self.q, j=self.j, s=self.s)
 
     
-    def chi2value(self, dm_method='int', chi_method='formula'):
+    def chi2value(self, dm_method='int', chi_method='formula', eval_both=True):
         """
         chi2value() method which simply calculates the reduced chi squared value in the comparison of the SN data set and the DM we calculate
         dm_method---which DM value to use, options are 'int' or 'tay' corresponding to integration or taylor method in "distance_modulus" method
@@ -148,22 +148,18 @@ class model():
         Pretty simple function, really
         """
 
-        # try:
-        #     self.dm_int
-        #     self.dm_tay
-        # except:
-        #     self.distance_modulus()
-        # else:
-        #     pass
-
-        if dm_method == 'int':
-            distmod = self.dm_int
-        elif dm_method == 'tay':
-            distmod = self.dm_tay
+        if eval_both:
+            self.chi_int = np.nan if np.isnan(self.dm_int).all() else rchi2(obs=self.dm_int, method=chi_method)
+            self.chi_tay = np.nan if np.isnan(self.dm_tay).all() else rchi2(obs=self.dm_tay, method=chi_method)
         else:
-            raise Exception('Bad "dm_method" input for "chi2value" method in "model" class. Inputs are "int" or "tay".')
-        
-        self.chi = np.nan if np.isnan(distmod).all() else rchi2(obs=distmod, method=chi_method)
+            if dm_method == 'int':
+                distmod = self.dm_int
+            elif dm_method == 'tay':
+                distmod = self.dm_tay
+            else:
+                raise Exception('Bad "dm_method" input for "chi2value" method in "model" class. Inputs are "int" or "tay".')
+
+            self.chi = np.nan if np.isnan(distmod).all() else rchi2(obs=distmod, method=chi_method)
 
 
     def plot(self, which, lcdm, matter):
@@ -318,7 +314,7 @@ def chi2_comp(parameter, space, beta=3., kappa=0., lam=lam0, dm_effort=False, dm
 
 
 def chi_search(fname, length=10, blim=(2., 4.), klim=(1., 10.), l=0., dm_effort=False, dm_method='int', chi_method='formula', 
-               plot=True, round=1, scale=LogNorm(), fdir='../../Data/model_data/'):
+               plot=True, round=1, scale=LogNorm(), fdir='../../Data/model_data/', both_eval=True):
     """
     chi_search() function. Calculates chi^2 value for models with different combinations (beta, kappa).
     User must input file name for stored data upon calling function.
@@ -344,93 +340,173 @@ def chi_search(fname, length=10, blim=(2., 4.), klim=(1., 10.), l=0., dm_effort=
     inputted file name and then prints statement of results.
     """
 
-    # matter = model(lam=0.)
+    if both_eval:
+        fname = fname + '.txt'
 
-    # Take user inputted file name for saving data
-    # fname = input('Input file name for saved data (ignore .txt):\t')
-    fname = fname + '.txt'
-    # if len(fname) < 5:
-    #     raise Exception('fname required')
-    # else:
-    #     pass
+        brange = np.linspace(np.min(blim), np.max(blim), length)
+        krange = np.linspace(np.min(klim), np.max(klim), length)
+        chival_a = np.zeros(length**2)
+        chival_b = np.zeros(length**2)
 
-    brange = np.linspace(np.min(blim), np.max(blim), length)
-    krange = np.linspace(np.min(klim), np.max(klim), length)
-    chival = np.zeros(length**2)
-
-    # Iterate over all (b, k), store chi value for each
-    for index, param in enumerate(itertools.product(brange, krange)):
-        beta, kappa = param
-        tmod = model(lam=l, beta=beta, kappa=kappa)
-        tmod.distance_modulus(effort=dm_effort)
-        tmod.chi2value(dm_method=dm_method, chi_method=chi_method)
-        if np.max(tmod.a2/np.interp(tmod.a, matter.a, matter.a2)) > 3 or np.min(tmod.a2/np.interp(tmod.a, matter.a, matter.a2)) < -10:
-            chival[index] = np.nan
-        else:            
-            chival[index] = tmod.chi
-    
-    # Convert NaNs to 1e6 because otherwise it's dumb (number not important)
-    chival_nonan = np.nan_to_num(chival, nan=1e6)
-    lowest = np.argmin(chival_nonan)
-    nan_ratio = len(chival_nonan[chival_nonan == 1e6]) / len(chival_nonan) * 100
-
-    # Raise exception if only NaN values were returned
-    if np.equal(chival_nonan, np.ones_like(chival_nonan)*1e6).all():
-        raise Exception('No real chi values found')
-    else:
-        pass
-
-    chi_low   = chival_nonan[lowest]
-    beta_low  = np.repeat(brange, length)[lowest]
-    kappa_low = np.tile(krange, length)[lowest]
-    
-    # Print results of function call
-    print('The lowest chi^2 value is {:.3f} for beta = {:.3f} & mu = {:.3f} in the range {:.0f} < beta < {:.0f} and {:.0f} < mu < {:.0f}\n\t'
-          '{:.1f} % of models had a chi^2 value of NaN. \n'
-          'Data saved in "{}"'
-          ''.format(chi_low, beta_low, kappa_low, np.min(blim), np.max(blim), np.min(klim), np.max(klim), nan_ratio, fdir+fname))
-
-
-    # Plot heat map of chi values
-    if plot:
-        chi_plot_z = np.reshape(chival, (length, length)).T
-
-        fig, ax = plt.subplots(figsize=(7, 5))
-        cmap = matplotlib.cm.get_cmap('viridis_r').copy()
-        cmap.set_bad(color='r')
-        im = ax.imshow(chi_plot_z, cmap=cmap, origin='lower', interpolation='nearest', norm=scale)
-        ax.text(x=np.array(range(length))[np.where(brange == beta_low)],
-                y=np.array(range(length))[np.where(krange == kappa_low)],
-                s=r'$\ast$', color='k', ha='center', va='center', fontsize=20)
+        # Iterate over all (b, k), store chi value for each
+        for index, param in enumerate(itertools.product(brange, krange)):
+            beta, kappa = param
+            tmod = model(lam=l, beta=beta, kappa=kappa)
+            tmod.distance_modulus(effort=dm_effort)
+            tmod.chi2value(dm_method=dm_method, chi_method=chi_method)
+            if np.max(tmod.a2/np.interp(tmod.a, matter.a, matter.a2)) > 3 or np.min(tmod.a2/np.interp(tmod.a, matter.a, matter.a2)) < -10:
+                chival[index] = np.nan
+            else:            
+                # chival[index] = tmod.chi
+                chival_a[index] = tmod.chi_int
+                chival_b[index] = tmod.chi_tay
         
-        ax.set_xticks(range(length), np.round(brange, round), rotation=45, fontsize=14)
-        ax.set_yticks(range(length), np.round(krange, round), fontsize=14)
-        ax.set_xlabel(r'$\beta$')
-        ax.set_ylabel(r'$k$')
-        fig.colorbar(im, label=r'$\chi^{2}_{r}$')
-        ax.tick_params(axis='both', which='both', direction='in', bottom=True, top=True, left=True, right=True)
-        ax.grid()
-        plt.show()
+        # Convert NaNs to 1e6 because otherwise it's dumb (number not important)
+        chival_a_nonan = np.nan_to_num(chival_a, nan=1e6)
+        chival_b_nonan = np.nan_to_num(chival_b, nan=1e6)
+        lowest = np.argmin(chival_a_nonan + chival_b_nonan)
+        nan_ratio = len(chival_a_nonan[chival_a_nonan == 1e6]) / len(chival_a_nonan) * 100
+
+        # Raise exception if only NaN values were returned
+        if np.equal(chival_a_nonan, np.ones_like(chival_a_nonan)*1e6).all():
+            raise Exception('No real chi values found')
+        else:
+            pass
+
+        chi_low_a = chival_a_nonan[lowest]
+        chi_low_b = chival_b_nonan[lowest]
+        beta_low  = np.repeat(brange, length)[lowest]
+        kappa_low = np.tile(krange, length)[lowest]
+        
+        # Print results of function call
+        print('The lowest chi^2 value is {:.3f} (int) {:.3f} (tay) for beta = {:.3f} & mu = {:.3f} in the range {:.0f} < beta < {:.0f} and {:.0f} < mu < {:.0f}\n\t'
+            '{:.1f} % of models had a chi^2 value of NaN. \n'
+            'Data saved in "{}"'
+            ''.format(chi_low_a, chi_low_b, beta_low, kappa_low, np.min(blim), np.max(blim), np.min(klim), np.max(klim), nan_ratio, fdir+fname))
+
+
+        # Plot heat map of chi values
+        if plot:
+            chi_plot_z = np.reshape(chival, (length, length)).T
+
+            fig, ax = plt.subplots(figsize=(7, 5))
+            cmap = matplotlib.cm.get_cmap('viridis_r').copy()
+            cmap.set_bad(color='r')
+            im = ax.imshow(chi_plot_z, cmap=cmap, origin='lower', interpolation='nearest', norm=scale)
+            ax.text(x=np.array(range(length))[np.where(brange == beta_low)],
+                    y=np.array(range(length))[np.where(krange == kappa_low)],
+                    s=r'$\ast$', color='k', ha='center', va='center', fontsize=20)
+            
+            ax.set_xticks(range(length), np.round(brange, round), rotation=45, fontsize=14)
+            ax.set_yticks(range(length), np.round(krange, round), fontsize=14)
+            ax.set_xlabel(r'$\beta$')
+            ax.set_ylabel(r'$k$')
+            fig.colorbar(im, label=r'$\chi^{2}_{r}$')
+            ax.tick_params(axis='both', which='both', direction='in', bottom=True, top=True, left=True, right=True)
+            ax.grid()
+            plt.show()
+        else:
+            pass
+
+        # Save chi, beta, kappa values to file
+        f_chi = np.copy(chival)
+        f_beta = np.repeat(brange, length)
+        f_kappa = np.tile(krange, length)
+        f_save = np.vstack((f_chi, f_beta, f_kappa)).T
+        fcomment = '#Results of "chi_search" called with the following inputs:\n' +\
+                    '#length={}, blim=({}, {}), klim=({}, {}), lambda={}, effort={}, dm_method={}, chi_method={}\n'.format(
+                        length, np.min(blim), np.max(blim), np.min(klim), np.max(klim), l, dm_effort, dm_method, chi_method) +\
+                    '#Lowest chi^2 was with beta = {} & k = {}\n'.format(beta_low, kappa_low)
+        np.savetxt(fname=fdir+fname, X=f_save, header='chi  beta    kappa', delimiter='   ', comments=fcomment)
+
+        # Compute optimal model based on chi results
+        model_optimized = model(lam=l, beta=beta_low, kappa=kappa_low)
+        model_optimized.distance_modulus(effort=dm_effort)
+        model_optimized.chi2value(dm_method=dm_method, chi_method=chi_method)
+
+        return model_optimized
+    
     else:
-        pass
 
-    # Save chi, beta, kappa values to file
-    f_chi = np.copy(chival)
-    f_beta = np.repeat(brange, length)
-    f_kappa = np.tile(krange, length)
-    f_save = np.vstack((f_chi, f_beta, f_kappa)).T
-    fcomment = '#Results of "chi_search" called with the following inputs:\n' +\
-                '#length={}, blim=({}, {}), klim=({}, {}), lambda={}, effort={}, dm_method={}, chi_method={}\n'.format(
-                    length, np.min(blim), np.max(blim), np.min(klim), np.max(klim), l, dm_effort, dm_method, chi_method) +\
-                '#Lowest chi^2 was with beta = {} & k = {}\n'.format(beta_low, kappa_low)
-    np.savetxt(fname=fdir+fname, X=f_save, header='chi  beta    kappa', delimiter='   ', comments=fcomment)
+        fname = fname + '.txt'
 
-    # Compute optimal model based on chi results
-    model_optimized = model(lam=l, beta=beta_low, kappa=kappa_low)
-    model_optimized.distance_modulus(effort=dm_effort)
-    model_optimized.chi2value(dm_method=dm_method, chi_method=chi_method)
+        brange = np.linspace(np.min(blim), np.max(blim), length)
+        krange = np.linspace(np.min(klim), np.max(klim), length)
+        chival = np.zeros(length**2)
 
-    return model_optimized
+        # Iterate over all (b, k), store chi value for each
+        for index, param in enumerate(itertools.product(brange, krange)):
+            beta, kappa = param
+            tmod = model(lam=l, beta=beta, kappa=kappa)
+            tmod.distance_modulus(effort=dm_effort)
+            tmod.chi2value(dm_method=dm_method, chi_method=chi_method)
+            if np.max(tmod.a2/np.interp(tmod.a, matter.a, matter.a2)) > 3 or np.min(tmod.a2/np.interp(tmod.a, matter.a, matter.a2)) < -10:
+                chival[index] = np.nan
+            else:            
+                chival[index] = tmod.chi
+        
+        # Convert NaNs to 1e6 because otherwise it's dumb (number not important)
+        chival_nonan = np.nan_to_num(chival, nan=1e6)
+        lowest = np.argmin(chival_nonan)
+        nan_ratio = len(chival_nonan[chival_nonan == 1e6]) / len(chival_nonan) * 100
+
+        # Raise exception if only NaN values were returned
+        if np.equal(chival_nonan, np.ones_like(chival_nonan)*1e6).all():
+            raise Exception('No real chi values found')
+        else:
+            pass
+
+        chi_low   = chival_nonan[lowest]
+        beta_low  = np.repeat(brange, length)[lowest]
+        kappa_low = np.tile(krange, length)[lowest]
+        
+        # Print results of function call
+        print('The lowest chi^2 value is {:.3f} for beta = {:.3f} & mu = {:.3f} in the range {:.0f} < beta < {:.0f} and {:.0f} < mu < {:.0f}\n\t'
+            '{:.1f} % of models had a chi^2 value of NaN. \n'
+            'Data saved in "{}"'
+            ''.format(chi_low, beta_low, kappa_low, np.min(blim), np.max(blim), np.min(klim), np.max(klim), nan_ratio, fdir+fname))
+
+
+        # Plot heat map of chi values
+        if plot:
+            chi_plot_z = np.reshape(chival, (length, length)).T
+
+            fig, ax = plt.subplots(figsize=(7, 5))
+            cmap = matplotlib.cm.get_cmap('viridis_r').copy()
+            cmap.set_bad(color='r')
+            im = ax.imshow(chi_plot_z, cmap=cmap, origin='lower', interpolation='nearest', norm=scale)
+            ax.text(x=np.array(range(length))[np.where(brange == beta_low)],
+                    y=np.array(range(length))[np.where(krange == kappa_low)],
+                    s=r'$\ast$', color='k', ha='center', va='center', fontsize=20)
+            
+            ax.set_xticks(range(length), np.round(brange, round), rotation=45, fontsize=14)
+            ax.set_yticks(range(length), np.round(krange, round), fontsize=14)
+            ax.set_xlabel(r'$\beta$')
+            ax.set_ylabel(r'$k$')
+            fig.colorbar(im, label=r'$\chi^{2}_{r}$')
+            ax.tick_params(axis='both', which='both', direction='in', bottom=True, top=True, left=True, right=True)
+            ax.grid()
+            plt.show()
+        else:
+            pass
+
+        # Save chi, beta, kappa values to file
+        f_chi = np.copy(chival)
+        f_beta = np.repeat(brange, length)
+        f_kappa = np.tile(krange, length)
+        f_save = np.vstack((f_chi, f_beta, f_kappa)).T
+        fcomment = '#Results of "chi_search" called with the following inputs:\n' +\
+                    '#length={}, blim=({}, {}), klim=({}, {}), lambda={}, effort={}, dm_method={}, chi_method={}\n'.format(
+                        length, np.min(blim), np.max(blim), np.min(klim), np.max(klim), l, dm_effort, dm_method, chi_method) +\
+                    '#Lowest chi^2 was with beta = {} & k = {}\n'.format(beta_low, kappa_low)
+        np.savetxt(fname=fdir+fname, X=f_save, header='chi  beta    kappa', delimiter='   ', comments=fcomment)
+
+        # Compute optimal model based on chi results
+        model_optimized = model(lam=l, beta=beta_low, kappa=kappa_low)
+        model_optimized.distance_modulus(effort=dm_effort)
+        model_optimized.chi2value(dm_method=dm_method, chi_method=chi_method)
+
+        return model_optimized
 
 
 def q_surface(length=20, blim=(2, 4), klim=(1, 10), qlim=(-1.0, 0.0), lam=0., dm_method='int', dm_effort=False, chi_method='formula',
