@@ -11,7 +11,7 @@ from matplotlib.colors import LogNorm, NoNorm
 import pandas as pd
 from tqdm import tqdm
 from tqdm.contrib import itertools
-from astropy.cosmology import Planck18
+# from astropy.cosmology import Planck18
 from astropy.cosmology import FlatLambdaCDM
 from functools import lru_cache
 from time import time
