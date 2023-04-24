@@ -40,7 +40,7 @@ lam0 = 0.666
 
 
 # Data
-df      = pd.read_csv('../Data/Pantheon+SH0ES.dat.txt', sep=' ')
+df      = pd.read_csv('../../Data/Pantheon+SH0ES.dat.txt', sep=' ')
 sndat   = np.array(df['MU_SH0ES'])
 snerr   = np.array(df['MU_SH0ES_ERR_DIAG'])
 z_sn    = np.array(df['zHD'])
