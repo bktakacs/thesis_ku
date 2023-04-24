@@ -348,7 +348,7 @@ def chi_search(fname, length=10, blim=(2., 4.), klim=(1., 10.), l=0., dm_effort=
 
     # Take user inputted file name for saving data
     # fname = input('Input file name for saved data (ignore .txt):\t')
-    # fname = fname + '.txt'
+    fname = fname + '.txt'
     # if len(fname) < 5:
     #     raise Exception('fname required')
     # else:
