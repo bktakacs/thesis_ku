@@ -2,6 +2,17 @@ from _icd import *
 
 
 def modified_friedmann(time, var, m, r, l, k, p):
+    """
+    friedmann equations from alternative model
+    :param time: time
+    :param var: array of variables a, adot
+    :param m: matter density
+    :param r: radiation density
+    :param l: lambda density
+    :param k: constant
+    :param p: power
+    :return: array of derivatives of a, adot
+    """
     dvar = np.zeros(2)
 
     dvar[0] = var[1]
@@ -27,11 +38,17 @@ def acceleration(a, ap, m, r, l, k, p):
 ##############################################################################
 
 def inverse(x, y):
+    """
+    Inverse of a function, used in distance modulus calculation when effort = False
+    """
     return y**(-0.5)
 
 ##############################################################################
 
 def adot_inverse(a, ap):
+    """
+    Inverse of adot, used in distance modulus calculation when effort = True
+    """
     return ap**-2
 
 ##############################################################################
@@ -42,12 +59,28 @@ def integrand(z, m, r, l, f, k):
 ##############################################################################
 
 def dm_z_o4(z=z_sn, q=-0.55, j=1, s=0):
+    """
+    Distance modulus as a function of redshift
+
+    :param z: array, redshift
+    :param q: float, deceleration parameter
+    :param j: float, jerk
+    :param s: float, snap
+    :return: array, distance modulus
+    """
     dl =  c * z / h0 * (1 + 0.5 * z * (1 - q) - (1/6) * z**2 * (1 - q - 3 * q**2 + j) + (1/24) * z**3 * (2 - 2 * q - 15 * q**2 - 15 * q**3 + 5 * j + 10*j*q + s)) 
     return 5 * np.log10(dl) + 25
 
 ##############################################################################
 
 def rchi2(obs, exp=sndat, method='formula'):
+    """
+    Reduced chi squared
+    :param obs: array, observed data
+    :param exp: array, expected data
+    :param method: string, method to calculate chi squared
+    :return: float, reduced chi squared
+    """
     if method == 'formula':
         chi = np.sum((obs - exp)**2)
         answer = chi / len(obs)
@@ -65,6 +98,10 @@ def rchi2(obs, exp=sndat, method='formula'):
 def read_model_data(fname, fdir='../Data/model_data/'):
     """
     Read model data quickly
+
+    :param fname: string, name of file
+    :param fdir: string, directory of file
+    :return: pandas dataframe, data
     """
     file = pd.read_csv(fdir+fname, delim_whitespace=True, comment='#')
     return file
@@ -74,6 +111,10 @@ def read_model_data(fname, fdir='../Data/model_data/'):
 def specific_function(array, number):
     """
     Function to do something specific and time consuming
+
+    :param array: array, array of data
+    :param number: int, which sorted chi^2 value to choose from which beta and kappa are returned
+    :return: float, beta, kappa
     """
     chi = array['chi']
     beta = array['beta']
