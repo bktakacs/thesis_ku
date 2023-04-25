@@ -106,7 +106,7 @@ def read_model_data(fname, fdir='../Data/model_data/'):
     file = pd.read_csv(fdir+fname, delim_whitespace=True, comment='#')
     return file
 
-#
+##############################################################################
 
 def specific_function(array, number):
     """

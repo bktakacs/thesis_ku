@@ -29,9 +29,16 @@ from main import *
 
 # Testing double optimization
 
-m1 = chi_search(fname='double_optimization_test', length=50, blim=(1, 10), klim=(0.1, 100), dm_effort=False, dm_method='int', plot=True)
+# m1 = chi_search(fname='double_optimization_test', length=50, blim=(1, 10), klim=(0.1, 100), dm_effort=False, dm_method='int', plot=True)
+# m1 = chi_search(fname='double_optimization_int_noeff_fine', length=50, blim=(1.4, 1.7), klim=(0.1, 4.2),
+#                 dm_effort=False, dm_method='int', plot=True)
 
-m1.distance_modulus(effort=False)
+# m1.distance_modulus(effort=False)
 
-m1.plot('acc', lcdm, matter)
-m1.plot('dm', lcdm, matter)
+# m1.plot('acc', lcdm, matter)
+# m1.plot('dm', lcdm, matter)
+
+
+# Testing q surface function
+m1 = q_surface(length=50, blim=(1, 2), klim=(0.1, 7))
+

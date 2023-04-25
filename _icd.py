@@ -11,7 +11,6 @@ from matplotlib.colors import LogNorm, NoNorm
 import pandas as pd
 from tqdm import tqdm
 from tqdm.contrib import itertools
-# from astropy.cosmology import Planck18
 from astropy.cosmology import FlatLambdaCDM
 from functools import lru_cache
 from time import time
@@ -31,12 +30,12 @@ plt.rcParams['figure.figsize'] = (10, 5)
 
 
 # Constants
-h0 = 73.6
 c  = 3e5        # celeritas [km/s]
-dh = c / h0
-mat0 = 0.334
-rad0 = 1e-4
-lam0 = 0.666
+h0 = 73.6       # hubbles constant [km/s/Mpc]
+dh = c / h0     # hubble distance [Mpc]
+mat0 = 0.334    # matter density
+rad0 = 1e-4     # radiation density
+lam0 = 0.666    # dark energy density
 
 
 # Data
