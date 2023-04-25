@@ -459,7 +459,8 @@ def chi_search(fname, length=10, blim=(2., 4.), klim=(1., 10.), l=0., dm_effort=
         fcomment = '#Results of "chi_search" called with the following inputs:\n' +\
                     '#length={}, blim=({}, {}), klim=({}, {}), lambda={}, effort={}, dm_method={}, chi_method={}\n'.format(
                         length, np.min(blim), np.max(blim), np.min(klim), np.max(klim), l, dm_effort, dm_method, chi_method) +\
-                    '#Lowest chi^2 was with beta = {} & k = {}\n'.format(beta_low, kappa_low)
+                    '#Lowest chi^2 was with beta = {} & k = {}\n'.format(beta_low, kappa_low) +\
+                    '#NaN ratio = {:.1f} %'.format(nan_ratio)
         np.savetxt(fname=fdir+fname, X=f_save, header='chi  beta    kappa', delimiter='   ', comments=fcomment)
         print('Data saved in {}'.format(fdir+fname))
 
@@ -664,7 +665,3 @@ matter = model(lam=0.)
 # plt.xlabel(r'$a$')
 # plt.ylabel(r'$\ddot{a}/\ddot{a}_{\mathrm{M}}$')
 # plt.show()
-
-# i made a git repository for this stuff!
-
-# another change for checking stuff
