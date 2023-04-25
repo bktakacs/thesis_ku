@@ -8,20 +8,8 @@ from _functions import modified_friedmann, acceleration, inverse, adot_inverse, 
 # Classes
 class model():
     """
-    class which creates a cosmological model from the following input parameters:
-    a_start-----initial value of scale factor at which to begin integration, chosen 1e-3 to correspond to time of recombination (z ~ 1100)
-    mat---------dimensionless matter density parameter (baryons + dark matter), defined in main_icd
-    rad---------dimensionless radiation density parameter (photons + neutrinos), defined in main_icd
-    lam---------dimensionless dark energy density parameter (cosmological constant), defined in main_icd
-    beta--------power to which mass is raised in new DM force
-    kappa-------constant in front of new DM force
-    n-----------not sure, but has to do with power series in Press-Schechter formalism, used in variable gamma
-    xaxis-------axis upon which we plan to plot, can be time 't' or scale factor 'a', scale factor and its derivatives only run until
-                xaxis variable reaches unity
-    xmax--------upper limit of integration in units of time tH0, chosen as 1.5 to ensure scale factor can reach unity if xaxis = 'a'
-    xlen--------length of time array for integration, chosen to be sufficiently large so that when we go to redshift there are values similar
-                to those of the z_sn array (1e-3, 2.2)
-
+    class which creates a cosmological model with given parameters
+    
     This class takes initial inputs and then integrates the modified Friedmann equations to get a, adot (a1) and t. From there we derive further
     time derivatives as well as other cosmological parameters.
 
@@ -29,6 +17,21 @@ class model():
     """
 
     def __init__(self, a_start=1e-3, mat=mat0, rad=rad0, lam=lam0, beta=3., kappa=0., n=1, xaxis='a', xmax=1.5, xlen=50000):
+        """
+        initialization method for model class
+        :param a_start: initial value of scale factor at which to begin integration, chosen 1e-3 to correspond to time of recombination (z ~ 1100)
+        :param mat: dimensionless matter density parameter (baryons + dark matter), defined in main_icd
+        :param rad: dimensionless radiation density parameter (photons + neutrinos), defined in main_icd
+        :param lam: dimensionless dark energy density parameter (cosmological constant), defined in main_icd
+        :param beta: power to which mass is raised in new DM force
+        :param kappa: constant in front of new DM force
+        :param n: not sure, but has to do with power series in Press-Schechter formalism, used in variable gamma
+        :param xaxis: axis upon which we plan to plot, can be time 't' or scale factor 'a', scale factor and its derivatives only run until
+        xaxis variable reaches unity
+        :param xamax: upper limit of integration in units of time tH0, chosen as 1.5 to ensure scale factor can reach unity if xaxis = 'a'
+        :param xlen: length of time array for integration, chosen to be sufficiently large so that when we go to redshift there are values similar
+        to those of the z_sn array (1e-3, 2.2)
+        """
         # properties of this model
         self.m = mat
         self.r = rad
@@ -61,14 +64,15 @@ class model():
         self.a1 = solution.y[1, :]
         self.t  = solution.t
 
-        # construct additional model parameters
-        #   time derivatives acceleration, jerk, snap
+        # time derivatives
         self.a2 = acceleration(self.a, self.a1, self.m, self.r, self.l, self.k, self.p)
         self.a3 = np.diff(self.a2) / np.diff(self.t)
         self.a4 = np.diff(self.a3) / np.diff(self.t[:-1])
 
+        # find where today is in terms of a or t
         hoy = np.argmin(np.abs(1 - self.a)) if xaxis == 'a' else np.argmin(np.abs(1 - self.t))
         
+        # truncate arrays to today
         self.a = self.a[:hoy]
         self.a1 = self.a1[:hoy]
         self.a2 = self.a2[:hoy]
@@ -85,16 +89,20 @@ class model():
     def distance_modulus(self, effort=True):
         """
         distance_modulus() method which calculates the distance modulus of scale factor values calculated in the initialization in two ways
-        effort--method for calculating DM from the integration of dz/E(z). type=='true' is the "true" way of doing this, calculating f and
-                using the integrand function. The other method calculates E(z) as an array of data and simply integrates that. It is a bit
-                mysterious however because it uses the inverse function which returns x**(-0.5) when it should just be x**(-1). For some reason
-                though, -0.5 just works.
+
+        :param effort: boolean, if True, uses the "true" method of calculating the distance modulus, if False, uses a faster method
+        :return: distance modulus array
+        
+        Note on effort parameter:
+        "True" way is calculating f and using the integrand function. "False" way method calculates E(z) as an array of data and simply
+        integrates that. It is a bit mysterious however because it uses the inverse function which returns x**(-0.5) when it should
+        just be x**(-1). For some reason though, -0.5 just works.
         
         The distance modulus is calculated through two methods, here called integration and taylor:
         DM through integration is calculated through a series of equations as follows:
         dc = dh * int_0^z dz/E(z) where E(z) = sqrt(m(1+z)(1+kf) + r(1+z)^4 + l)
         dl = (1+z) * dh ;   dm = 5 * np.log10(dl) + 25 (for dl given in Mpc)
-        Because z from the model will not exactly equal z from the SN data, we interpolate
+        Because z from the model will not exactly equal z from the SN data, we interpolate along z from SNe
         
         DM through taylor is calculated using a Taylor approximation of the scale factor which is a long equation that's written below
 
@@ -141,9 +149,9 @@ class model():
     
     def chi2value(self, dm_method='int', chi_method='formula', eval_both=True):
         """
-        chi2value() method which simply calculates the reduced chi squared value in the comparison of the SN data set and the DM we calculate
-        dm_method---which DM value to use, options are 'int' or 'tay' corresponding to integration or taylor method in "distance_modulus" method
-        chi_method--which method to use in the calculation fo the chi squared value in the "rchi2" function
+        chi2value() method which simply calculates the reduced chi squared value in the comparison of the SN data set and the DM we calculate\n
+        dm_method---which DM value to use, options are 'int' or 'tay' corresponding to integration or taylor method in "distance_modulus" method\n
+        chi_method--which method to use in the calculation fo the chi squared value in the "rchi2" function\n
 
         Pretty simple function, really
         """
@@ -317,22 +325,21 @@ def chi_search(fname, length=10, blim=(2., 4.), klim=(1., 10.), l=0., dm_effort=
                plot=True, round=1, scale=LogNorm(), fdir='../../Data/model_data/', double_eval=True):
     """
     chi_search() function. Calculates chi^2 value for models with different combinations (beta, kappa).
-    User must input file name for stored data upon calling function.
 
-    length----------integer, length of array with beta or kappa values. Length^2 is number of iterations in loop
-    blim------------tuple, upper and lower bounds of beta
-    klim------------tple, upper and lower bounds of kappa
-    l---------------integer, lambda value to be used for each model
-    dm_effort-------boolean, whether to use effort or not in calculation of distance modulus (used later in calculating chi^2)
-    dm_method-------'int' or 'tay', which method to use in evaluating distance modulus
-    chi_method------'formula' or 'poly', which method to use in evaluating chi^2 value
-    plot------------boolean, plot chi^2 heat map or no
-    round-----------integer, used when plot==True, what number of decimal places to round x & y labels to, for visual purposes
-    scale-----------NoNorm() or LogNorm(), used when plot==True, scale of heat map. NoNorm() (linear) for fine scale grid when chi^2 values
-                    are within an order of magniutes. LogNorm() (log) for courser scale grid where chi^2 values differ greatly
-    fdir------------string, file directory for storing data. Default stores in /Data/model_data/
-
-    Returns model using beta and kappa which give with lowest chi^2 value
+    :param fname: string, name of file to save data to
+    :param length: integer, length of array with beta or kappa values. Length^2 is number of iterations in loop
+    :param blim: tuple, upper and lower bounds of beta
+    :param klim: tuple, upper and lower bounds of kappa
+    :param l: integer, lambda value to be used for each model
+    :param dm_effort: boolean, whether to use effort or not in calculation of distance modulus (used later in calculating chi^2)
+    :param dm_method: 'int' or 'tay', which method to use in evaluating distance modulus
+    :param chi_method: 'formula' or 'poly', which method to use in evaluating chi^2 value
+    :param plot: boolean, plot chi^2 heat map or no
+    :param round: integer, used when plot==True, what number of decimal places to round x & y labels to, for visual purposes
+    :param scale: NoNorm() or LogNorm(), used when plot==True, scale of heat map. NoNorm() (linear) for fine scale grid when chi^2 values are within an order of magniutes. LogNorm() (log) for courser scale grid where chi^2 values are within an order of
+    :param fdir: string, file directory for storing data. Default stores in /Data/model_data/
+    :param double_eval: boolean, whether to evaluate chi^2 value for each model twice (once for each method) or not
+    :return: optimized model object
 
     This function creates a linear range of beta values using length & blim, same for kappa, and then loops over combinations of those.
     For each combination a model is created and the distance_modulus method called using dm_effort input. Then chi2_value() method is called
@@ -513,8 +520,22 @@ def chi_search(fname, length=10, blim=(2., 4.), klim=(1., 10.), l=0., dm_effort=
 
 
 def q_surface(length=20, blim=(2, 4), klim=(1, 10), qlim=(-1.0, 0.0), lam=0., dm_method='int', dm_effort=False, chi_method='formula',
-              splot=True, qplot=True):
-    """Surface plot of deceleration parameter q for a given range of beta and kappa values."""
+              splot=True, mplot=True):
+    """
+    q_surface() function. Plots a surface of q values for a given range of beta and kappa values.
+
+    :param length: number of points to plot in each direction
+    :param blim: range of beta values to plot
+    :param klim: range of kappa values to plot
+    :param qlim: range of q values to plot
+    :param lam: lambda value to use for model
+    :param dm_method: method to use for distance modulus calculation
+    :param dm_effort: if True, use more accurate distance modulus calculation
+    :param chi_method: method to use for chi^2 calculation
+    :param splot: if True, plot surface plot of q values
+    :param mplot: if True, plot acceleration and distance modulus of optimized model
+    :return: optimized model top_mod
+    """
 
     brange = np.linspace(np.min(blim), np.max(blim), length)
     krange = np.linspace(np.min(klim), np.max(klim), length)
@@ -533,7 +554,7 @@ def q_surface(length=20, blim=(2, 4), klim=(1, 10), qlim=(-1.0, 0.0), lam=0., dm
 
         if (temp_mod.q > np.min(qlim)) and (temp_mod.q < np.max(qlim)):
             temp_mod.distance_modulus(effort=dm_effort)
-            temp_mod.chi2value(dm_method=dm_method, chi_method=chi_method)
+            temp_mod.chi2value(dm_method=dm_method, chi_method=chi_method, eval_both=False)
 
             qcd.append(temp_mod.q)
             bcd.append(temp_mod.b)
@@ -620,7 +641,7 @@ def q_surface(length=20, blim=(2, 4), klim=(1, 10), qlim=(-1.0, 0.0), lam=0., dm
     else:
         pass
 
-    if qplot:
+    if mplot:
         plot_mod = model(lam=lam, beta=bred[np.argmin(xred)], kappa=kred[np.argmin(xred)])
         plot_mod.distance_modulus(effort=dm_effort)
         plot_mod.plot('acc', model(), model(lam=0.))
