@@ -314,7 +314,7 @@ def chi2_comp(parameter, space, beta=3., kappa=0., lam=lam0, dm_effort=False, dm
 
 
 def chi_search(fname, length=10, blim=(2., 4.), klim=(1., 10.), l=0., dm_effort=False, dm_method='int', chi_method='formula', 
-               plot=True, round=1, scale=LogNorm(), fdir='../../Data/model_data/', both_eval=True):
+               plot=True, round=1, scale=LogNorm(), fdir='../../Data/model_data/', double_eval=True):
     """
     chi_search() function. Calculates chi^2 value for models with different combinations (beta, kappa).
     User must input file name for stored data upon calling function.
@@ -340,7 +340,7 @@ def chi_search(fname, length=10, blim=(2., 4.), klim=(1., 10.), l=0., dm_effort=
     inputted file name and then prints statement of results.
     """
 
-    if both_eval:
+    if double_eval:
         fname = fname + '.txt'
 
         brange = np.linspace(np.min(blim), np.max(blim), length)
@@ -380,10 +380,9 @@ def chi_search(fname, length=10, blim=(2., 4.), klim=(1., 10.), l=0., dm_effort=
         kappa_low = np.tile(krange, length)[lowest]
         
         # Print results of function call
-        print('The lowest chi^2 value is {:.3f} (int) {:.3f} (tay) for beta = {:.3f} & mu = {:.3f} in the range {:.0f} < beta < {:.0f} and {:.0f} < mu < {:.0f}\n\t'
+        print('The lowest chi^2 values are {:.3f} (int) {:.3f} (tay) for beta = {:.3f} & mu = {:.3f} in the range {:.0f} < beta < {:.0f} and {:.0f} < mu < {:.0f}\n\t'
             '{:.1f} % of models had a chi^2 value of NaN. \n'
-            'Data saved in "{}"'
-            ''.format(chi_low_a, chi_low_b, beta_low, kappa_low, np.min(blim), np.max(blim), np.min(klim), np.max(klim), nan_ratio, fdir+fname))
+            ''.format(chi_low_a, chi_low_b, beta_low, kappa_low, np.min(blim), np.max(blim), np.min(klim), np.max(klim), nan_ratio))
 
 
         # Plot heat map of chi values
@@ -410,22 +409,22 @@ def chi_search(fname, length=10, blim=(2., 4.), klim=(1., 10.), l=0., dm_effort=
             pass
 
         # Save chi, beta, kappa values to file
-        # f_chi = np.copy(chival)
-        # f_beta = np.repeat(brange, length)
-        # f_kappa = np.tile(krange, length)
-        # f_save = np.vstack((f_chi, f_beta, f_kappa)).T
-        # fcomment = '#Results of "chi_search" called with the following inputs:\n' +\
-        #             '#length={}, blim=({}, {}), klim=({}, {}), lambda={}, effort={}, dm_method={}, chi_method={}\n'.format(
-        #                 length, np.min(blim), np.max(blim), np.min(klim), np.max(klim), l, dm_effort, dm_method, chi_method) +\
-        #             '#Lowest chi^2 was with beta = {} & k = {}\n'.format(beta_low, kappa_low)
-        # np.savetxt(fname=fdir+fname, X=f_save, header='chi  beta    kappa', delimiter='   ', comments=fcomment)
+        f_chi = np.copy(chival_a+chival_b)
+        f_beta = np.repeat(brange, length)
+        f_kappa = np.tile(krange, length)
+        f_save = np.vstack((f_chi, f_beta, f_kappa)).T
+        f_comment = '#Results of "chi_search" called with the following inputs:\n' +\
+                    '#length={}, blim=({}, {}), klim=({}, {}), lambda={}, effort={}, dm_method={}, chi_method={}\n'.format(
+                        length, np.min(blim), np.max(blim), np.min(klim), np.max(klim), l, dm_effort, dm_method, chi_method) +\
+                    '#Lowest chi^2 was with beta = {} & k = {}\n'.format(beta_low, kappa_low)
+        np.savetxt(fname=fdir+fname, X=f_save, header='chi  beta    kappa', delimiter='   ', comments=f_comment)
 
-        # # Compute optimal model based on chi results
-        # model_optimized = model(lam=l, beta=beta_low, kappa=kappa_low)
-        # model_optimized.distance_modulus(effort=dm_effort)
-        # model_optimized.chi2value(dm_method=dm_method, chi_method=chi_method)
+        # Compute optimal model based on chi results
+        model_optimized = model(lam=l, beta=beta_low, kappa=kappa_low)
+        model_optimized.distance_modulus(effort=dm_effort)
+        model_optimized.chi2value(dm_method=dm_method, chi_method=chi_method)
 
-        # return model_optimized
+        return model_optimized
     
     else:
 
@@ -446,6 +445,12 @@ def chi_search(fname, length=10, blim=(2., 4.), klim=(1., 10.), l=0., dm_effort=
             else:            
                 chival[index] = tmod.chi
         
+        # Raise exception if only NaN values were returned
+        if np.isnan(chival).all():
+            raise Exception('No real chi values found')
+        else:
+            pass
+        
         # Save chi, beta, kappa values to file
         f_chi = np.copy(chival)
         f_beta = np.repeat(brange, length)
@@ -463,12 +468,7 @@ def chi_search(fname, length=10, blim=(2., 4.), klim=(1., 10.), l=0., dm_effort=
         lowest = np.argmin(chival_nonan)
         nan_ratio = len(chival_nonan[chival_nonan == 1e6]) / len(chival_nonan) * 100
 
-        # Raise exception if only NaN values were returned
-        if np.equal(chival_nonan, np.ones_like(chival_nonan)*1e6).all():
-            raise Exception('No real chi values found')
-        else:
-            pass
-
+        # Find lowest chi^2 value and corresponding beta, kappa
         chi_low   = chival_nonan[lowest]
         beta_low  = np.repeat(brange, length)[lowest]
         kappa_low = np.tile(krange, length)[lowest]
@@ -547,8 +547,6 @@ def q_surface(length=20, blim=(2, 4), klim=(1, 10), qlim=(-1.0, 0.0), lam=0., dm
 
         else:
             pass
-    
-    model_optimized = top_mod
 
     q_save = np.reshape(q_save, (length, length))
 
@@ -629,7 +627,7 @@ def q_surface(length=20, blim=(2, 4), klim=(1, 10), qlim=(-1.0, 0.0), lam=0., dm
     else:
         pass
 
-    return model_optimized
+    return top_mod
 
 
 
