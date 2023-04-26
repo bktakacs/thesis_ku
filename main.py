@@ -454,6 +454,7 @@ def chi_search(fname, length=10, blim=(2., 4.), klim=(1., 10.), l=0., dm_effort=
                         fontsize=12)
         f1.set_xlabel(r'$\beta$')
         f1.set_ylabel(r'$k$')
+        f1.set_title(r'Integration method')
         f1.tick_params(axis='both', which='both', direction='in',
                         bottom=True, top=True, left=True, right=True)
         f1.grid()
@@ -473,6 +474,7 @@ def chi_search(fname, length=10, blim=(2., 4.), klim=(1., 10.), l=0., dm_effort=
                         fontsize=12)
         f2.set_xlabel(r'$\beta$')
         f2.set_ylabel(r'$k$')
+        f2.set_title(r'Taylor expansion')
         f2.tick_params(axis='both', which='both', direction='in',
                         bottom=True, top=True, left=True, right=True)
         f2.grid()
@@ -492,6 +494,7 @@ def chi_search(fname, length=10, blim=(2., 4.), klim=(1., 10.), l=0., dm_effort=
                         fontsize=12)
         f3.set_xlabel(r'$\beta$')
         f3.set_ylabel(r'$k$')
+        f3.set_title(r'Combined')
         f3.tick_params(axis='both', which='both', direction='in',
                         bottom=True, top=True, left=True, right=True)
         f3.grid()      
