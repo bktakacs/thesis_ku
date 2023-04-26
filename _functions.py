@@ -95,7 +95,7 @@ def rchi2(obs, exp=sndat, method='formula'):
 
 ##############################################################################
 
-def read_model_data(fname, fdir='../Data/model_data/'):
+def read_model_data(fname, fdir='../../Data/model_data/'):
     """
     Read model data quickly
 
