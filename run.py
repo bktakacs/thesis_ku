@@ -40,5 +40,7 @@ from main import *
 
 
 # Testing q surface function
-m1 = q_surface(length=50, blim=(1, 2), klim=(0.1, 7))
+# m1 = q_surface(length=50, blim=(1, 2), klim=(0.1, 7))
+chi_search('nosave', length=20, double_eval=False)
 
+chi_search('nosave', length=20, double_eval=True)
