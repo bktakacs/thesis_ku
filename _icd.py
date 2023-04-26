@@ -40,12 +40,13 @@ lam0 = 0.666    # dark energy density
 
 # Data
 df      = pd.read_csv('../../Data/Pantheon+SH0ES.dat.txt', sep=' ')
-sndat   = np.array(df['MU_SH0ES'])
-snerr   = np.array(df['MU_SH0ES_ERR_DIAG'])
-z_sn    = np.array(df['zHD'])
-z_err   = np.array(df['zHDERR'])
+sndat   = np.array(df['MU_SH0ES'])  # supernova data
+snerr   = np.array(df['MU_SH0ES_ERR_DIAG']) # supernova error
+z_sn    = np.array(df['zHD'])    # redshift
+z_err   = np.array(df['zHDERR'])    # redshift error
 
-# dat     = pd.read_csv('../Data/lcparam_full_long.txt', sep=' ')
+# dat     = pd.read_csv('../../Data/lcparam_full_long.txt', sep=' ')
 
+# distance modulus from astropy for comparison
 cosmo = FlatLambdaCDM(H0=h0, Om0=mat0)
 dm_astro = cosmo.distmod(z_sn).value
