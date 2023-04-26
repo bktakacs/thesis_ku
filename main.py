@@ -500,6 +500,7 @@ def chi_search(fname, length=10, blim=(2., 4.), klim=(1., 10.), l=0., dm_effort=
         f3.grid()      
         fig.colorbar(im3, label=r'$\chi^{2}_{r}$', ax=f3)
         plt.show()
+        
     elif plot:
         chi_plot_z = np.reshape(chival, (length, length)).T
 
