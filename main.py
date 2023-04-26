@@ -149,11 +149,13 @@ class model():
     
     def chi2value(self, dm_method='int', chi_method='formula', eval_both=True):
         """
-        chi2value() method which simply calculates the reduced chi squared value in the comparison of the SN data set and the DM we calculate\n
-        dm_method---which DM value to use, options are 'int' or 'tay' corresponding to integration or taylor method in "distance_modulus" method\n
-        chi_method--which method to use in the calculation fo the chi squared value in the "rchi2" function\n
+        Method to calculate the chi squared value of the model compared to the SN data set
 
-        Pretty simple function, really
+        :param dm_method: string, either 'int' or 'tay' for distance modulus method
+        :param chi_method: string, either 'formula' or 'poly' for chi squared method
+        :param eval_both: boolean, if True, calculates chi2 for both distance modulus methods, if False, calculates for only one,
+        defaulting to whichever is specified in dm_method
+        :return: chi squared value of model compared to SN data set
         """
 
         if eval_both:
@@ -172,13 +174,14 @@ class model():
 
     def plot(self, which, lcdm, matter):
         """
-        plot() method which just plots things from the model you've now created
-        which---what to plot, options are 'acc' to plot the acceleration normalized to matter-dominated model, or 
-                        'dm' to plot the distance modulus in comparison with a flatLCDM model
-        lcdm----model for plotting lcdm, used for comparison
-        matter--model for normalization of acc plot
+        This method plots the acceleration of the scale factor or the distance modulus, depending on the input "which" 
+        When plotting acceleration it normalizes the acceleration of the model to the acceleration of the matter model
+        and plots the acceleration of the LCDM model for comparison
 
-        Simple function to plot things from this model
+        :param which: string, options are 'acc' or 'dm' corresponding to acceleration or distance modulus
+        :param lcdm: model object, used for comparison
+        :param matter: model object, used for normalization of acc plot
+        :return: plot
         """
 
         self.a2_norm = self.a2 / np.interp(self.a, matter.a, matter.a2)
@@ -254,6 +257,21 @@ class model():
 
 # Functions
 def chi2_comp(parameter, space, beta=3., kappa=0., lam=lam0, dm_effort=False, dm_method='int', chi_method='formula', plot=True):
+    """
+    This function calculates the chi^2 value for a given parameter space and plots the chi^2 value as a function of the
+    parameter space. It also prints the lowest chi^2 value and the corresponding parameter value.
+    :param parameter: string, options are 'l', 'b' or 'k', corresponding to lambda, beta or kappa
+    :param space: array, parameter space to be explored
+    :param beta: float, beta value
+    :param kappa: float, kappa value
+    :param lam: float, lambda value
+    :param dm_effort: bool, if True, uses the "true" method of calculating the distance modulus, if False, uses a faster method
+    :param dm_method: string, options are 'int' or 'tay', corresponding to the integration method or Taylor expansion method
+    :param chi_method: string, options are 'formula' or 'poly' corresponding to the formula method or polynomial method
+    :param plot: bool, if True, plots the chi^2 value as a function of the parameter space
+    :return: model object, model with the lowest chi^2 value   
+    """
+
     array = np.zeros_like(space)
 
     if parameter == 'l':
@@ -324,7 +342,10 @@ def chi2_comp(parameter, space, beta=3., kappa=0., lam=lam0, dm_effort=False, dm
 def chi_search(fname, length=10, blim=(2., 4.), klim=(1., 10.), l=0., dm_effort=False, dm_method='int', chi_method='formula', 
                plot=True, round=1, scale=LogNorm(), fdir='../../Data/model_data/', double_eval=True):
     """
-    chi_search() function. Calculates chi^2 value for models with different combinations (beta, kappa).
+    chi_search() function. Calculates chi^2 value for models with different combinations (beta, kappa). This function creates a linear range of
+    beta values using length & blim, same for kappa, and then loops over combinations of those. For each combination a model is created and the
+    distance_modulus method called using dm_effort input. Then chi2_value() method is calledusing dm_method and chi_method inputs. Chi^2 value
+    is stored and shaped into (length, length) array for plotting. Finally stores data using inputted file name and then prints statement of results.
 
     :param fname: string, name of file to save data to
     :param length: integer, length of array with beta or kappa values. Length^2 is number of iterations in loop
@@ -340,18 +361,14 @@ def chi_search(fname, length=10, blim=(2., 4.), klim=(1., 10.), l=0., dm_effort=
     :param fdir: string, file directory for storing data. Default stores in /Data/model_data/
     :param double_eval: boolean, whether to evaluate chi^2 value for each model twice (once for each method) or not
     :return: optimized model object
-
-    This function creates a linear range of beta values using length & blim, same for kappa, and then loops over combinations of those.
-    For each combination a model is created and the distance_modulus method called using dm_effort input. Then chi2_value() method is called
-    using dm_method and chi_method inputs. Chi^2 value is stored and shaped into (length, length) array for plotting. Finally stores data using
-    inputted file name and then prints statement of results.
     """
 
-    if double_eval:
-        fname = fname + '.txt'
+    fname = fname + '.txt'
 
-        brange = np.linspace(np.min(blim), np.max(blim), length)
-        krange = np.linspace(np.min(klim), np.max(klim), length)
+    brange = np.linspace(np.min(blim), np.max(blim), length)
+    krange = np.linspace(np.min(klim), np.max(klim), length)
+    
+    if double_eval:
         chival_a = np.zeros(length**2)
         chival_b = np.zeros(length**2)
 
@@ -638,16 +655,13 @@ def q_surface(length=20, blim=(2, 4), klim=(1, 10), qlim=(-1.0, 0.0), lam=0., dm
         ax2.set_title(r'$k, q$')
         ax2.view_init(elev=0, azim=0)
         plt.show()
-    else:
-        pass
+
 
     if mplot:
         plot_mod = model(lam=lam, beta=bred[np.argmin(xred)], kappa=kred[np.argmin(xred)])
         plot_mod.distance_modulus(effort=dm_effort)
         plot_mod.plot('acc', model(), model(lam=0.))
         plot_mod.plot('dm', model(), model(lam=0.))
-    else:
-        pass
 
     return top_mod
 
