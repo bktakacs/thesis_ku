@@ -514,10 +514,10 @@ def chi_search(fname, length=10, blim=(2., 4.), klim=(1., 10.), l=0., dm_effort=
         ax.text(x=np.array(range(length))[np.where(brange == beta_low)],
                 y=np.array(range(length))[np.where(krange == kappa_low)],
                 s=r'$\ast$', color='r', ha='center', va='center', fontsize=20)
-        ax.set_xticks(np.linspace(0, length+0.5, 10),
+        ax.set_xticks(np.linspace(0, length, 10),
                       np.round(np.linspace(brange[0], brange[-1], 10), 1),
                       rotation=45, fontsize=14)
-        ax.set_yticks(np.linspace(0, length-0.5, 10),
+        ax.set_yticks(np.linspace(0, length, 10),
                       np.round(np.linspace(krange[0], krange[-1], 10), 1),
                       fontsize=14)
         ax.set_xlabel(r'$\beta$')
@@ -531,7 +531,8 @@ def chi_search(fname, length=10, blim=(2., 4.), klim=(1., 10.), l=0., dm_effort=
 
     # Save chi, beta, kappa values to file
     if save:
-        f_chi = np.copy(chival) if not double_eval else np.copy(chival_int + chival_tay)
+        f_chi = np.copy(chival) if not double_eval else np.copy(chival_int
+                                                                +chival_tay)
         f_beta = np.repeat(brange, length)
         f_kappa = np.tile(krange, length)
         f_save = np.vstack((f_chi, f_beta, f_kappa)).T
@@ -569,7 +570,8 @@ def q_surface(length=20, blim=(2, 4), klim=(1, 10), qlim=(-1.0, 0.0), lam=0.,
     :param dm_effort: if True, use more accurate distance modulus calculation
     :param chi_method: method to use for chi^2 calculation
     :param splot: if True, plot surface plot of q values
-    :param mplot: if True, plot acceleration and distance modulus of optimized model
+    :param mplot: if True, plot acceleration and distance modulus of optimized
+    model
     :return: optimized model top_mod
     """
 
