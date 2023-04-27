@@ -340,7 +340,7 @@ def chi2_comp(parameter, space, beta=3., kappa=0., lam=lam0, dm_effort=False, dm
 
 
 def chi_search(fname, length=10, blim=(2., 4.), klim=(1., 10.), l=0., dm_effort=False, dm_method='int', chi_method='formula', 
-               plot=True, round=1, scale=LogNorm(), fdir='../../Data/model_data/', double_eval=True):
+               plot=True, round=1, scale=LogNorm(), fdir='../../Data/model_data/', double_eval=False):
     """
     chi_search() function. Calculates chi^2 value for models with different combinations (beta, kappa). This function creates a linear range of
     beta values using length & blim, same for kappa, and then loops over combinations of those. For each combination a model is created and the
@@ -447,10 +447,10 @@ def chi_search(fname, length=10, blim=(2., 4.), klim=(1., 10.), l=0., dm_effort=
                 y=np.array(range(length))[np.where(krange == kappa_low)],
                 s=r'$\ast$', color='r', ha='center', va='center', fontsize=16)
         f1.set_xticks(np.linspace(0, length-0.5, 10),
-                        np.round(np.linspace(brange[0], brange[-1], 10), 1),
+                        np.round(np.linspace(brange[0], brange[-1], 10), round),
                         rotation=45, fontsize=12)
         f1.set_yticks(np.linspace(0, length-0.5, 10),
-                        np.round(np.linspace(krange[0], krange[-1], 10), 1),
+                        np.round(np.linspace(krange[0], krange[-1], 10), round),
                         fontsize=12)
         f1.set_xlabel(r'$\beta$')
         f1.set_ylabel(r'$k$')
@@ -458,7 +458,8 @@ def chi_search(fname, length=10, blim=(2., 4.), klim=(1., 10.), l=0., dm_effort=
         f1.tick_params(axis='both', which='both', direction='in',
                         bottom=True, top=True, left=True, right=True)
         f1.grid()
-        fig.colorbar(im1, label=r'$\chi^{2}_{r}$', ax=f1)
+        cbar = fig.colorbar(im1, ax=f1)
+        cbar.set_label(r'$\chi^2$', rotation='90')
 
         # tay
         im2 = f2.imshow(chi_plot_z_tay, cmap=cmap, origin='lower',
@@ -467,10 +468,10 @@ def chi_search(fname, length=10, blim=(2., 4.), klim=(1., 10.), l=0., dm_effort=
                 y=np.array(range(length))[np.where(krange == kappa_low)],
                 s=r'$\ast$', color='r', ha='center', va='center', fontsize=16)
         f2.set_xticks(np.linspace(0, length-0.5, 10),
-                        np.round(np.linspace(brange[0], brange[-1], 10), 1),
+                        np.round(np.linspace(brange[0], brange[-1], 10), round),
                         rotation=45, fontsize=12)
         f2.set_yticks(np.linspace(0, length-0.5, 10),
-                        np.round(np.linspace(krange[0], krange[-1], 10), 1),
+                        np.round(np.linspace(krange[0], krange[-1], 10), round),
                         fontsize=12)
         f2.set_xlabel(r'$\beta$')
         f2.set_ylabel(r'$k$')
@@ -487,10 +488,10 @@ def chi_search(fname, length=10, blim=(2., 4.), klim=(1., 10.), l=0., dm_effort=
                 y=np.array(range(length))[np.where(krange == kappa_low)],
                 s=r'$\ast$', color='r', ha='center', va='center', fontsize=16)
         f3.set_xticks(np.linspace(0, length-0.5, 10),
-                        np.round(np.linspace(brange[0], brange[-1], 10), 1),
+                        np.round(np.linspace(brange[0], brange[-1], 10), round),
                         rotation=45, fontsize=12)
         f3.set_yticks(np.linspace(0, length-0.5, 10),
-                        np.round(np.linspace(krange[0], krange[-1], 10), 1),
+                        np.round(np.linspace(krange[0], krange[-1], 10), round),
                         fontsize=12)
         f3.set_xlabel(r'$\beta$')
         f3.set_ylabel(r'$k$')
@@ -513,7 +514,7 @@ def chi_search(fname, length=10, blim=(2., 4.), klim=(1., 10.), l=0., dm_effort=
         ax.text(x=np.array(range(length))[np.where(brange == beta_low)],
                 y=np.array(range(length))[np.where(krange == kappa_low)],
                 s=r'$\ast$', color='r', ha='center', va='center', fontsize=20)
-        ax.set_xticks(np.linspace(0, length-0.5, 10),
+        ax.set_xticks(np.linspace(0, length+0.5, 10),
                       np.round(np.linspace(brange[0], brange[-1], 10), 1),
                       rotation=45, fontsize=14)
         ax.set_yticks(np.linspace(0, length-0.5, 10),
@@ -521,7 +522,8 @@ def chi_search(fname, length=10, blim=(2., 4.), klim=(1., 10.), l=0., dm_effort=
                       fontsize=14)
         ax.set_xlabel(r'$\beta$')
         ax.set_ylabel(r'$k$')
-        fig.colorbar(im, label=r'$\chi^{2}_{r}$')
+        cbar = fig.colorbar(im)
+        cbar.set_label(r'$\chi^{2}_{r}$', rotation='90')
         ax.tick_params(axis='both', which='both', direction='in',
                        bottom=True, top=True, left=True, right=True)
         ax.grid()
@@ -529,15 +531,19 @@ def chi_search(fname, length=10, blim=(2., 4.), klim=(1., 10.), l=0., dm_effort=
 
     # Save chi, beta, kappa values to file
     if save:
-        f_chi = np.copy(chival_int + chival_tay)
+        f_chi = np.copy(chival) if not double_eval else np.copy(chival_int + chival_tay)
         f_beta = np.repeat(brange, length)
         f_kappa = np.tile(krange, length)
         f_save = np.vstack((f_chi, f_beta, f_kappa)).T
         f_comment = '#Results of "chi_search" called with the following inputs:\n'+\
-                    '#length={}, blim=({}, {}), klim=({}, {}), lambda={}, effort={}, dm_method={}, chi_method={}\n'.format(
-                        length, np.min(blim), np.max(blim), np.min(klim), np.max(klim), l, dm_effort, dm_method, chi_method) +\
-                    '#Lowest chi^2 was with beta = {} & k = {}\n'.format(beta_low, kappa_low)
-        np.savetxt(fname=fdir+fname, X=f_save, header='chi  beta    kappa', delimiter='   ', comments=f_comment)
+                '#length={}, blim=({}, {}), klim=({}, {}), lambda={},'.format(
+                    length, blim[0], blim[1], klim[0], klim[1], l) +\
+                'effort={}, dm_method={}, chi_method={}\n'.format(
+                    dm_effort, dm_method, chi_method) +\
+                '#Lowest chi^2 was with beta = {} & k = {}\n'.format(
+                    beta_low, kappa_low)
+        np.savetxt(fname=fdir+fname, X=f_save, header='chi beta kappa',
+                   delimiter=' ', comments=f_comment)
 
     # Compute optimal model based on chi results
     model_optimized = model(lam=l, beta=beta_low, kappa=kappa_low)
@@ -547,10 +553,12 @@ def chi_search(fname, length=10, blim=(2., 4.), klim=(1., 10.), l=0., dm_effort=
     return model_optimized
 
 
-def q_surface(length=20, blim=(2, 4), klim=(1, 10), qlim=(-1.0, 0.0), lam=0., dm_method='int', dm_effort=False, chi_method='formula',
+def q_surface(length=20, blim=(2, 4), klim=(1, 10), qlim=(-1.0, 0.0), lam=0.,
+              dm_method='int', dm_effort=False, chi_method='formula', 
               splot=True, mplot=True):
     """
-    q_surface() function. Plots a surface of q values for a given range of beta and kappa values.
+    q_surface() function. Plots a surface of q values for a given range of
+    beta and kappa values.
 
     :param length: number of points to plot in each direction
     :param blim: range of beta values to plot
