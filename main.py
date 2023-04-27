@@ -81,9 +81,12 @@ class model():
         self.t = self.t[:hoy]
 
         # parameters from time derivatives
-        self.q = - self.a2[-1] * self.a[-1] * self.a1[-1]**-2    # deceleration parameter q
-        self.j = self.a3[-1] * self.a[-1]**2 * self.a1[-1]**-3    # jerk j
-        self.s = self.a4[-1] * self.a[-1]**3 * self.a1[-1]**-4    # snap s
+        self.q = - self.a2[-1] * self.a[-1] * self.a1[-1]**-2   # decel param q
+        self.j = self.a3[-1] * self.a[-1]**2 * self.a1[-1]**-3  # jerk j
+        self.s = self.a4[-1] * self.a[-1]**3 * self.a1[-1]**-4  # snap s
+
+    def norm(self, matter):
+        self.a2norm = self.a2 / np.interp(self.a, matter.a, matter.a2)
 
     
     def distance_modulus(self, effort=True):
@@ -339,28 +342,43 @@ def chi2_comp(parameter, space, beta=3., kappa=0., lam=lam0, dm_effort=False, dm
     return model_optimized
 
 
-def chi_search(fname, length=10, blim=(2., 4.), klim=(1., 10.), l=0., dm_effort=False, dm_method='int', chi_method='formula', 
-               plot=True, round=1, scale=LogNorm(), fdir='../../Data/model_data/', double_eval=False):
+def chi_search(fname, length=10, blim=(2., 4.), klim=(1., 10.), l=0.,
+               dm_effort=False, dm_method='int', chi_method='formula',
+               plot=True, round=1, scale=LogNorm(), double_eval=False,
+               fdir='../../Data/model_data/'):
     """
-    chi_search() function. Calculates chi^2 value for models with different combinations (beta, kappa). This function creates a linear range of
-    beta values using length & blim, same for kappa, and then loops over combinations of those. For each combination a model is created and the
-    distance_modulus method called using dm_effort input. Then chi2_value() method is calledusing dm_method and chi_method inputs. Chi^2 value
-    is stored and shaped into (length, length) array for plotting. Finally stores data using inputted file name and then prints statement of results.
+    chi_search() function. Calculates chi^2 value for models with different
+    combinations (beta, kappa). This function creates a linear range of beta
+    values using length & blim, same for kappa, and then loops over
+    combinations of those. For each combination a model is created and the
+    distance_modulus method called using dm_effort input. Then chi2_value()
+    method is calledusing dm_method and chi_method inputs. Chi^2 value is
+    stored and shaped into (length, length) array for plotting. Finally stores
+    data using inputted file name and then prints statement of results.
 
     :param fname: string, name of file to save data to
-    :param length: integer, length of array with beta or kappa values. Length^2 is number of iterations in loop
+    :param length: integer, length of array with beta or kappa values. Length^2
+    is number of iterations in loop
     :param blim: tuple, upper and lower bounds of beta
     :param klim: tuple, upper and lower bounds of kappa
     :param l: integer, lambda value to be used for each model
-    :param dm_effort: boolean, whether to use effort or not in calculation of distance modulus (used later in calculating chi^2)
-    :param dm_method: 'int' or 'tay', which method to use in evaluating distance modulus
-    :param chi_method: 'formula' or 'poly', which method to use in evaluating chi^2 value
+    :param dm_effort: boolean, whether to use effort or not in calculation of
+    distance modulus (used later in calculating chi^2)
+    :param dm_method: 'int' or 'tay', which method to use in evaluating
+    distance modulus
+    :param chi_method: 'formula' or 'poly', which method to use in evaluating
+    chi^2 value
     :param plot: boolean, plot chi^2 heat map or no
-    :param round: integer, used when plot==True, what number of decimal places to round x & y labels to, for visual purposes
-    :param scale: NoNorm() or LogNorm(), used when plot==True, scale of heat map. NoNorm() (linear) for fine scale grid when chi^2 values are within an order of magnitude,
-                    LogNorm() (log) for coarse scale grid when chi^2 values are not within an order of magnitude
-    :param fdir: string, file directory for storing data. Default stores in /Data/model_data/
-    :param double_eval: boolean, whether to evaluate chi^2 value for each model twice (once for each method) or not
+    :param round: integer, used when plot==True, what number of decimal places
+    to round x & y labels to, for visual purposes
+    :param scale: NoNorm() or LogNorm(), used when plot==True, scale of heat
+    map. NoNorm() (linear) for fine scale grid when chi^2 values are within an
+    order of magnitude, LogNorm() (log) for coarse scale grid when chi^2 values
+    are not within an order of magnitude
+    :param fdir: string, file directory for storing data. Default stores in
+    /Data/model_data/
+    :param double_eval: boolean, whether to evaluate chi^2 value for each model
+    twice (once for each method) or not
     :return: optimized model object
     """
 
@@ -382,24 +400,28 @@ def chi_search(fname, length=10, blim=(2., 4.), klim=(1., 10.), l=0., dm_effort=
         tmod = model(lam=l, beta=param[0], kappa=param[1])
         tmod.distance_modulus(effort=dm_effort)
         tmod.chi2value(dm_method=dm_method, chi_method=chi_method)
-        if np.max(tmod.a2/np.interp(tmod.a, matter.a, matter.a2)) > 3 or np.min(tmod.a2/np.interp(tmod.a, matter.a, matter.a2)) < -10:
+        if (np.max(tmod.a2/np.interp(tmod.a, matter.a, matter.a2)) > 3 or 
+            np.min(tmod.a2/np.interp(tmod.a, matter.a, matter.a2)) < -10):
             chival_int[index] = np.nan
             chival_tay[index] = np.nan
         else:
             chival_int[index] = tmod.chi_int
             chival_tay[index] = tmod.chi_tay
 
-    chival = chival_int if dm_method == 'int' else chival_tay if dm_method == 'tay' else None
+    chival = chival_int if dm_method == 'int' else chival_tay if \
+                                                   dm_method == 'tay' else None
     
     # Convert NaNs to 1e6 because otherwise it's dumb (number not important)
     chival_nonan = np.nan_to_num(chival, nan=1e6)
     chival_int_nonan = np.nan_to_num(chival_int, nan=1e6)
     chival_tay_nonan = np.nan_to_num(chival_tay, nan=1e6)
     chival_com_nonan = chival_int_nonan + chival_tay_nonan
-    lowest = np.argmin(chival_com_nonan) if double_eval else np.argmin(chival_nonan)
+    lowest = np.argmin(chival_com_nonan) if double_eval else \
+                                                        np.argmin(chival_nonan)
 
     if double_eval:
-        nan_ratio = len(chival_com_nonan[chival_com_nonan >= 1e6]) / len(chival_com_nonan) * 100
+        nan_ratio = (len(chival_com_nonan[chival_com_nonan >= 1e6]) / 
+                                                len(chival_com_nonan) * 100)
     else:
         nan_ratio = len(chival[chival == 1e6]) / len(chival) * 100
 
@@ -416,14 +438,17 @@ def chi_search(fname, length=10, blim=(2., 4.), klim=(1., 10.), l=0., dm_effort=
 
     # Print results of function call
     if double_eval:
-        print('The lowest chi^2 values are {:.3f} (int) {:.3f} (tay) for beta = {:.3f} & mu = {:.3f} in the range\n\t'
+        print('The lowest chi^2 values are {:.3f} (int) {:.3f} (tay) for beta'
+              '= {:.3f} & mu = {:.3f} in the range\n\t'
               '{:.0f} < beta < {:.0f} and {:.0f} < mu < {:.0f}\n\t'
               '{:.1f} % of models had a chi^2 value of NaN. \n'
-              ''.format(chi_low_int, chi_low_tay, beta_low, kappa_low, np.min(blim), np.max(blim),
-                        np.min(klim), np.max(klim), nan_ratio))
+              ''.format(chi_low_int, chi_low_tay, beta_low, kappa_low,
+                        np.min(blim), np.max(blim), np.min(klim), np.max(klim),
+                                                                    nan_ratio))
     else:
-        print('The lowest chi^2 value is {:.3f} for beta = {:.3f} & mu = {:.3f} in the range'
-              '\n\t{:.0f} < beta < {:.0f} and {:.0f} < mu < {:.0f}\n\t'
+        print('The lowest chi^2 value is {:.3f} for beta = {:.3f} & mu ='
+              '{:.3f} in the range'
+              '\n{:.0f} < beta < {:.0f} and {:.0f} < mu < {:.0f}\n\t'
               '{:.1f} % of models had a chi^2 value of NaN. \n'
               ''.format(chi_low, beta_low, kappa_low, np.min(blim),
                         np.max(blim), np.min(klim), np.max(klim), nan_ratio))
@@ -447,11 +472,11 @@ def chi_search(fname, length=10, blim=(2., 4.), klim=(1., 10.), l=0., dm_effort=
                 y=np.array(range(length))[np.where(krange == kappa_low)],
                 s=r'$\ast$', color='r', ha='center', va='center', fontsize=16)
         f1.set_xticks(np.linspace(0, length-0.5, 10),
-                        np.round(np.linspace(brange[0], brange[-1], 10), round),
-                        rotation=45, fontsize=12)
+                      np.round(np.linspace(brange[0], brange[-1], 10), round),
+                      rotation=45, fontsize=12)
         f1.set_yticks(np.linspace(0, length-0.5, 10),
-                        np.round(np.linspace(krange[0], krange[-1], 10), round),
-                        fontsize=12)
+                      np.round(np.linspace(krange[0], krange[-1], 10), round),
+                      fontsize=12)
         f1.set_xlabel(r'$\beta$')
         f1.set_ylabel(r'$k$')
         f1.set_title(r'Integration method')
@@ -468,16 +493,16 @@ def chi_search(fname, length=10, blim=(2., 4.), klim=(1., 10.), l=0., dm_effort=
                 y=np.array(range(length))[np.where(krange == kappa_low)],
                 s=r'$\ast$', color='r', ha='center', va='center', fontsize=16)
         f2.set_xticks(np.linspace(0, length-0.5, 10),
-                        np.round(np.linspace(brange[0], brange[-1], 10), round),
-                        rotation=45, fontsize=12)
+                      np.round(np.linspace(brange[0], brange[-1], 10), round),
+                      rotation=45, fontsize=12)
         f2.set_yticks(np.linspace(0, length-0.5, 10),
-                        np.round(np.linspace(krange[0], krange[-1], 10), round),
-                        fontsize=12)
+                      np.round(np.linspace(krange[0], krange[-1], 10), round),
+                      fontsize=12)
         f2.set_xlabel(r'$\beta$')
         f2.set_ylabel(r'$k$')
         f2.set_title(r'Taylor expansion')
         f2.tick_params(axis='both', which='both', direction='in',
-                        bottom=True, top=True, left=True, right=True)
+                       bottom=True, top=True, left=True, right=True)
         f2.grid()
         fig.colorbar(im2, label=r'$\chi^{2}_{r}$', ax=f2)
 
@@ -488,11 +513,11 @@ def chi_search(fname, length=10, blim=(2., 4.), klim=(1., 10.), l=0., dm_effort=
                 y=np.array(range(length))[np.where(krange == kappa_low)],
                 s=r'$\ast$', color='r', ha='center', va='center', fontsize=16)
         f3.set_xticks(np.linspace(0, length-0.5, 10),
-                        np.round(np.linspace(brange[0], brange[-1], 10), round),
-                        rotation=45, fontsize=12)
+                      np.round(np.linspace(brange[0], brange[-1], 10), round),
+                      rotation=45, fontsize=12)
         f3.set_yticks(np.linspace(0, length-0.5, 10),
-                        np.round(np.linspace(krange[0], krange[-1], 10), round),
-                        fontsize=12)
+                      np.round(np.linspace(krange[0], krange[-1], 10), round),
+                      fontsize=12)
         f3.set_xlabel(r'$\beta$')
         f3.set_ylabel(r'$k$')
         f3.set_title(r'Combined')
@@ -536,13 +561,14 @@ def chi_search(fname, length=10, blim=(2., 4.), klim=(1., 10.), l=0., dm_effort=
         f_beta = np.repeat(brange, length)
         f_kappa = np.tile(krange, length)
         f_save = np.vstack((f_chi, f_beta, f_kappa)).T
-        f_comment = '#Results of "chi_search" called with the following inputs:\n'+\
+        f_comment = '#Results of "chi_search" called with the following' +\
+                'inputs:\n' +\
                 '#length={}, blim=({}, {}), klim=({}, {}), lambda={},'.format(
                     length, blim[0], blim[1], klim[0], klim[1], l) +\
                 'effort={}, dm_method={}, chi_method={}\n'.format(
-                    dm_effort, dm_method, chi_method) +\
+                                        dm_effort, dm_method, chi_method) +\
                 '#Lowest chi^2 was with beta = {} & k = {}\n'.format(
-                    beta_low, kappa_low)
+                                                        beta_low, kappa_low)
         np.savetxt(fname=fdir+fname, X=f_save, header='chi beta kappa',
                    delimiter=' ', comments=f_comment)
 
@@ -592,7 +618,8 @@ def q_surface(length=20, blim=(2, 4), klim=(1, 10), qlim=(-1.0, 0.0), lam=0.,
 
         if (temp_mod.q > np.min(qlim)) and (temp_mod.q < np.max(qlim)):
             temp_mod.distance_modulus(effort=dm_effort)
-            temp_mod.chi2value(dm_method=dm_method, chi_method=chi_method, eval_both=False)
+            temp_mod.chi2value(dm_method=dm_method, chi_method=chi_method,
+                               eval_both=False)
 
             qcd.append(temp_mod.q)
             bcd.append(temp_mod.b)
@@ -607,7 +634,8 @@ def q_surface(length=20, blim=(2, 4), klim=(1, 10), qlim=(-1.0, 0.0), lam=0.,
     q_save = np.reshape(q_save, (length, length))
 
     if len(qcd) < 1:
-        raise Exception('No q values found within the range {} < q < {}'.format(np.min(qlim), np.max(qlim)))
+        raise Exception('No q values found within the range {} < q < {}'
+                        ''.format(np.min(qlim), np.max(qlim)))
     else:
         pass
 
@@ -675,7 +703,8 @@ def q_surface(length=20, blim=(2, 4), klim=(1, 10), qlim=(-1.0, 0.0), lam=0.,
 
 
     if mplot:
-        plot_mod = model(lam=lam, beta=bred[np.argmin(xred)], kappa=kred[np.argmin(xred)])
+        plot_mod = model(beta=bred[np.argmin(xred)], 
+                         kappa=kred[np.argmin(xred)],lam=lam)
         plot_mod.distance_modulus(effort=dm_effort)
         plot_mod.plot('acc', model(), model(lam=0.))
         plot_mod.plot('dm', model(), model(lam=0.))

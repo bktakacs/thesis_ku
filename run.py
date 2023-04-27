@@ -2,7 +2,7 @@
 from main import *
 
 # # Run chi_search 4 times: 1: int-noeff, 2:int-eff, 3:tay-noeff, 4:tay-eff
-chi_search('test_20', length=20)
+
 # m1 = chi_search(fname='optimization-int-noeff-1', length=50, blim=(1, 10), klim=(0.1, 100), dm_effort=False, dm_method='int', plot=False)
 
 # m2 = chi_search(fname='optimization-int-eff-1', length=50, blim=(1, 10), klim=(0.1, 100), dm_effort=True, dm_method='int', plot=False)
@@ -41,3 +41,29 @@ chi_search('test_20', length=20)
 
 # Testing q surface function
 # m1 = q_surface(length=30, blim=(1, 2), klim=(0.1, 7))
+
+
+
+
+# Steen has asked about fixing one value (beta, for example) and then plotting
+# a bunch of values of kappa and seeing what happens or trying to get close
+# to a decent looking plot. Let's try that.
+
+# Start by fixing beta and looking at different kappa
+beta = 3
+# klook = (0.1, 0.5, 1, 2, 3, 4, 5)
+klook = (0.1, 0.2, 0.3, 0.4, 0.5)
+
+for i in tqdm(klook):
+    temp_mod = model(beta=beta, kappa=i, lam=0.)
+    temp_mod.norm(matter=matter)
+    plt.plot(temp_mod.a, temp_mod.a2norm, label='kappa = {}'.format(i))
+
+plt.xlabel(r'$a$')
+plt.ylabel(r'$\ddot{a}$')
+plt.ylim([-5, 2])
+plt.legend()
+plt.grid()
+plt.tick_params(axis='both', which='both', direction='in', bottom=True,
+                top=True, left=True, right=True)
+plt.show()
