@@ -78,5 +78,28 @@ blook = (1, 2, 3, 4, 5)
 #                 top=True, left=True, right=True)
 # plt.show()
 
-top = chi_search_a('optimization_acc', length=50, blim=(1, 10),
-                   klim=(0.1, 100))
+# top = chi_search_a('optimization_acc', length=50, blim=(1, 10),
+#                    klim=(0.1, 100))
+
+
+
+
+# Test our functions
+test_model = model(beta=2, kappa=2, lam=1.)
+print('Done')
+test_model.norm(matter=matter)
+print('Done')
+test_model.distance_modulus(effort=False)
+print('Done')
+test_model.chi_value(eval_both=False)
+print('Done')
+test_model.plot('acc', lcdm, matter)
+print('Done')
+test_model.plot('dm', lcdm, matter)
+print('Done')
+test_model = chi_comp('k', [np.linspace(0, 10, 10)])
+print('Done')
+test_model = chi_search('nosave')
+print('Done')
+test_model = chi_search_a('nosave')
+print('Done')
