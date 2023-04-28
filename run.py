@@ -3,7 +3,9 @@ from main import *
 
 # # Run chi_search 4 times: 1: int-noeff, 2:int-eff, 3:tay-noeff, 4:tay-eff
 
-# m1 = chi_search(fname='optimization-int-noeff-1', length=50, blim=(1, 10), klim=(0.1, 100), dm_effort=False, dm_method='int', plot=False)
+# m1 = chi_search(fname='optimization-int-noeff-1', length=50, blim=(1, 10),
+#                 klim=(0.1, 100), dm_effort=False, dm_method='int',
+#                 plot=True)
 
 # m2 = chi_search(fname='optimization-int-eff-1', length=50, blim=(1, 10), klim=(0.1, 100), dm_effort=True, dm_method='int', plot=False)
 
@@ -50,20 +52,31 @@ from main import *
 # to a decent looking plot. Let's try that.
 
 # Start by fixing beta and looking at different kappa
-beta = 3
-# klook = (0.1, 0.5, 1, 2, 3, 4, 5)
+beta = 2
+kappa = 2
+
 klook = (0.1, 0.2, 0.3, 0.4, 0.5)
+blook = (1, 2, 3, 4, 5)
 
-for i in tqdm(klook):
-    temp_mod = model(beta=beta, kappa=i, lam=0.)
-    temp_mod.norm(matter=matter)
-    plt.plot(temp_mod.a, temp_mod.a2norm, label='kappa = {}'.format(i))
+# for i in tqdm(klook):
+#     temp_mod = model(beta=beta, kappa=i, lam=0.)
+#     temp_mod.norm(matter=matter)
+#     plt.plot(temp_mod.a, temp_mod.a2norm, label='kappa = {}'.format(i))
 
-plt.xlabel(r'$a$')
-plt.ylabel(r'$\ddot{a}$')
-plt.ylim([-5, 2])
-plt.legend()
-plt.grid()
-plt.tick_params(axis='both', which='both', direction='in', bottom=True,
-                top=True, left=True, right=True)
-plt.show()
+# for i in tqdm(blook):
+#     temp_mod = model(beta=i, kappa=kappa, lam=0.)
+#     temp_mod.norm(matter=matter)
+#     plt.plot(temp_mod.a, temp_mod.a2norm, label='beta = {}'.format(i))
+
+# plt.text(x=0.01, y=-1.6, s=r'$\kappa = {}$'.format(kappa))
+# plt.xlabel(r'$a$')
+# plt.ylabel(r'$\ddot{a}$')
+# plt.ylim([-5, 2])
+# plt.legend(loc='lower left')
+# plt.grid()
+# plt.tick_params(axis='both', which='both', direction='in', bottom=True,
+#                 top=True, left=True, right=True)
+# plt.show()
+
+top = chi_search_a('optimization_acc', length=50, blim=(1, 10),
+                   klim=(0.1, 100))

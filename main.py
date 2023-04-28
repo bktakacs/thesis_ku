@@ -10,27 +10,39 @@ class model():
     """
     class which creates a cosmological model with given parameters
     
-    This class takes initial inputs and then integrates the modified Friedmann equations to get a, adot (a1) and t. From there we derive further
-    time derivatives as well as other cosmological parameters.
+    This class takes initial inputs and then integrates the modified Friedmann
+    equations to get a, adot (a1) and t. From there we derive further time
+    derivatives as well as other cosmological parameters.
 
-    Calling this class with default arguments, model(), returns a flat LCDM model. A matter dominated model is returned by model(lam=0.)
+    Calling this class with default arguments, model(), returns a flat LCDM
+    model. A matter dominated model is returned by model(lam=0.)
     """
 
-    def __init__(self, a_start=1e-3, mat=mat0, rad=rad0, lam=lam0, beta=3., kappa=0., n=1, xaxis='a', xmax=1.5, xlen=50000):
+    def __init__(self, a_start=1e-3, mat=mat0, rad=rad0, lam=lam0, beta=3.,
+                 kappa=0., n=1, xaxis='a', xmax=1.5, xlen=50000):
         """
         initialization method for model class
-        :param a_start: initial value of scale factor at which to begin integration, chosen 1e-3 to correspond to time of recombination (z ~ 1100)
-        :param mat: dimensionless matter density parameter (baryons + dark matter), defined in main_icd
-        :param rad: dimensionless radiation density parameter (photons + neutrinos), defined in main_icd
-        :param lam: dimensionless dark energy density parameter (cosmological constant), defined in main_icd
+        :param a_start: initial value of scale factor at which to begin
+        integration, chosen 1e-3 to correspond to time of recombination
+        (z ~ 1100)
+        :param mat: dimensionless matter density parameter
+        (baryons + dark matter), defined in _icd
+        :param rad: dimensionless radiation density parameter
+        (photons + neutrinos), defined in _icd
+        :param lam: dimensionless dark energy density parameter
+        (cosmological constant), defined in _icd
         :param beta: power to which mass is raised in new DM force
         :param kappa: constant in front of new DM force
-        :param n: not sure, but has to do with power series in Press-Schechter formalism, used in variable gamma
-        :param xaxis: axis upon which we plan to plot, can be time 't' or scale factor 'a', scale factor and its derivatives only run until
-        xaxis variable reaches unity
-        :param xamax: upper limit of integration in units of time tH0, chosen as 1.5 to ensure scale factor can reach unity if xaxis = 'a'
-        :param xlen: length of time array for integration, chosen to be sufficiently large so that when we go to redshift there are values similar
-        to those of the z_sn array (1e-3, 2.2)
+        :param n: not sure, but has to do with power series in Press-Schechter
+        formalism, used in variable gamma
+        :param xaxis: axis upon which we plan to plot, can be time 't' or scale
+        factor 'a', scale factor and its derivatives only run until xaxis
+        variable reaches unity
+        :param xamax: upper limit of integration in units of time tH0, chosen
+        as 1.5 to ensure scale factor can reach unity if xaxis = 'a'
+        :param xlen: length of time array for integration, chosen to be
+        sufficiently large so that when we go to redshift there are values
+        similar to those of the z_sn array (1e-3, 2.2)
         """
         # properties of this model
         self.m = mat
@@ -45,7 +57,8 @@ class model():
         self.p = self.gamma / (2 * beta)
         
         # set initial condtions from a_start
-        a1_start = np.sqrt(self.m * a_start**-1 + self.r * a_start**-2 + self.l * a_start**2)
+        a1_start = np.sqrt(self.m * a_start**-1 + self.r * a_start**-2 + \
+                                                        self.l * a_start**2)
         initial_conditions = (a_start, a1_start)
 
         # time array upon which to integrate
@@ -53,8 +66,13 @@ class model():
         # time_array = np.logspace(-5, np.log10(xmax), xlen)
 
         # integrate modified friedmann equations
-        # solution = odeint(modified_friedmann, y0=initial_conditions, t=time_array, args=(self.m, self.r, self.l, self.k, self.p), tfirst=True)
-        solution = solve_ivp(modified_friedmann, y0=initial_conditions, t_span=(0, xmax), t_eval=time_array, args=(self.m, self.r, self.l, self.k, self.p))
+        # solution = odeint(modified_friedmann, y0=initial_conditions,
+        #                   t=time_array,
+        #                   args=(self.m, self.r, self.l, self.k, self.p),
+        #                   tfirst=True)
+        solution = solve_ivp(modified_friedmann, y0=initial_conditions,
+                             t_span=(0, xmax), t_eval=time_array,
+                             args=(self.m, self.r, self.l, self.k, self.p))
 
         # extract model parameters
         # self.a  = solution[:, 0]
@@ -65,12 +83,14 @@ class model():
         self.t  = solution.t
 
         # time derivatives
-        self.a2 = acceleration(self.a, self.a1, self.m, self.r, self.l, self.k, self.p)
+        self.a2 = acceleration(self.a, self.a1, self.m, self.r,
+                                                    self.l, self.k, self.p)
         self.a3 = np.diff(self.a2) / np.diff(self.t)
         self.a4 = np.diff(self.a3) / np.diff(self.t[:-1])
 
         # find where today is in terms of a or t
-        hoy = np.argmin(np.abs(1 - self.a)) if xaxis == 'a' else np.argmin(np.abs(1 - self.t))
+        hoy = np.argmin(np.abs(1 - self.a)) if xaxis == 'a' else \
+                                                  np.argmin(np.abs(1 - self.t))
         
         # truncate arrays to today
         self.a = self.a[:hoy]
@@ -81,9 +101,9 @@ class model():
         self.t = self.t[:hoy]
 
         # parameters from time derivatives
-        self.q = - self.a2[-1] * self.a[-1] * self.a1[-1]**-2   # decel param q
-        self.j = self.a3[-1] * self.a[-1]**2 * self.a1[-1]**-3  # jerk j
-        self.s = self.a4[-1] * self.a[-1]**3 * self.a1[-1]**-4  # snap s
+        self.q = - self.a2[-1] * self.a[-1] * self.a1[-1]**-2  # decel param q
+        self.j = self.a3[-1] * self.a[-1]**2 * self.a1[-1]**-3 # jerk j
+        self.s = self.a4[-1] * self.a[-1]**3 * self.a1[-1]**-4 # snap s
 
     def norm(self, matter):
         self.a2norm = self.a2 / np.interp(self.a, matter.a, matter.a2)
@@ -177,11 +197,14 @@ class model():
 
     def plot(self, which, lcdm, matter):
         """
-        This method plots the acceleration of the scale factor or the distance modulus, depending on the input "which" 
-        When plotting acceleration it normalizes the acceleration of the model to the acceleration of the matter model
-        and plots the acceleration of the LCDM model for comparison
+        This method plots the acceleration of the scale factor or the distance
+        modulus, depending on the input "which". When plotting acceleration it
+        normalizes the acceleration of the model to the acceleration of the
+        matter model and plots the acceleration of the LCDM model for
+        comparison
 
-        :param which: string, options are 'acc' or 'dm' corresponding to acceleration or distance modulus
+        :param which: string, options are 'acc' or 'dm' corresponding to
+        acceleration or distance modulus
         :param lcdm: model object, used for comparison
         :param matter: model object, used for normalization of acc plot
         :return: plot
@@ -201,17 +224,19 @@ class model():
         if which == 'acc':
 
             plt.figure()
-            plt.plot(x_mod, self.a2/np.interp(self.a, matter.a, matter.a2), c='r', ls='-',
+            plt.plot(x_mod, self.a2/np.interp(self.a, matter.a, matter.a2),
+                     c='r', ls='-', 
                      label=r'Alt. Model, $\beta={:.2f}, k={:.2f}$'
                      ''.format(self.b, self.k))
             
-            plt.plot(x_lcdm, lcdm.a2/np.interp(lcdm.a, matter.a, matter.a2), c='k', ls='--',
-                     label=r'$\Lambda$CDM Model')
+            plt.plot(x_lcdm, lcdm.a2/np.interp(lcdm.a, matter.a, matter.a2),
+                     c='k', ls='--', label=r'$\Lambda$CDM Model')
             
             plt.xlabel(r'$a$')
             plt.ylabel(r'$\ddot{a}/\ddot{a}_{\mathrm{M}}$')
             plt.ylim([-5, 2])
-            plt.tick_params(axis='both', which='both', direction='in', bottom=True, top=True, left=True, right=True)
+            plt.tick_params(axis='both', which='both', direction='in',
+                            bottom=True, top=True, left=True, right=True)
             plt.legend(loc='lower left')
             plt.grid()
             plt.show()
@@ -330,7 +355,8 @@ def chi2_comp(parameter, space, beta=3., kappa=0., lam=lam0, dm_effort=False, dm
         plt.yscale(yscale)
         plt.grid()
         plt.legend(loc='best', fontsize=14)
-        plt.tick_params(axis='both', which='both', direction='in', bottom=True, top=True, left=True, right=True)
+        plt.tick_params(axis='both', which='both', direction='in',
+                        bottom=True, top=True, left=True, right=True)
         plt.show()
 
     else:
@@ -352,12 +378,12 @@ def chi_search(fname, length=10, blim=(2., 4.), klim=(1., 10.), l=0.,
     values using length & blim, same for kappa, and then loops over
     combinations of those. For each combination a model is created and the
     distance_modulus method called using dm_effort input. Then chi2_value()
-    method is calledusing dm_method and chi_method inputs. Chi^2 value is
+    method is called using dm_method and chi_method inputs. Chi^2 value is
     stored and shaped into (length, length) array for plotting. Finally stores
     data using inputted file name and then prints statement of results.
 
     :param fname: string, name of file to save data to
-    :param length: integer, length of array with beta or kappa values. Length^2
+    :param length: integer, length of array with beta or kappa values.Length^2
     is number of iterations in loop
     :param blim: tuple, upper and lower bounds of beta
     :param klim: tuple, upper and lower bounds of kappa
@@ -373,12 +399,12 @@ def chi_search(fname, length=10, blim=(2., 4.), klim=(1., 10.), l=0.,
     to round x & y labels to, for visual purposes
     :param scale: NoNorm() or LogNorm(), used when plot==True, scale of heat
     map. NoNorm() (linear) for fine scale grid when chi^2 values are within an
-    order of magnitude, LogNorm() (log) for coarse scale grid when chi^2 values
-    are not within an order of magnitude
+    order of magnitude, LogNorm() (log) for coarse scale grid when chi^2
+    values are not within an order of magnitude
     :param fdir: string, file directory for storing data. Default stores in
     /Data/model_data/
-    :param double_eval: boolean, whether to evaluate chi^2 value for each model
-    twice (once for each method) or not
+    :param double_eval: boolean, whether to evaluate chi^2 value for each
+    model twice (once for each method) or not
     :return: optimized model object
     """
 
@@ -391,25 +417,32 @@ def chi_search(fname, length=10, blim=(2., 4.), klim=(1., 10.), l=0.,
     brange = np.linspace(np.min(blim), np.max(blim), length)
     krange = np.linspace(np.min(klim), np.max(klim), length)
 
-    # if double_eval:
     chival_int = np.zeros(length**2)
     chival_tay = np.zeros(length**2)
+
+    nan_count = 0
 
     # Iterate over all (b, k), store chi value for each
     for index, param in enumerate(itertools.product(brange, krange)):
         tmod = model(lam=l, beta=param[0], kappa=param[1])
-        tmod.distance_modulus(effort=dm_effort)
-        tmod.chi2value(dm_method=dm_method, chi_method=chi_method)
-        if (np.max(tmod.a2/np.interp(tmod.a, matter.a, matter.a2)) > 3 or 
-            np.min(tmod.a2/np.interp(tmod.a, matter.a, matter.a2)) < -10):
+        tmod.norm(matter=matter)
+        if (np.max(tmod.a2norm) > 3 or np.min(tmod.a2norm) < -10):
             chival_int[index] = np.nan
             chival_tay[index] = np.nan
+            nan_count += 1
         else:
+            tmod.distance_modulus(effort=dm_effort)
+            tmod.chi2value(dm_method=dm_method, chi_method=chi_method)
             chival_int[index] = tmod.chi_int
             chival_tay[index] = tmod.chi_tay
+    
+    # Raise exception if only NaN values were returned
+    if nan_count == length**2:
+        raise Exception('No real chi values found')
+    nan_ratio = nan_count / length**2 * 100
 
-    chival = chival_int if dm_method == 'int' else chival_tay if \
-                                                   dm_method == 'tay' else None
+    chival = np.copy(chival_int) if dm_method == 'int' else \
+             np.copy(chival_tay) if dm_method == 'tay' else None
     
     # Convert NaNs to 1e6 because otherwise it's dumb (number not important)
     chival_nonan = np.nan_to_num(chival, nan=1e6)
@@ -419,16 +452,6 @@ def chi_search(fname, length=10, blim=(2., 4.), klim=(1., 10.), l=0.,
     lowest = np.argmin(chival_com_nonan) if double_eval else \
                                                         np.argmin(chival_nonan)
 
-    if double_eval:
-        nan_ratio = (len(chival_com_nonan[chival_com_nonan >= 1e6]) / 
-                                                len(chival_com_nonan) * 100)
-    else:
-        nan_ratio = len(chival[chival == 1e6]) / len(chival) * 100
-
-    # Raise exception if only NaN values were returned
-    if np.all(chival_com_nonan >= 1e6) or np.all(chival == 1e6):
-        raise Exception('No real chi values found')
-
     # Find beta and kappa values for lowest chi^2 value
     chi_low_int = chival_int_nonan[lowest]
     chi_low_tay = chival_tay_nonan[lowest]
@@ -437,21 +460,19 @@ def chi_search(fname, length=10, blim=(2., 4.), klim=(1., 10.), l=0.,
     kappa_low = np.tile(krange, length)[lowest]
 
     # Print results of function call
-    if double_eval:
-        print('The lowest chi^2 values are {:.3f} (int) {:.3f} (tay) for beta'
-              '= {:.3f} & mu = {:.3f} in the range\n\t'
-              '{:.0f} < beta < {:.0f} and {:.0f} < mu < {:.0f}\n\t'
-              '{:.1f} % of models had a chi^2 value of NaN. \n'
-              ''.format(chi_low_int, chi_low_tay, beta_low, kappa_low,
-                        np.min(blim), np.max(blim), np.min(klim), np.max(klim),
-                                                                    nan_ratio))
-    else:
-        print('The lowest chi^2 value is {:.3f} for beta = {:.3f} & mu ='
-              '{:.3f} in the range'
-              '\n{:.0f} < beta < {:.0f} and {:.0f} < mu < {:.0f}\n\t'
-              '{:.1f} % of models had a chi^2 value of NaN. \n'
-              ''.format(chi_low, beta_low, kappa_low, np.min(blim),
-                        np.max(blim), np.min(klim), np.max(klim), nan_ratio))
+    print('The lowest chi^2 values are {:.3f} (int) {:.3f} (tay) for beta'
+          '= {:.3f} & mu = {:.3f} in the range\n\t'
+          '{:.0f} < beta < {:.0f} and {:.0f} < mu < {:.0f}\n\t'
+          '{:.1f} % of models had a chi^2 value of NaN. \n'
+          ''.format(chi_low_int, chi_low_tay, beta_low, kappa_low,
+                    np.min(blim), np.max(blim), np.min(klim), np.max(klim),
+                    nan_ratio) if double_eval else \
+          'The lowest chi^2 value is {:.3f} for beta = {:.3f} & mu = '
+          '{:.3f} in the range'
+          '\n{:.0f} < beta < {:.0f} and {:.0f} < mu < {:.0f}\n\t'
+          '{:.1f} % of models had a chi^2 value of NaN. \n'
+          ''.format(chi_low, beta_low, kappa_low, np.min(blim), np.max(blim),
+                    np.min(klim), np.max(klim), nan_ratio))
 
     # Plot heat map of chi values
     if plot and double_eval: 
@@ -579,6 +600,113 @@ def chi_search(fname, length=10, blim=(2., 4.), klim=(1., 10.), l=0.,
 
     return model_optimized
 
+def chi_search_a(fname, length=10, blim=(2., 4.), klim=(1., 10.),
+                 lam=0., plot=True, fdir='../../Data/model_data/'):
+    """
+    chi_search_a() function. Iterates over all combinations (beta, kappa) and
+    for each creates a model and calculates the chi^2 fit of the acceleration
+    to that of the LCDM model. Just a test and I'm curious to see what comes
+    out of it.
+
+    :param fname: file name to save results to
+    :param length: length of beta and kappa ranges
+    :param blim: limit of beta values to plot
+    :param klim: limit of kappa values to plot
+    :param plot: if True, plot best fit acceleration
+    :param fdir: directory to save results to
+    """
+
+    if len(fname) == 0:
+        raise Exception('fname must be a string of at least one character')
+    
+    if fname == 'nosave':
+        nosave = True
+    
+    fname += '.txt'
+
+    # Create beta and kappa ranges
+    brange = np.linspace(blim[0], blim[1], length)
+    krange = np.linspace(klim[0], klim[1], length)
+
+    # Create empty arrays to store chi^2 values
+    chival = np.zeros(length**2)
+
+    # Initialize some things
+    matter = model(lam=0.)
+    lcdm = model()
+    lcdm.norm(matter)
+    nan_count = 0
+    top_mod = model(lam=lam, beta=brange[0], kappa=krange[0])
+    top_mod.norm(matter=matter)
+    top_mod_a2norm_interp = np.interp(lcdm.a, top_mod.a, top_mod.a2norm)
+    running_chi = rchi2(top_mod_a2norm_interp, lcdm.a2norm)
+
+    # Iterate over all combinations of beta and kappa
+    for index, param in enumerate(itertools.product(brange, krange)):
+        tmod = model(lam=lam, beta=param[0], kappa=param[1])
+        tmod.norm(matter=matter)
+        if (np.max(tmod.a2norm) > 3 or np.min(tmod.a2norm) < -10):
+            chival[index] = np.nan
+            nan_count += 1
+        else:
+            tmod_a2norm_interp = np.interp(lcdm.a, tmod.a, tmod.a2norm)
+            chival[index] = rchi2(tmod_a2norm_interp, lcdm.a2norm)
+            top_mod = tmod if chival[index] < running_chi else top_mod
+
+    # Raise exception if only Nans are returned
+    if nan_count == length**2:
+        raise Exception('Only NaNs returned. Check input parameters.')
+    nan_ratio = nan_count / length**2
+
+    # Find lowest chi^2 value and corresponding beta and kappa values
+    chi_low = np.sort(chival)[0]
+    lowest = np.argmin(np.abs(chival - chi_low))
+    beta_low = np.repeat(brange, length)[lowest]
+    kappa_low = np.tile(krange, length)[lowest]
+
+    # Print results
+    print('The lowest chi^2 value is {:.3f} for beta = {:.3f} & mu = {:.3f} in'
+          'the range\n{:.0f} < beta < {:.0f} and {:.0f} < mu < {:.0f}\n\t'
+          '{:.1f} % of models had a chi^2 value of NaN. \n'
+          ''.format(chi_low, beta_low, kappa_low, blim[0], blim[1], 
+                    klim[0], klim[1], nan_ratio))
+    
+    # Plot results
+    if plot:
+        plt.figure()
+        plt.plot(top_mod.a, top_mod.a2norm, c='r', ls='-', 
+                    label=r'Alt. Model, $\beta={:.2f}, k={:.2f}$'.format(
+                                                        top_mod.b, top_mod.k))
+        
+        plt.plot(lcdm.a, lcdm.a2norm, c='k', ls='--',
+                 label=r'$\Lambda$CDM Model')
+
+        plt.xlabel(r'$a$')
+        plt.ylabel(r'$\ddot{a}/\ddot{a}_{\mathrm{M}}$')
+        plt.ylim([-5, 2])
+        plt.tick_params(axis='both', which='both', direction='in', bottom=True,
+                        top=True, left=True, right=True)
+        plt.legend(loc='lower left')
+        plt.grid()
+        plt.show()
+
+    # Save results (maybe)
+    if not nosave:
+        f_chi = chival
+        f_beta = np.repeat(brange, length)
+        f_kappa = np.tile(krange, length)
+        f_save = np.vstack((f_chi, f_beta, f_kappa)).T
+        f_comment = '#Results of "chi_search_a" called with the following' +\
+                'inputs:\n' +\
+                '#length={}, blim=({}, {}), klim=({}, {}), lambda={},'.format(
+                    length, blim[0], blim[1], klim[0], klim[1], lam) +\
+                '#Lowest chi^2 was with beta = {} & k = {}\n'.format(
+                    beta_low, kappa_low)
+        np.savetxt(fname=fdir+fname, X=f_save, header='chi beta kappa',
+                   delimiter=' ', comments=f_comment)
+    
+    return top_mod
+
 
 def q_surface(length=20, blim=(2, 4), klim=(1, 10), qlim=(-1.0, 0.0), lam=0.,
               dm_method='int', dm_effort=False, chi_method='formula', 
@@ -704,12 +832,27 @@ def q_surface(length=20, blim=(2, 4), klim=(1, 10), qlim=(-1.0, 0.0), lam=0.,
 
     if mplot:
         plot_mod = model(beta=bred[np.argmin(xred)], 
-                         kappa=kred[np.argmin(xred)],lam=lam)
+                         kappa=kred[np.argmin(xred)],lam=lam)                 
         plot_mod.distance_modulus(effort=dm_effort)
         plot_mod.plot('acc', model(), model(lam=0.))
         plot_mod.plot('dm', model(), model(lam=0.))
 
     return top_mod
+
+
+# def optimize(fname, length=20, beta_lim_init=(1, 4), kappa_lim_init=(1, 10),
+#              o_lambda=0., dm_effort=False, dm_method='int', plot=2,
+#              double_eval=False, fdir='../../Data/model_data/'):
+#     """
+#     Fill in later
+#     """
+
+#     m1 = chi_search('nosave', length=length, blim=beta_lim_init,
+#                     klim=kappa_lim_init, lam=o_lambda, dm_effort=dm_effort,
+#                     dm_method=dm_method, double_eval=double_eval, splot=False,
+#                     mplot=False)
+
+    
 
 
 # Set up lcdm and matter models
