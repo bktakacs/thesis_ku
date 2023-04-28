@@ -2,7 +2,8 @@
 
 # Import
 from _icd import *
-from _functions import modified_friedmann, acceleration, inverse, adot_inverse, integrand, dm_z_o4, rchi2, read_model_data, specific_function
+from _functions import modified_friedmann, acceleration, dm_z_o4, rchi2,\
+                       read_model_data, specific_function
 
 
 # Classes
@@ -53,8 +54,8 @@ class model():
         self.axis = xaxis
 
         # gamma and p variables used in acceleration equation
-        self.gamma  = 1 + n / 3
-        self.p = self.gamma / (2 * beta)
+        gamma  = 1 + n / 3
+        self.p = gamma / (2 * beta)
         
         # set initial condtions from a_start
         a1_start = np.sqrt(self.m * a_start**-1 + self.r * a_start**-2 + \
@@ -66,25 +67,27 @@ class model():
         # time_array = np.logspace(-5, np.log10(xmax), xlen)
 
         # integrate modified friedmann equations
+        solution = solve_ivp(modified_friedmann, y0=initial_conditions,
+                             t_span=(0, xmax), t_eval=time_array,
+                             args=(self.m, self.r, self.l, self.k, self.p))
+        # following lines are for odeint
         # solution = odeint(modified_friedmann, y0=initial_conditions,
         #                   t=time_array,
         #                   args=(self.m, self.r, self.l, self.k, self.p),
         #                   tfirst=True)
-        solution = solve_ivp(modified_friedmann, y0=initial_conditions,
-                             t_span=(0, xmax), t_eval=time_array,
-                             args=(self.m, self.r, self.l, self.k, self.p))
 
         # extract model parameters
-        # self.a  = solution[:, 0]
-        # self.a1 = solution[:, 1]
-        # self.t  = np.copy(time_array)
         self.a  = solution.y[0, :]
         self.a1 = solution.y[1, :]
         self.t  = solution.t
+        # following lines are for odeint
+        # self.a  = solution[:, 0]
+        # self.a1 = solution[:, 1]
+        # self.t  = np.copy(time_array)
 
         # time derivatives
-        self.a2 = acceleration(self.a, self.a1, self.m, self.r,
-                                                    self.l, self.k, self.p)
+        self.a2 = acceleration(self.a, self.a1, self.m, self.r, 
+                               self.l, self.k, self.p)
         self.a3 = np.diff(self.a2) / np.diff(self.t)
         self.a4 = np.diff(self.a3) / np.diff(self.t[:-1])
 
@@ -106,30 +109,44 @@ class model():
         self.s = self.a4[-1] * self.a[-1]**3 * self.a1[-1]**-4 # snap s
 
     def norm(self, matter):
+        """
+        norm() method which normalizes the scale factor acceleration
+        to that of a matter only model
+        :param matter: matter class object
+        :return: None
+        """
         self.a2norm = self.a2 / np.interp(self.a, matter.a, matter.a2)
 
     
     def distance_modulus(self, effort=True):
         """
-        distance_modulus() method which calculates the distance modulus of scale factor values calculated in the initialization in two ways
+        distance_modulus() method which calculates the distance modulus of
+        scale factor values calculated in the initialization in two ways
 
-        :param effort: boolean, if True, uses the "true" method of calculating the distance modulus, if False, uses a faster method
+        :param effort: boolean, if True, uses the "true" method of calculating
+        the distance modulus, if False, uses a faster method
         :return: distance modulus array
         
         Note on effort parameter:
-        "True" way is calculating f and using the integrand function. "False" way method calculates E(z) as an array of data and simply
-        integrates that. It is a bit mysterious however because it uses the inverse function which returns x**(-0.5) when it should
-        just be x**(-1). For some reason though, -0.5 just works.
+        "True" way is calculating f and using the integrand function. "False"
+        way method calculates E(z) as an array of data and simply integrates
+        that. It is a bit mysterious however because it uses the inverse
+        function which returns x**(-0.5) when it should just be x**(-1). For
+        some reason though, -0.5 just works.
         
-        The distance modulus is calculated through two methods, here called integration and taylor:
-        DM through integration is calculated through a series of equations as follows:
-        dc = dh * int_0^z dz/E(z) where E(z) = sqrt(m(1+z)(1+kf) + r(1+z)^4 + l)
-        dl = (1+z) * dh ;   dm = 5 * np.log10(dl) + 25 (for dl given in Mpc)
-        Because z from the model will not exactly equal z from the SN data, we interpolate along z from SNe
+        The distance modulus is calculated through two methods, here called
+        integration and taylor: DM through integration is calculated through a
+        series of equations as follows: dc = dh * int_0^z dz/E(z) where
+        E(z) = sqrt(m(1+z)(1+kf) + r(1+z)^4 + l) ; dl = (1+z) * dh ;
+        dm = 5 * np.log10(dl) + 25 (for dl given in Mpc). Because z from the
+        model will not exactly equal z from the SN data, we interpolate along z
+        from SNe
         
-        DM through taylor is calculated using a Taylor approximation of the scale factor which is a long equation that's written below
+        DM through taylor is calculated using a Taylor approximation of the
+        scale factor which is a long equation that's written below
 
-        At the end we add the dm_int and dm_tay attributes corresponding to the DM calculated from integration and taylor respectively
+        At the end we add the dm_int and dm_tay attributes corresponding to the
+        DM calculated from integration and taylor respectively
         """
 
         z = (1 / self.a - 1)
@@ -137,62 +154,77 @@ class model():
         idxf = np.argmin(np.abs(z - z_sn[0]))
 
         if effort:
-
+            # calculate f
             integral_f = np.zeros_like(z)
             for index, scale in enumerate(self.a):
-                integral_f[index] = quad(adot_inverse, 0, scale, (self.a1[index],))[0]
+                integral_f[index] = quad(lambda x, y: y**-2, 0, scale,
+                                         (self.a1[index],))[0]
             f = (self.a1 / self.a * integral_f)**(self.p)
 
+            # calculate dl
+            integrand = lambda x, m, r, l, f, k: \
+                (m * (1 + x) * (1 + k * f) + r * (1 + x)**4 + l)**-0.5
             dl = np.zeros_like(z)
             for index, redshift in enumerate((z)):
-                dl[index] = (1 + redshift) * dh * quad(integrand, 0, redshift, (self.m, self.r, self.l, f[index], self.k))[0]
+                dl[index] = (1 + redshift) * dh * quad(integrand, 0, redshift,
+                                                       (self.m, self.r, self.l,
+                                                        f[index], self.k))[0]
 
         elif not effort:
-
+            # calculate E(z)
             ez = self.a1 / self.a
             
+            # calculate dl
             dl = np.zeros_like(z)
             for index, redshift in enumerate(z):
-                dl[index] = (1 + redshift) * dh * quad(inverse, 0, redshift, (ez[index],))[0]
+                dl[index] = (1 + redshift) * dh * quad(lambda x, y: y**-0.5, 0,
+                                                       redshift,
+                                                       (ez[index],))[0]
         
         else:
-            raise Exception('Bad "effort" input for "distance_luminosity" method in "model" class. Input is boolean.')
+            raise Exception('Bad "effort" input for "distance_luminosity" \
+                            method in "model" class. Input is boolean.')
     
+        # calculate dm
         dm_int = 5 * np.log10(dl) + 25
         dm_int = np.flip(dm_int[idx0:idxf])
         z = np.flip(z[idx0:idxf])
 
+        # try to interpolate, else nan
         try:
             self.dm_int = np.interp(z_sn, z, dm_int)
         except:
             self.dm_int = np.nan
 
+        # calculate dm_tay
         self.dm_tay = dm_z_o4(z=z_sn, q=self.q, j=self.j, s=self.s)
 
     
-    def chi2value(self, dm_method='int', chi_method='formula', eval_both=True):
+    def chi_value(self, dm_method='int', chi_method='formula', eval_both=True):
         """
-        Method to calculate the chi squared value of the model compared to the SN data set
+        Method to calculate the chi squared value of the model compared to the
+        SN data set
 
-        :param dm_method: string, either 'int' or 'tay' for distance modulus method
-        :param chi_method: string, either 'formula' or 'poly' for chi squared method
-        :param eval_both: boolean, if True, calculates chi2 for both distance modulus methods, if False, calculates for only one,
-        defaulting to whichever is specified in dm_method
+        :param dm_method: string, either 'int' or 'tay' for distance modulus
+        method
+        :param chi_method: string, either 'formula' or 'poly' for chi squared
+        method
+        :param eval_both: boolean, if True, calculates chi2 for both distance
+        modulus methods, if False, calculates for only one, defaulting to
+        whichever is specified in dm_method
         :return: chi squared value of model compared to SN data set
         """
 
         if eval_both:
-            self.chi_int = np.nan if np.isnan(self.dm_int).all() else rchi2(obs=self.dm_int, method=chi_method)
-            self.chi_tay = np.nan if np.isnan(self.dm_tay).all() else rchi2(obs=self.dm_tay, method=chi_method)
+            self.chi_int = np.nan if np.isnan(self.dm_int).all() else \
+                                    rchi2(obs=self.dm_int, method=chi_method)
+            self.chi_tay = np.nan if np.isnan(self.dm_tay).all() else \
+                                    rchi2(obs=self.dm_tay, method=chi_method)
         else:
-            if dm_method == 'int':
-                distmod = self.dm_int
-            elif dm_method == 'tay':
-                distmod = self.dm_tay
-            else:
-                raise Exception('Bad "dm_method" input for "chi2value" method in "model" class. Inputs are "int" or "tay".')
+            distmod = self.dm_int if dm_method == 'int' else self.dm_tay
 
-            self.chi = np.nan if np.isnan(distmod).all() else rchi2(obs=distmod, method=chi_method)
+            self.chi = np.nan if np.isnan(distmod).all() else \
+                                        rchi2(obs=distmod, method=chi_method)
 
 
     def plot(self, which, lcdm, matter):
@@ -210,27 +242,22 @@ class model():
         :return: plot
         """
 
-        self.a2_norm = self.a2 / np.interp(self.a, matter.a, matter.a2)
+        # normalize acceleration
+        self.norm(matter)
+        lcdm.norm(matter)
 
-        if self.axis == 'a':
-            x_mod = self.a
-            x_lcdm = lcdm.a
-        elif self.axis == 't':
-            x_mod = self.t
-            x_lcdm = lcdm.t
-        else:
-            raise Exception('Something here')
+        x_mod = self.a if self.axis == 'a' else self.t
+        x_lcdm = lcdm.a if lcdm.axis == 'a' else lcdm.t
 
         if which == 'acc':
 
             plt.figure()
-            plt.plot(x_mod, self.a2/np.interp(self.a, matter.a, matter.a2),
-                     c='r', ls='-', 
+            plt.plot(x_mod, self.a2norm, c='r', ls='-', 
                      label=r'Alt. Model, $\beta={:.2f}, k={:.2f}$'
                      ''.format(self.b, self.k))
             
-            plt.plot(x_lcdm, lcdm.a2/np.interp(lcdm.a, matter.a, matter.a2),
-                     c='k', ls='--', label=r'$\Lambda$CDM Model')
+            plt.plot(x_lcdm, lcdm.a2norm, c='k', ls='--',
+                     label=r'$\Lambda$CDM Model')
             
             plt.xlabel(r'$a$')
             plt.ylabel(r'$\ddot{a}/\ddot{a}_{\mathrm{M}}$')
@@ -245,32 +272,41 @@ class model():
             
             fig = plt.figure(constrained_layout=False)
             frame1 = fig.add_axes((.1, .3, .8, .6))
-            plt.errorbar(z_sn, sndat, yerr=snerr, lw=0.5, ls='', marker='.', markersize=2, label=r'Pantheon+SH0ES', zorder=0)
+            plt.errorbar(z_sn, sndat, yerr=snerr, lw=0.5, ls='', marker='.',
+                         markersize=2, label=r'Pantheon+SH0ES', zorder=0)
 
             plt.plot(z_sn, dm_astro, c='orange', ls='-',
-                     label=r'$DM$ from flat-$\Lambda$CDM Cosmology, $\chi^{{2}}_{{r}}={:.4f}$'.format((rchi2(obs=dm_astro))))
+                     label=r'$DM$ from flat-$\Lambda$CDM Cosmology,\
+                     $\chi^{{2}}_{{r}}={:.4f}$'.format(rchi2(obs=dm_astro)))
             
-            plt.plot(z_sn, self.dm_int, c='k', ls='-.',
-                     label=r'$DM(z, E(z))$, $\chi^{{2}}_{{r}}={:.4f}$'.format((rchi2(obs=self.dm_int))))
+            plt.plot(z_sn, self.dm_int, c='k', ls='-.', label=r'$DM(z, E(z))$,\
+                     $\chi^{{2}}_{{r}}={:.4f}$'.format(rchi2(obs=self.dm_int)))
             
             plt.plot(z_sn, self.dm_tay, c='r', ls='--',
-                     label=r'$DM(z, q, j, s)$, $\chi^{{2}}_{{r}}={:.4f}$'.format((rchi2(obs=self.dm_tay))))
+                     label=r'$DM(z, q, j, s)$,\
+                        $\chi^{{2}}_{{r}}={:.4f}$'.format(
+                                                    rchi2(obs=self.dm_tay)))
             
             plt.ylabel(r'$DM$ [mag]')
             plt.xscale('log')
-            plt.tick_params(axis='both', which='both', direction='in', bottom=True, top=True, left=True, right=True)
+            plt.tick_params(axis='both', which='both', direction='in',
+                            bottom=True, top=True, left=True, right=True)
             plt.legend()
             plt.grid()
             frame1.set_xticklabels([])
 
             frame2 = fig.add_axes((.1, .1, .8, .2))
-            plt.errorbar(z_sn, sndat - dm_astro, yerr=snerr, lw=0.5, ls='', marker='.', markersize=2, label=r'Supernova', zorder=0)
-            plt.plot(z_sn, (self.dm_int - dm_astro)/dm_astro*100, c='k', ls='-.')
-            plt.plot(z_sn, (self.dm_tay - dm_astro)/dm_astro*100, c='r', ls='--')
+            plt.errorbar(z_sn, sndat - dm_astro, yerr=snerr, lw=0.5, ls='',
+                         marker='.', markersize=2, label=r'Supernova',zorder=0)
+            plt.plot(z_sn, (self.dm_int - dm_astro)/dm_astro*100, c='k',
+                     ls='-.')
+            plt.plot(z_sn, (self.dm_tay - dm_astro)/dm_astro*100, c='r',
+                     ls='--')
             plt.xlabel(r'$z$')
             plt.xscale('log')
             plt.ylabel(r'$\%\Delta{DM}_{\mathrm{flat}\Lambda\mathrm{CDM}}$')
-            plt.tick_params(axis='both', which='both', direction='in', bottom=True, top=True, left=True, right=True)
+            plt.tick_params(axis='both', which='both', direction='in',
+                            bottom=True, top=True, left=True, right=True)
             plt.tick_params(axis='x', pad=7)
             extraticks = [-1, 1]
             plt.yticks(list(plt.yticks()[0]) + extraticks)
@@ -280,23 +316,31 @@ class model():
             plt.show()
 
         else:
-            raise Exception('Bad "which" input in "plot" method in "model" class. Inputs are "acc" or "dm".')
+            raise Exception('Bad "which" input in "plot" method in "model"\
+                            class. Inputs are "acc" or "dm".')
 
 
 # Functions
-def chi2_comp(parameter, space, beta=3., kappa=0., lam=lam0, dm_effort=False, dm_method='int', chi_method='formula', plot=True):
+def chi_comp(parameter, space, beta=3., kappa=0., lam=lam0, dm_effort=False,
+              dm_method='int', chi_method='formula', plot=True):
     """
-    This function calculates the chi^2 value for a given parameter space and plots the chi^2 value as a function of the
-    parameter space. It also prints the lowest chi^2 value and the corresponding parameter value.
-    :param parameter: string, options are 'l', 'b' or 'k', corresponding to lambda, beta or kappa
+    This function calculates the chi^2 value for a given parameter space and
+    plots the chi^2 value as a function of the parameter space. It also prints
+    the lowest chi^2 value and the corresponding parameter value.
+    :param parameter: string, options are 'l', 'b' or 'k', corresponding to
+    lambda, beta or kappa
     :param space: array, parameter space to be explored
     :param beta: float, beta value
     :param kappa: float, kappa value
     :param lam: float, lambda value
-    :param dm_effort: bool, if True, uses the "true" method of calculating the distance modulus, if False, uses a faster method
-    :param dm_method: string, options are 'int' or 'tay', corresponding to the integration method or Taylor expansion method
-    :param chi_method: string, options are 'formula' or 'poly' corresponding to the formula method or polynomial method
-    :param plot: bool, if True, plots the chi^2 value as a function of the parameter space
+    :param dm_effort: bool, if True, uses the "true" method of calculating the
+    distance modulus, if False, uses a faster method
+    :param dm_method: string, options are 'int' or 'tay', corresponding to the
+    integration method or Taylor expansion method
+    :param chi_method: string, options are 'formula' or 'poly' corresponding to
+    the formula method or polynomial method
+    :param plot: bool, if True, plots the chi^2 value as a function of the
+    parameter space
     :return: model object, model with the lowest chi^2 value   
     """
 
@@ -306,13 +350,17 @@ def chi2_comp(parameter, space, beta=3., kappa=0., lam=lam0, dm_effort=False, dm
         for index, value in enumerate(tqdm(space)):
             tmod = model(lam=value, beta=beta, kappa=kappa)
             tmod.distance_modulus(effort=dm_effort)
-            tmod.chi2value(dm_method=dm_method, chi_method=chi_method)
+            tmod.chi_value(dm_method=dm_method, chi_method=chi_method)
             array[index] = tmod.chi
         
-        model_optimized = model(lam=space[np.argmin(array)], beta=beta, kappa=kappa)
+        model_optimized = model(lam=space[np.argmin(array)], beta=beta,
+                                kappa=kappa)
 
-        print('The lowest chi^2 value is {:.3f} for beta = {:.3f}, k = {:.3f} and Omg_Lambda = {:.3f} for Omg_Lambda in the range [{:.1f}, {:.1f}]'
-                ''.format(np.min(array), beta, kappa, space[np.argmin(array)], space[0], space[-1]))
+        print('The lowest chi^2 value is {:.3f} for beta = {:.3f}, k = {:.3f}'
+              'and Omg_Lambda = {:.3f} for Omg_Lambda in the range'
+              '[{:.1f}, {:.1f}]'.format(
+                        np.min(array), beta, kappa, space[np.argmin(array)],
+                        space[0], space[-1]))
 
     elif parameter == 'b':
         for index, value in enumerate(tqdm(space)):
@@ -321,10 +369,13 @@ def chi2_comp(parameter, space, beta=3., kappa=0., lam=lam0, dm_effort=False, dm
             tmod.chi2value(dm_method=dm_method, chi_method=chi_method)
             array[index] = tmod.chi
         
-        model_optimized = model(lam=lam, beta=space[np.argmin(array)], kappa=kappa)
+        model_optimized = model(lam=lam, beta=space[np.argmin(array)],
+                                kappa=kappa)
 
-        print('The lowest chi^2 value is {:.3f} for beta = {:.3f}, k = {:.3f} and Omg_Lambda = {:.3f} for beta in the range [{:.1f}, {:.1f}]'
-                ''.format(np.min(array), space[np.argmin(array)], kappa, lam, space[0], space[-1]))
+        print('The lowest chi^2 value is {:.3f} for beta = {:.3f}, k = {:.3f}'
+              'and Omg_Lambda = {:.3f} for beta in the range [{:.1f}, {:.1f}]'
+                ''.format(np.min(array), space[np.argmin(array)], kappa, lam,
+                          space[0], space[-1]))
     
     elif parameter == 'k':
         for index, value in enumerate(tqdm(space)):
@@ -333,23 +384,34 @@ def chi2_comp(parameter, space, beta=3., kappa=0., lam=lam0, dm_effort=False, dm
             tmod.chi2value(dm_method=dm_method, chi_method=chi_method)
             array[index] = tmod.chi
         
-        model_optimized = model(lam=lam, beta=beta, kappa=space[np.argmin(array)])
+        model_optimized = model(lam=lam, beta=beta,
+                                kappa=space[np.argmin(array)])
 
-        print('The lowest chi^2 value is {:.3f} for beta = {:.3f}, k = {:.3f} and Omg_Lambda = {:.3f} for kappa in the range [{:.1f}, {:.1f}]'
-                ''.format(np.min(array), beta, space[np.argmin(array)], lam, space[0], space[-1]))
+        print('The lowest chi^2 value is {:.3f} for beta = {:.3f}, k = {:.3f}'
+              'and Omg_Lambda = {:.3f} for kappa in the range [{:.1f}, {:.1f}]'
+              ''.format(np.min(array), beta, space[np.argmin(array)], lam,
+                        space[0], space[-1]))
             
     else:
         raise Exception('Bad "parameter" input in chi2_comp function')
 
     if plot:
-        xlab = r'$\beta$' if parameter == 'b' else r'$k$' if parameter == 'k' else r'$\Omega_{\Lambda}$'
+        xlab = r'$\beta$' if parameter == 'b'\
+                else r'$k$' if parameter == 'k'\
+                else r'$\Omega_{\Lambda}$'
         yscale = 'log' if np.max(array)/np.min(array) > 50 else 'linear'
-        plotlab = r'$k={:.3f},\Omega_{{\Lambda}}={:.1f}$' if parameter == 'b' else r'$\beta={:.3f},\Omega_{{\Lambda}}={:.1f}$' if parameter == 'k' else r'$\beta={:.3f},k={:.3f}$'
-        plotform = (kappa, lam) if parameter == 'b' else (beta, lam) if parameter == 'k' else (beta, kappa)
+        plotlab = r'$k={:.3f},\Omega_{{\Lambda}}={:.1f}$' if parameter == 'b'\
+                    else r'$\beta={:.3f},\Omega_{{\Lambda}}={:.1f}$'\
+                        if parameter == 'k'\
+                            else r'$\beta={:.3f},k={:.3f}$'
+        plotform = (kappa, lam) if parameter == 'b'\
+                    else (beta, lam) if parameter == 'k'\
+                        else (beta, kappa)
 
         plt.figure()
         plt.plot(space, array, c='k', ls='-', label=plotlab.format(*plotform))
-        plt.plot([space[np.argmin(array)], space[np.argmin(array)]], [0.9*np.min(array), 1.01*np.max(array)], c='r', ls='--')
+        plt.plot([space[np.argmin(array)], space[np.argmin(array)]],
+                 [0.9*np.min(array), 1.01*np.max(array)], c='r', ls='--')
         plt.xlabel(xlab)
         plt.ylabel(r'$\chi^{2}_{r}$')
         plt.yscale(yscale)
@@ -358,9 +420,6 @@ def chi2_comp(parameter, space, beta=3., kappa=0., lam=lam0, dm_effort=False, dm
         plt.tick_params(axis='both', which='both', direction='in',
                         bottom=True, top=True, left=True, right=True)
         plt.show()
-
-    else:
-        pass
 
     model_optimized.distance_modulus(effort=dm_effort)
     model_optimized.chi2value(dm_method=dm_method, chi_method=chi_method)
@@ -708,30 +767,32 @@ def chi_search_a(fname, length=10, blim=(2., 4.), klim=(1., 10.),
     return top_mod
 
 
-def q_surface(length=20, blim=(2, 4), klim=(1, 10), qlim=(-1.0, 0.0), lam=0.,
-              dm_method='int', dm_effort=False, chi_method='formula', 
+def q_surface(length=20, blim=(2., 4.), klim=(1., 10.), qlim=(-1.0, 0.0),
+              lam=0., dm_method='int', dm_effort=False, chi_method='formula', 
               splot=True, mplot=True):
     """
     q_surface() function. Plots a surface of q values for a given range of
     beta and kappa values.
 
-    :param length: number of points to plot in each direction
-    :param blim: range of beta values to plot
-    :param klim: range of kappa values to plot
-    :param qlim: range of q values to plot
-    :param lam: lambda value to use for model
-    :param dm_method: method to use for distance modulus calculation
-    :param dm_effort: if True, use more accurate distance modulus calculation
-    :param chi_method: method to use for chi^2 calculation
-    :param splot: if True, plot surface plot of q values
-    :param mplot: if True, plot acceleration and distance modulus of optimized
-    model
-    :return: optimized model top_mod
+    :param length: int, number of points to plot in each direction
+    :param blim: tuple, range of beta values to plot
+    :param klim: tuple, range of kappa values to plot
+    :param qlim: tuple, range of q values to plot
+    :param lam: float, lambda value to use for model
+    :param dm_method: string, method to use for distance modulus calculation
+    :param dm_effort: bool, if True, use more accurate dist mod calculation
+    :param chi_method: string, method to use for chi^2 calculation
+    :param splot: bool, if True, plot surface plot of q values
+    :param mplot: bool, if True, plot acceleration and dist mod of opt model
+    :return: class, optimized model top_mod
     """
+
+    if (blim[0] > blim[1] or klim[0] > klim[1] or qlim[0] > qlim[1]):
+        raise Exception('blim, klim, and qlim tuples must be of form (a, b)\
+                        where a < b')
 
     brange = np.linspace(np.min(blim), np.max(blim), length)
     krange = np.linspace(np.min(klim), np.max(klim), length)
-
     q_save = np.zeros(length**2)
 
     qcd = []
@@ -744,9 +805,9 @@ def q_surface(length=20, blim=(2, 4), klim=(1, 10), qlim=(-1.0, 0.0), lam=0.,
         temp_mod = model(lam=lam, beta=param[0], kappa=param[1])
         q_save[index] = temp_mod.q
 
-        if (temp_mod.q > np.min(qlim)) and (temp_mod.q < np.max(qlim)):
+        if (qlim[0] < temp_mod.q < qlim[1]):
             temp_mod.distance_modulus(effort=dm_effort)
-            temp_mod.chi2value(dm_method=dm_method, chi_method=chi_method,
+            temp_mod.chi_value(dm_method=dm_method, chi_method=chi_method,
                                eval_both=False)
 
             qcd.append(temp_mod.q)
@@ -754,18 +815,15 @@ def q_surface(length=20, blim=(2, 4), klim=(1, 10), qlim=(-1.0, 0.0), lam=0.,
             kcd.append(temp_mod.k)
             xcd.append(temp_mod.chi)
 
-            if temp_mod.chi < current_chi:
-                current_chi = temp_mod.chi
-                top_mod = temp_mod
-
+            top_mod = temp_mod if temp_mod.chi < current_chi else top_mod
+            current_chi = temp_mod.chi if temp_mod.chi < current_chi \
+                                        else current_chi
 
     q_save = np.reshape(q_save, (length, length))
 
     if len(qcd) < 1:
         raise Exception('No q values found within the range {} < q < {}'
                         ''.format(np.min(qlim), np.max(qlim)))
-    else:
-        pass
 
     qround = np.round(qcd, 2)   # round down to 2 decimal places
     qred = []
@@ -779,8 +837,6 @@ def q_surface(length=20, blim=(2, 4), klim=(1, 10), qlim=(-1.0, 0.0), lam=0.,
             bred.append(bcd[i])
             kred.append(kcd[i])
             xred.append(xcd[i])
-        else:
-            continue
 
     sortorder = np.copy(qred)
     qred,   bred = zip(*sorted(zip(sortorder, bred)))
@@ -789,11 +845,13 @@ def q_surface(length=20, blim=(2, 4), klim=(1, 10), qlim=(-1.0, 0.0), lam=0.,
 
     for i in range(len(qred)):
         if xred[i] == np.min(xred):
-            print('   **** q = {:.3f}\tfor\tbeta = {:.3f}\tk = {:.3f}\twith chi^2 = {:.4f} *****'
-                  ''.format(qred[i], bred[i], kred[i], xred[i]))
+            print('   **** q = {:.3f}\tfor\tbeta = {:.3f}\tk = {:.3f}\twith'
+                  'chi^2 = {:.4f} *****'.format(
+                                        qred[i], bred[i], kred[i], xred[i]))
         else:
-            print('\tq = {:.3f}\tfor\tbeta = {:.3f}\tk = {:.3f}\twith chi^2 = {:.4f}'
-                  ''.format(qred[i], bred[i], kred[i], xred[i]))
+            print('\tq = {:.3f}\tfor\tbeta = {:.3f}\tk = {:.3f}\twith'
+                  'chi^2 = {:.4f}'.format(
+                                        qred[i], bred[i], kred[i], xred[i]))
             
     
     if splot:
