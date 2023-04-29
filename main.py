@@ -432,7 +432,7 @@ def chi_comp(parameter: str, space: list, beta: float = 3., kappa: float = 0.,
 def chi_search(fname: str, length: int = 10, blim: tuple = (2., 4.),
                klim: tuple = (1., 10.), l: int = 0., dm_effort: bool = False,
                dm_method: str = 'int', chi_method: str = 'formula',
-               plot: bool = True, round: int = 1, scale: function = LogNorm(),
+               plot: bool = True, round: int = 1, scale = LogNorm(),
                double_eval: bool = False, fdir: str='../../Data/model_data/'):
     """
     chi_search() function. Calculates chi^2 value for models with different
@@ -662,9 +662,8 @@ def chi_search(fname: str, length: int = 10, blim: tuple = (2., 4.),
 
     return model_optimized
 
-def chi_search_a(fname: str, length: int = 10,
-                 blim: tuple = (2., 4.), klim: tuple = (1., 10.),
-                 lam: int = 0., plot: bool = True, 
+def chi_search_a(fname: str, length: int = 10, blim: tuple = (2., 4.),
+                 klim: tuple = (1., 10.), lam: int = 0., plot: bool = True, 
                  fdir: str = '../../Data/model_data/'):
     """
     chi_search_a() function. Iterates over all combinations (beta, kappa) and
@@ -780,17 +779,28 @@ def q_surface(length: int = 20, blim: tuple = (2., 4.),
     q_surface() function. Plots a surface of q values for a given range of
     beta and kappa values.
 
-    :param length: int, number of points to plot in each direction
-    :param blim: tuple, range of beta values to plot
-    :param klim: tuple, range of kappa values to plot
-    :param qlim: tuple, range of q values to plot
-    :param lam: float, lambda value to use for model
-    :param dm_method: string, method to use for distance modulus calculation
-    :param dm_effort: bool, if True, use more accurate dist mod calculation
-    :param chi_method: string, method to use for chi^2 calculation
-    :param splot: bool, if True, plot surface plot of q values
-    :param mplot: bool, if True, plot acceleration and dist mod of opt model
-    :return: class, optimized model top_mod
+    Parameters
+    ----------
+    length : int
+        number of points to plot in each direction
+    blim : tuple
+        range of beta values to plot
+    klim : tuple
+        range of kappa values to plot
+    qlim : tuple
+        range of q values to plot
+    lam : float
+        lambda value to use for model
+    dm_method : str
+        method to use for distance modulus calculation
+    dm_effort : bool
+        if True, use more accurate dist mod calculation
+    chi_method : str
+        method to use for chi^2 calculation
+    splot : bool
+        if True, plot surface plot of q values
+    mplot : bool
+        if True, plot acceleration and dist mod of opt model
     """
 
     if (blim[0] > blim[1] or klim[0] > klim[1] or qlim[0] > qlim[1]):
@@ -904,23 +914,126 @@ def q_surface(length: int = 20, blim: tuple = (2., 4.),
     return top_mod
 
 
-# def optimize(fname, length=20, beta_lim_init=(1, 4), kappa_lim_init=(1, 10),
-#              o_lambda=0., dm_effort=False, dm_method='int', plot=2,
-#              double_eval=False, fdir='../../Data/model_data/'):
-#     """
-#     Fill in later
-#     """
+def auto_optimize(fname: str, it_num: int = 2,
+                  search_method: str = 'acc', length: int = 20,
+                  beta_lim_init: tuple = (1, 4),
+                  kappa_lim_init: tuple = (1, 10), o_lambda: float = 0.,
+                  dm_effort: bool = False, dm_method: str = 'int',
+                  plot: int = 1, double_eval: bool = False,
+                  fdir: str = '../../Data/model_data/'):
+    """
+    Automatically optimize model parameters for a given number of iterations
+    it_num using search_method method. First call search_method with initial
+    inputs and then if it_num > 1, call search_method with inputs 80% nearer
+    the best model from the it_num - 1 iteration.
 
-#     m1 = chi_search('nosave', length=length, blim=beta_lim_init,
-#                     klim=kappa_lim_init, lam=o_lambda, dm_effort=dm_effort,
-#                     dm_method=dm_method, double_eval=double_eval, splot=False,
-#                     mplot=False)
+    Parameters
+    ----------
+    fname : str
+        Name of file to save data to. Use 'nosave' to not save data.
+    it_num : int
+        Number of iterations to run.
+    search_method : function
+        Method to use for searching for best model. Options are chi_search or
+        chi_search_a
+    beta_lim_init : tuple
+        Initial beta limits for search.
+    kappa_lim_init : tuple
+        Initial kappa limits for search.
+    o_lambda : float
+        Cosmological constant.
+    dm_effort : bool
+        Whether to use effort to calculate distance modulus.
+    dm_method : str
+        Method to use for calculating distance modulus.
+    plot : int
+        Whether to plot results. 0 = no plot, 1 = plot best, 2 = plot all.
+    double_eval : bool
+        Whether to evaluate on both chi^2 values for each model.
+    fdir : str
+        Directory to save data to.
+    """
+
+    if fname == 'nosave':
+        save = False
+    elif len(fname) < 1:
+        raise ValueError('fname must be a string')
+    
+    if it_num < 2:
+        raise ValueError('it_num must be a positive integer greater than 1')
+    
+    if plot not in (0, 1, 2):
+        raise ValueError('plot must be 0, 1 or 2')
+    
+    plot_notfinal = True if plot == 2 else False
+    plot_final = False if plot == 0 else True
+
+    model_initial = chi_search_a(fname=fname, length=length,
+                                 blim=beta_lim_init, klim=kappa_lim_init,
+                                 lam=o_lambda,
+                                 plot=plot_notfinal, fdir=fdir) \
+            if search_method == 'acc' \
+            else chi_search(fname=fname, length=length, blim=beta_lim_init,
+                            klim=kappa_lim_init, lam=o_lambda,
+                            dm_method=dm_method, dm_effort=dm_effort,
+                            plot=plot_notfinal, double_eval=double_eval,
+                            fdir=fdir)
+    
+    if it_num > 2:
+        for i in range(it_num - 2):
+            model_mid = chi_search_a(fname=fname, length=length, 
+                                     blim=(0.8*model_mid.b, 1.2*model_mid.b),
+                                     klim=(0.8*model_mid.k, 1.2*model_mid.k),
+                                     lam=o_lambda,
+                                     plot=plot_notfinal) \
+                    if search_method == 'acc' \
+                    else chi_search(fname=fname, length=length,
+                                    blim=(0.8*model_mid.b, 1.2*model_mid.b),
+                                    klim=(0.8*model_mid.k, 1.2*model_mid.k),
+                                    lam=o_lambda,
+                                    dm_method=dm_method, dm_effort=dm_effort,
+                                    plot=plot_notfinal,
+                                    double_eval=double_eval, fdir=fdir)
+    
+        model_final = chi_search_a(fname=fname, length=length,
+                                   blim=(0.8*model_mid.b, 1.2*model_mid.b),
+                                   klim=(0.8*model_mid.k, 1.2*model_mid.k),
+                                   lam=o_lambda, plot=plot_final, fdir=fdir)\
+                if search_method == 'acc' \
+                else chi_search(fname=fname, length=length,
+                                blim=(0.8*model_mid.b, 1.2*model_mid.b),
+                                klim=(0.8*model_mid.k, 1.2*model_mid.k),
+                                lam=o_lambda, dm_method=dm_method,
+                                dm_effort=dm_effort, plot=plot_final,
+                                double_eval=double_eval, fdir=fdir)
+        
+    else:
+        model_final = chi_search_a(fname=fname, length=length,
+                                   blim=(0.8*model_initial.b,
+                                         1.2*model_initial.b),
+                                   klim=(0.8*model_initial.k,
+                                         1.2*model_initial.k),
+                                   lam=o_lambda, plot=plot_final, fdir=fdir) \
+                if search_method == 'acc' \
+                else chi_search(fname=fname, length=length,
+                                blim=(0.8*model_initial.b,
+                                      1.2*model_initial.b),
+                                klim=(0.8*model_initial.k,
+                                      1.2*model_initial.k),
+                                lam=o_lambda, dm_method=dm_method,
+                                dm_effort=dm_effort, plot=plot_final,
+                                double_eval=double_eval, fdir=fdir)
+        
+    
+    return model_final    
 
 
 def main():
     """
     Main function
     """
+
+    auto_optimize(fname='nosave')
 
 
 main()
