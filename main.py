@@ -25,27 +25,41 @@ class model():
                  xmax: float = 1.5, xlen: int = 50000):
         """
         initialization method for model class
-        :param a_start: initial value of scale factor at which to begin
-        integration, chosen 1e-3 to correspond to time of recombination
-        (z ~ 1100)
-        :param mat: dimensionless matter density parameter
-        (baryons + dark matter), defined in _icd
-        :param rad: dimensionless radiation density parameter
-        (photons + neutrinos), defined in _icd
-        :param lam: dimensionless dark energy density parameter
-        (cosmological constant), defined in _icd
-        :param beta: power to which mass is raised in new DM force
-        :param kappa: constant in front of new DM force
-        :param n: not sure, but has to do with power series in Press-Schechter
-        formalism, used in variable gamma
-        :param xaxis: axis upon which we plan to plot, can be time 't' or scale
-        factor 'a', scale factor and its derivatives only run until xaxis
-        variable reaches unity
-        :param xamax: upper limit of integration in units of time tH0, chosen
-        as 1.5 to ensure scale factor can reach unity if xaxis = 'a'
-        :param xlen: length of time array for integration, chosen to be
-        sufficiently large so that when we go to redshift there are values
-        similar to those of the z_sn array (1e-3, 2.2)
+
+        Parameters
+        ----------
+        a_start : float, optional
+            initial value of scale factor at which to begin integration,
+            chosen 1e-3 to correspond to time of recombination (z ~ 1100)
+            The default is 1e-3.
+        mat : float, optional
+            dimensionless matter density parameter (baryons + dark matter),
+            defined in _icd. The default is mat0.
+        rad : float, optional
+            dimensionless radiation density parameter (photons + neutrinos),
+            defined in _icd. The default is rad0.
+        lam : float, optional
+            dimensionless dark energy density parameter (cosmological
+            constant), defined in _icd. The default is lam0.
+        beta : float, optional
+            power to which mass is raised in new DM force. The default is 3.
+        kappa : float, optional
+            constant in front of new DM force. The default is 0..
+        n : float, optional
+            not sure, but has to do with power series in Press-Schechter
+            formalism, used in variable gamma. The default is 1.
+        xaxis : str, optional
+            axis upon which we plan to plot, can be time 't' or scale factor
+            'a', scale factor and its derivatives only run until xaxis
+            variable reaches unity. The default is 'a'.
+        xmax : float, optional
+            upper limit of integration in units of time tH0, chosen as 1.5 to
+            ensure scale factor can reach unity if xaxis = 'a'. The default is
+            1.5.
+        xlen : int, optional
+            length of time array for integration, chosen to be sufficiently
+            large so that when we go to redshift there are values similar to
+            those of the z_sn array (1e-3, 2.2). The default is 50000.
         """
         # properties of this model
         self.m = mat
@@ -115,8 +129,11 @@ class model():
         """
         norm() method which normalizes the scale factor acceleration
         to that of a matter only model
-        :param matter: matter class object
-        :return: None
+
+        Parameters
+        ----------
+        matter : object
+            matter class object
         """
 
         if type(matter) != model:
@@ -128,11 +145,14 @@ class model():
     def distance_modulus(self, effort: bool = True):
         """
         distance_modulus() method which calculates the distance modulus of
-        scale factor values calculated in the initialization in two ways
+        scale factor values calculated in the initialization in two ways.
+        Returns array
 
-        :param effort: if True, uses the "true" method of calculating
-        the distance modulus, if False, uses a faster method
-        :return: distance modulus array
+        Parameters
+        ----------
+        effort : bool, optional
+            if True, uses the "true" method of calculating the distance
+            modulus, if False, uses a faster method. The default is True.
         
         Note on effort parameter:
         "True" way is calculating f and using the integrand function. "False"
@@ -210,15 +230,6 @@ class model():
         """
         Method to calculate the chi squared value of the model compared to the
         SN data set
-
-        :param dm_method: either 'int' or 'tay' for distance modulus
-        method
-        :param chi_method: either 'formula' or 'poly' for chi squared
-        method
-        :param eval_both: if True, calculates chi2 for both distance
-        modulus methods, if False, calculates for only one, defaulting to
-        whichever is specified in dm_method
-        :return: chi squared value of model compared to SN data set
         """
 
         self.chi_int = np.nan if np.isnan(self.dm_int).all() else \
@@ -235,11 +246,15 @@ class model():
         matter model and plots the acceleration of the LCDM model for
         comparison
 
-        :param which: options are 'acc' or 'dm' corresponding to
-        acceleration or distance modulus
-        :param lcdm: model object, used for comparison
-        :param matter: model object, used for normalization of acc plot
-        :return: plot
+        Parameters
+        ----------
+        which : str
+            options are 'acc' or 'dm' corresponding to acceleration or
+            distance modulus
+        lcdm : object
+            model object, used for comparison
+        matter : object
+            model object, used for normalization of acc plot
         """
 
         if which not in ('acc', 'dm'):
@@ -333,21 +348,28 @@ def chi_comp(parameter: str, space: list, beta: float = 3., kappa: float = 0.,
     This function calculates the chi^2 value for a given parameter space and
     plots the chi^2 value as a function of the parameter space. It also prints
     the lowest chi^2 value and the corresponding parameter value.
-    :param parameter: string, options are 'l', 'b' or 'k', corresponding to
-    lambda, beta or kappa
-    :param space: parameter space to be explored
-    :param beta: beta value
-    :param kappa: kappa value
-    :param lam: lambda value
-    :param dm_effort: if True, uses the "true" method of calculating the
-    distance modulus, if False, uses a faster method
-    :param dm_method: options are 'int' or 'tay', corresponding to the
-    integration method or Taylor expansion method
-    :param chi_method: options are 'formula' or 'poly' corresponding to the
-    formula method or polynomial method
-    :param plot: if True, plots the chi^2 value as a function of the
-    parameter space
-    :return: model object, model with the lowest chi^2 value   
+
+    Parameters
+    ----------
+    parameter : str
+        string, options are 'l', 'b' or 'k', corresponding to lambda, beta or
+        kappa
+    space : list
+        parameter space to be explored
+    beta : float
+        beta value
+    kappa : float
+        kappa value
+    lam : float
+        lambda value
+    dm_effort : bool
+        if True, uses the "true" method of calculating the distance modulus,
+        if False, uses a faster method
+    dm_method : str
+        options are 'int' or 'tay', corresponding to the integration method or
+        Taylor expansion method
+    plot : bool
+        if True, plots the chi^2 value as a function of the parameter space
     """
 
     if parameter not in ('l', 'b', 'k'):
@@ -438,43 +460,50 @@ def chi_comp(parameter: str, space: list, beta: float = 3., kappa: float = 0.,
 
 def chi_search(fname: str, length: int = 10, blim: tuple = (2., 4.),
                klim: tuple = (1., 10.), lam: int = 0., dm_effort: bool = False,
-               dm_method: str = 'int', chi_method: str = 'formula',
-               plot: bool = True, round: int = 1, scale = LogNorm(),
-               double_eval: bool = False, fdir: str='../../Data/model_data/'):
+               dm_method: str = 'int', plot: bool = True, round: int = 1,
+               scale = LogNorm(), double_eval: bool = False,
+               fdir: str='../../Data/model_data/'):
     """
     chi_search() function. Calculates chi^2 value for models with different
     combinations (beta, kappa). This function creates a linear range of beta
     values using length & blim, same for kappa, and then loops over
     combinations of those. For each combination a model is created and the
-    distance_modulus method called using dm_effort input. Then chi2_value()
-    method is called using dm_method and chi_method inputs. Chi^2 value is
-    stored and shaped into (length, length) array for plotting. Finally stores
-    data using inputted file name and then prints statement of results.
+    distance_modulus method called using dm_effort input. Then chi_value()
+    method is called. Chi^2 value is stored and shaped into (length, length)
+    array for plotting. Finally stores data using inputted file name and then
+    prints statement of results.
 
-    :param fname: string, name of file to save data to
-    :param length: integer, length of array with beta or kappa values.Length^2
-    is number of iterations in loop
-    :param blim: tuple, upper and lower bounds of beta
-    :param klim: tuple, upper and lower bounds of kappa
-    :param l: integer, lambda value to be used for each model
-    :param dm_effort: boolean, whether to use effort or not in calculation of
-    distance modulus (used later in calculating chi^2)
-    :param dm_method: 'int' or 'tay', which method to use in evaluating
-    distance modulus
-    :param chi_method: 'formula' or 'poly', which method to use in evaluating
-    chi^2 value
-    :param plot: boolean, plot chi^2 heat map or no
-    :param round: integer, used when plot==True, what number of decimal places
-    to round x & y labels to, for visual purposes
-    :param scale: NoNorm() or LogNorm(), used when plot==True, scale of heat
-    map. NoNorm() (linear) for fine scale grid when chi^2 values are within an
-    order of magnitude, LogNorm() (log) for coarse scale grid when chi^2
-    values are not within an order of magnitude
-    :param fdir: string, file directory for storing data. Default stores in
-    /Data/model_data/
-    :param double_eval: boolean, whether to evaluate chi^2 value for each
-    model twice (once for each method) or not
-    :return: optimized model object
+    Parameters
+    ----------
+    fname : str
+        Name of file to save data to
+    length : int, optional
+        Length of array with beta or kappa values. Length^2 is number of
+        iterations in loop. The default is 10.
+    blim : tuple, optional
+        Upper and lower bounds of beta. The default is (2., 4.).
+    klim : tuple, optional
+        Upper and lower bounds of kappa. The default is (1., 10.).
+    lam : int, optional
+        Lambda value to be used for each model. The default is 0.
+    dm_effort : bool, optional
+        Whether to use effort or not in calculation of distance modulus (used
+        later in calculating chi^2). The default is False.
+    dm_method : str, optional
+        'int' or 'tay', which method to use in evaluating distance modulus.
+        The default is 'int'.
+    plot : bool, optional
+        Plot chi^2 heat map or no. The default is True.
+    round : int, optional
+        Used when plot==True, what number of decimal places to round x & y
+        labels to, for visual purposes. The default is 1.
+    scale : matplotlib.colors.Normalize, optional
+        Used when plot==True, what scale to use for colour map. The default is
+        LogNorm().
+    double_eval : bool, optional
+        Whether to evaluate on both chi^2 values for each model.
+    fdir : str, optional
+        Directory to save data to. The default is '../../Data/model_data/'.
     """
 
     if fname == 'nosave':
@@ -653,10 +682,10 @@ def chi_search(fname: str, length: int = 10, blim: tuple = (2., 4.),
         f_save = np.vstack((f_chi, f_beta, f_kappa)).T
         f_comment = '#Results of "chi_search" called with the following' +\
                 'inputs:\n' +\
-                '#length={}, blim=({}, {}), klim=({}, {}), lambda={},'.format(
+                '#length={}, blim=({}, {}), klim=({}, {}), lambda={}, '.format(
                     length, blim[0], blim[1], klim[0], klim[1], lam) +\
-                'effort={}, dm_method={}, chi_method={}\n'.format(
-                                        dm_effort, dm_method, chi_method) +\
+                'effort={}, dm_method={}, \n'.format(
+                                        dm_effort, dm_method) +\
                 '#Lowest chi^2 was with beta = {} & k = {}\n'.format(
                                                         beta_low, kappa_low)
         np.savetxt(fname=fdir+fname, X=f_save, header='chi beta kappa',
@@ -665,7 +694,7 @@ def chi_search(fname: str, length: int = 10, blim: tuple = (2., 4.),
     # Compute optimal model based on chi results
     model_optimized = model(lam=lam, beta=beta_low, kappa=kappa_low)
     model_optimized.distance_modulus(effort=dm_effort)
-    model_optimized.chi_value(dm_method=dm_method, chi_method=chi_method)
+    model_optimized.chi_value()
 
     return model_optimized
 
@@ -678,19 +707,29 @@ def chi_search_a(fname: str, length: int = 10, blim: tuple = (2., 4.),
     to that of the LCDM model. Just a test and I'm curious to see what comes
     out of it.
 
-    :param fname: file name to save results to
-    :param length: length of beta and kappa ranges
-    :param blim: limit of beta values to plot
-    :param klim: limit of kappa values to plot
-    :param plot: if True, plot best fit acceleration
-    :param fdir: directory to save results to
+    Parameters
+    ----------
+    fname : str
+        file name to save results to
+    length : int, optional
+        length of beta and kappa ranges, by default 10
+    blim : tuple, optional
+        limit of beta values to plot, by default (2., 4.)
+    klim : tuple, optional
+        limit of kappa values to plot, by default (1., 10.)
+    lam : int, optional
+        lambda value to use, by default 0.
+    plot : bool, optional
+        if True, plot best fit acceleration, by default True
+    fdir : str, optional
+        directory to save results to, by default '../../Data/model_data/'
     """
 
     if len(fname) == 0:
         raise Exception('fname must be a string of at least one character')
     
     if fname == 'nosave':
-        nosave = True
+        save = False
 
     if blim[0] > blim[1] or klim[0] > klim[1]:
         raise Exception('blim and klim must be increasing tuples')
@@ -764,7 +803,7 @@ def chi_search_a(fname: str, length: int = 10, blim: tuple = (2., 4.),
         plt.show()
 
     # Save results (maybe)
-    if not nosave:
+    if save:
         f_chi = chival
         f_beta = np.repeat(brange, length)
         f_kappa = np.tile(krange, length)
@@ -805,8 +844,6 @@ def q_surface(length: int = 20, blim: tuple = (2., 4.),
         method to use for distance modulus calculation
     dm_effort : bool
         if True, use more accurate dist mod calculation
-    chi_method : str
-        method to use for chi^2 calculation
     splot : bool
         if True, plot surface plot of q values
     mplot : bool
@@ -939,7 +976,8 @@ def auto_optimize(fname: str, it_num: int = 2,
     Parameters
     ----------
     fname : str
-        Name of file to save data to. Use 'nosave' to not save data.
+        Name of file to save data to. Use 'nosave' to not save data. Only saves
+        data for final iteration.
     it_num : int
         Number of iterations to run.
     search_method : function
