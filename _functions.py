@@ -1,7 +1,8 @@
 from _icd import *
 
 
-def modified_friedmann(time, var, m, r, l, k, p):
+def modified_friedmann(time, var: list, m: float, r: float, l: float, k: float,
+                       p: float):
     """
     friedmann equations from alternative model
     :param time: time
@@ -35,7 +36,8 @@ def modified_friedmann(time, var, m, r, l, k, p):
 
 ###############################################################################
 
-def acceleration(a, ap, m, r, l, k, p):
+def acceleration(a: list, ap: list, m: float, r: float, l: float, k: float,
+                 p: float):
     g = ap**2 * a * m**-1 - r * m**-1 * a**-1 - l * m**-1 * a**3 - 1
 
     numerator = (np.sign(k) * np.abs(k)**p * np.sign(g) * np.abs(g)**(1-p) -
@@ -50,14 +52,14 @@ def acceleration(a, ap, m, r, l, k, p):
 
 ###############################################################################
 
-def dm_z_o4(z=z_sn, q=-0.55, j=1, s=0):
+def dm_z_o4(z: list = z_sn, q: float = -0.55, j: float = 1., s: float = 0.):
     """
     Distance modulus as a function of redshift
 
-    :param z: array, redshift
-    :param q: float, deceleration parameter
-    :param j: float, jerk
-    :param s: float, snap
+    :param z: redshift
+    :param q: deceleration parameter
+    :param j: jerk
+    :param s: snap
     :return: array, distance modulus
     """
     dl =  (c * z / h0 * (1 + 0.5 * z * (1 - q) - 
@@ -69,12 +71,12 @@ def dm_z_o4(z=z_sn, q=-0.55, j=1, s=0):
 
 ###############################################################################
 
-def rchi2(obs, exp=sndat, method='formula'):
+def rchi2(obs: list, exp: list = sndat, method: str = 'formula'):
     """
     Reduced chi squared
-    :param obs: array, observed data
-    :param exp: array, expected data
-    :param method: string, method to calculate chi squared
+    :param obs: observed data
+    :param exp: expected data
+    :param method: method to calculate chi squared
     :return: float, reduced chi squared
     """
     if method == 'formula':
@@ -92,7 +94,7 @@ def rchi2(obs, exp=sndat, method='formula'):
 
 ###############################################################################
 
-def read_model_data(fname, fdir='../../Data/model_data/'):
+def read_model_data(fname: str, fdir: str = '../../Data/model_data/'):
     """
     Read model data quickly
 
@@ -107,13 +109,13 @@ def read_model_data(fname, fdir='../../Data/model_data/'):
 
 ###############################################################################
 
-def specific_function(array, number):
+def specific_function(array: list, number: int):
     """
     Function to do something specific and time consuming
 
-    :param array: array, array of data
-    :param number: int, which sorted chi^2 value to choose from which beta and
-    kappa are returned
+    :param array: array of data
+    :param number: which sorted chi^2 value to choose from which beta and kappa
+    are returned
     :return: float, beta, kappa
     """
 
