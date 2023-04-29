@@ -357,7 +357,7 @@ def chi_comp(parameter: str, space: list, beta: float = 3., kappa: float = 0.,
                                 kappa=kappa)
 
         print('The lowest chi^2 value is {:.3f} for beta = {:.3f}, k = {:.3f}'
-              'and Omg_Lambda = {:.3f} for Omg_Lambda in the range'
+              ' and Omg_Lambda = {:.3f} for Omg_Lambda in the range '
               '[{:.1f}, {:.1f}]'.format(
                         np.min(array), beta, kappa, space[np.argmin(array)],
                         space[0], space[-1]))
@@ -374,7 +374,7 @@ def chi_comp(parameter: str, space: list, beta: float = 3., kappa: float = 0.,
                                 kappa=kappa)
 
         print('The lowest chi^2 value is {:.3f} for beta = {:.3f}, k = {:.3f}'
-              'and Omg_Lambda = {:.3f} for beta in the range [{:.1f}, {:.1f}]'
+              ' and Omg_Lambda = {:.3f} for beta in the range [{:.1f}, {:.1f}]'
                 ''.format(np.min(array), space[np.argmin(array)], kappa, lam,
                           space[0], space[-1]))
     
@@ -389,7 +389,7 @@ def chi_comp(parameter: str, space: list, beta: float = 3., kappa: float = 0.,
         model_optimized = model(lam=lam, beta=beta,
                                 kappa=space[np.argmin(array)])
 
-        print('The lowest chi^2 value is {:.3f} for beta = {:.3f}, k = {:.3f}'
+        print('The lowest chi^2 value is {:.3f} for beta = {:.3f}, k = {:.3f} '
               'and Omg_Lambda = {:.3f} for kappa in the range [{:.1f}, {:.1f}]'
               ''.format(np.min(array), beta, space[np.argmin(array)], lam,
                         space[0], space[-1]))
@@ -404,8 +404,7 @@ def chi_comp(parameter: str, space: list, beta: float = 3., kappa: float = 0.,
         yscale = 'log' if np.max(array)/np.min(array) > 50 else 'linear'
         plotlab = r'$k={:.3f},\Omega_{{\Lambda}}={:.1f}$' if parameter == 'b'\
                     else r'$\beta={:.3f},\Omega_{{\Lambda}}={:.1f}$'\
-                        if parameter == 'k'\
-                            else r'$\beta={:.3f},k={:.3f}$'
+                    if parameter == 'k' else r'$\beta={:.3f},k={:.3f}$'
         plotform = (kappa, lam) if parameter == 'b'\
                     else (beta, lam) if parameter == 'k'\
                         else (beta, kappa)
@@ -430,7 +429,7 @@ def chi_comp(parameter: str, space: list, beta: float = 3., kappa: float = 0.,
 
 
 def chi_search(fname: str, length: int = 10, blim: tuple = (2., 4.),
-               klim: tuple = (1., 10.), l: int = 0., dm_effort: bool = False,
+               klim: tuple = (1., 10.), lam: int = 0., dm_effort: bool = False,
                dm_method: str = 'int', chi_method: str = 'formula',
                plot: bool = True, round: int = 1, scale = LogNorm(),
                double_eval: bool = False, fdir: str='../../Data/model_data/'):
@@ -486,7 +485,7 @@ def chi_search(fname: str, length: int = 10, blim: tuple = (2., 4.),
 
     # Iterate over all (b, k), store chi value for each
     for index, param in enumerate(itertools.product(brange, krange)):
-        tmod = model(lam=l, beta=param[0], kappa=param[1])
+        tmod = model(lam=lam, beta=param[0], kappa=param[1])
         tmod.norm(matter=model(lam=0.))
         if (np.max(tmod.a2norm) > 3 or np.min(tmod.a2norm) < -10):
             chival_int[index] = np.nan
@@ -523,7 +522,7 @@ def chi_search(fname: str, length: int = 10, blim: tuple = (2., 4.),
 
     # Print results of function call
     print('The lowest chi^2 values are {:.3f} (int) {:.3f} (tay) for beta'
-          '= {:.3f} & mu = {:.3f} in the range\n\t'
+          ' = {:.3f} & mu = {:.3f} in the range\n\t'
           '{:.0f} < beta < {:.0f} and {:.0f} < mu < {:.0f}\n\t'
           '{:.1f} % of models had a chi^2 value of NaN. \n'
           ''.format(chi_low_int, chi_low_tay, beta_low, kappa_low,
@@ -647,7 +646,7 @@ def chi_search(fname: str, length: int = 10, blim: tuple = (2., 4.),
         f_comment = '#Results of "chi_search" called with the following' +\
                 'inputs:\n' +\
                 '#length={}, blim=({}, {}), klim=({}, {}), lambda={},'.format(
-                    length, blim[0], blim[1], klim[0], klim[1], l) +\
+                    length, blim[0], blim[1], klim[0], klim[1], lam) +\
                 'effort={}, dm_method={}, chi_method={}\n'.format(
                                         dm_effort, dm_method, chi_method) +\
                 '#Lowest chi^2 was with beta = {} & k = {}\n'.format(
@@ -656,7 +655,7 @@ def chi_search(fname: str, length: int = 10, blim: tuple = (2., 4.),
                    delimiter=' ', comments=f_comment)
 
     # Compute optimal model based on chi results
-    model_optimized = model(lam=l, beta=beta_low, kappa=kappa_low)
+    model_optimized = model(lam=lam, beta=beta_low, kappa=kappa_low)
     model_optimized.distance_modulus(effort=dm_effort)
     model_optimized.chi_value(dm_method=dm_method, chi_method=chi_method)
 
@@ -718,7 +717,7 @@ def chi_search_a(fname: str, length: int = 10, blim: tuple = (2., 4.),
     # Raise exception if only Nans are returned
     if nan_count == length**2:
         raise Exception('Only NaNs returned. Check input parameters.')
-    nan_ratio = nan_count / length**2
+    nan_ratio = nan_count / length**2 * 100
 
     # Find lowest chi^2 value and corresponding beta and kappa values
     chi_low = np.sort(chival)[0]
@@ -728,7 +727,7 @@ def chi_search_a(fname: str, length: int = 10, blim: tuple = (2., 4.),
 
     # Print results
     print('The lowest chi^2 value is {:.3f} for beta = {:.3f} & mu = {:.3f} in'
-          'the range\n{:.0f} < beta < {:.0f} and {:.0f} < mu < {:.0f}\n\t'
+          ' the range\n{:.0f} < beta < {:.0f} and {:.0f} < mu < {:.0f}\n\t'
           '{:.1f} % of models had a chi^2 value of NaN. \n'
           ''.format(chi_low, beta_low, kappa_low, blim[0], blim[1], 
                     klim[0], klim[1], nan_ratio))
@@ -954,6 +953,7 @@ def auto_optimize(fname: str, it_num: int = 2,
         Directory to save data to.
     """
 
+    # Validate arguments
     if fname == 'nosave':
         save = False
     elif len(fname) < 1:
@@ -965,9 +965,14 @@ def auto_optimize(fname: str, it_num: int = 2,
     if plot not in (0, 1, 2):
         raise ValueError('plot must be 0, 1 or 2')
     
+    if search_method != 'acc' or search_method != 'dm':
+        raise ValueError('search_method must be "acc" or "dm"')
+    
+    # Plot parameters
     plot_notfinal = True if plot == 2 else False
     plot_final = False if plot == 0 else True
 
+    # Initial search
     model_initial = chi_search_a(fname=fname, length=length,
                                  blim=beta_lim_init, klim=kappa_lim_init,
                                  lam=o_lambda,
@@ -979,6 +984,7 @@ def auto_optimize(fname: str, it_num: int = 2,
                             plot=plot_notfinal, double_eval=double_eval,
                             fdir=fdir)
     
+    # Subsequent searches
     if it_num > 2:
         for i in range(it_num - 2):
             model_mid = chi_search_a(fname=fname, length=length, 
@@ -994,7 +1000,8 @@ def auto_optimize(fname: str, it_num: int = 2,
                                     dm_method=dm_method, dm_effort=dm_effort,
                                     plot=plot_notfinal,
                                     double_eval=double_eval, fdir=fdir)
-    
+
+        # Final search
         model_final = chi_search_a(fname=fname, length=length,
                                    blim=(0.8*model_mid.b, 1.2*model_mid.b),
                                    klim=(0.8*model_mid.k, 1.2*model_mid.k),
@@ -1006,8 +1013,9 @@ def auto_optimize(fname: str, it_num: int = 2,
                                 lam=o_lambda, dm_method=dm_method,
                                 dm_effort=dm_effort, plot=plot_final,
                                 double_eval=double_eval, fdir=fdir)
-        
+    
     else:
+        # Final search
         model_final = chi_search_a(fname=fname, length=length,
                                    blim=(0.8*model_initial.b,
                                          1.2*model_initial.b),
@@ -1033,7 +1041,7 @@ def main():
     Main function
     """
 
-    auto_optimize(fname='nosave')
+    auto_optimize(fname='nosave', search_method='acc')
 
 
 main()
