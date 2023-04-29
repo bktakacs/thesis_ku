@@ -19,8 +19,10 @@ class model():
     model. A matter dominated model is returned by model(lam=0.)
     """
 
-    def __init__(self, a_start=1e-3, mat=mat0, rad=rad0, lam=lam0, beta=3.,
-                 kappa=0., n=1, xaxis='a', xmax=1.5, xlen=50000):
+    def __init__(self, a_start: float = 1e-3, mat: float = mat0, 
+                 rad: float = rad0, lam: float = lam0, beta: float = 3.,
+                 kappa: float = 0., n: float = 1, xaxis: str = 'a', 
+                 xmax: float = 1.5, xlen: int = 50000):
         """
         initialization method for model class
         :param a_start: initial value of scale factor at which to begin
@@ -118,12 +120,12 @@ class model():
         self.a2norm = self.a2 / np.interp(self.a, matter.a, matter.a2)
 
     
-    def distance_modulus(self, effort=True):
+    def distance_modulus(self, effort: bool = True):
         """
         distance_modulus() method which calculates the distance modulus of
         scale factor values calculated in the initialization in two ways
 
-        :param effort: boolean, if True, uses the "true" method of calculating
+        :param effort: if True, uses the "true" method of calculating
         the distance modulus, if False, uses a faster method
         :return: distance modulus array
         
@@ -200,16 +202,17 @@ class model():
         self.dm_tay = dm_z_o4(z=z_sn, q=self.q, j=self.j, s=self.s)
 
     
-    def chi_value(self, dm_method='int', chi_method='formula', eval_both=True):
+    def chi_value(self, dm_method: str = 'int', chi_method: str = 'formula', 
+                  eval_both: bool = True):
         """
         Method to calculate the chi squared value of the model compared to the
         SN data set
 
-        :param dm_method: string, either 'int' or 'tay' for distance modulus
+        :param dm_method: either 'int' or 'tay' for distance modulus
         method
-        :param chi_method: string, either 'formula' or 'poly' for chi squared
+        :param chi_method: either 'formula' or 'poly' for chi squared
         method
-        :param eval_both: boolean, if True, calculates chi2 for both distance
+        :param eval_both: if True, calculates chi2 for both distance
         modulus methods, if False, calculates for only one, defaulting to
         whichever is specified in dm_method
         :return: chi squared value of model compared to SN data set
@@ -227,7 +230,7 @@ class model():
                                         rchi2(obs=distmod, method=chi_method)
 
 
-    def plot(self, which, lcdm, matter):
+    def plot(self, lcdm: object, matter: object, which: str = 'acc'):
         """
         This method plots the acceleration of the scale factor or the distance
         modulus, depending on the input "which". When plotting acceleration it
@@ -235,7 +238,7 @@ class model():
         matter model and plots the acceleration of the LCDM model for
         comparison
 
-        :param which: string, options are 'acc' or 'dm' corresponding to
+        :param which: options are 'acc' or 'dm' corresponding to
         acceleration or distance modulus
         :param lcdm: model object, used for comparison
         :param matter: model object, used for normalization of acc plot
@@ -366,7 +369,7 @@ def chi_comp(parameter, space, beta=3., kappa=0., lam=lam0, dm_effort=False,
         for index, value in enumerate(tqdm(space)):
             tmod = model(lam=lam, beta=value, kappa=kappa)
             tmod.distance_modulus(effort=dm_effort)
-            tmod.chi2value(dm_method=dm_method, chi_method=chi_method)
+            tmod.chi_value(dm_method=dm_method, chi_method=chi_method)
             array[index] = tmod.chi
         
         model_optimized = model(lam=lam, beta=space[np.argmin(array)],
@@ -381,7 +384,7 @@ def chi_comp(parameter, space, beta=3., kappa=0., lam=lam0, dm_effort=False,
         for index, value in enumerate(tqdm(space)):
             tmod = model(lam=lam, beta=beta, kappa=value)
             tmod.distance_modulus(effort=dm_effort)
-            tmod.chi2value(dm_method=dm_method, chi_method=chi_method)
+            tmod.chi_value(dm_method=dm_method, chi_method=chi_method)
             array[index] = tmod.chi
         
         model_optimized = model(lam=lam, beta=beta,
@@ -422,7 +425,7 @@ def chi_comp(parameter, space, beta=3., kappa=0., lam=lam0, dm_effort=False,
         plt.show()
 
     model_optimized.distance_modulus(effort=dm_effort)
-    model_optimized.chi2value(dm_method=dm_method, chi_method=chi_method)
+    model_optimized.chi_value(dm_method=dm_method, chi_method=chi_method)
 
     return model_optimized
 
@@ -484,14 +487,14 @@ def chi_search(fname, length=10, blim=(2., 4.), klim=(1., 10.), l=0.,
     # Iterate over all (b, k), store chi value for each
     for index, param in enumerate(itertools.product(brange, krange)):
         tmod = model(lam=l, beta=param[0], kappa=param[1])
-        tmod.norm(matter=matter)
+        tmod.norm(matter=model(lam=0.))
         if (np.max(tmod.a2norm) > 3 or np.min(tmod.a2norm) < -10):
             chival_int[index] = np.nan
             chival_tay[index] = np.nan
             nan_count += 1
         else:
             tmod.distance_modulus(effort=dm_effort)
-            tmod.chi2value(dm_method=dm_method, chi_method=chi_method)
+            tmod.chi_value(dm_method=dm_method, chi_method=chi_method)
             chival_int[index] = tmod.chi_int
             chival_tay[index] = tmod.chi_tay
     
@@ -914,5 +917,14 @@ def q_surface(length=20, blim=(2., 4.), klim=(1., 10.), qlim=(-1.0, 0.0),
 
 
 # Set up lcdm and matter models
-lcdm   = model()
-matter = model(lam=0.)
+
+def main():
+    """
+    Main function
+    """
+
+    lcdm = model()
+    print(type(lcdm))
+
+
+main()

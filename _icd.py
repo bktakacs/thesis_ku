@@ -1,8 +1,7 @@
 # Imports, Constants, Data
 
 # Imports
-from scipy.integrate import solve_ivp, odeint, quad, RK45, cumtrapz, simpson
-from scipy.optimize import curve_fit
+from scipy.integrate import solve_ivp, odeint, quad
 from scipy.stats import chisquare
 import numpy as np
 import matplotlib.pyplot as plt
@@ -12,8 +11,6 @@ import pandas as pd
 from tqdm import tqdm
 from tqdm.contrib import itertools
 from astropy.cosmology import FlatLambdaCDM
-from functools import lru_cache
-from time import time
 import warnings
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 
