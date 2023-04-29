@@ -916,17 +916,11 @@ def q_surface(length: int = 20, blim: tuple = (2., 4.),
 #                     dm_method=dm_method, double_eval=double_eval, splot=False,
 #                     mplot=False)
 
-    
-
-
-# Set up lcdm and matter models
 
 def main():
     """
     Main function
     """
-
-    pass
 
 
 main()
