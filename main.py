@@ -110,7 +110,8 @@ class model():
         self.j = self.a3[-1] * self.a[-1]**2 * self.a1[-1]**-3 # jerk j
         self.s = self.a4[-1] * self.a[-1]**3 * self.a1[-1]**-4 # snap s
 
-    def norm(self, matter):
+
+    def norm(self, matter: object):
         """
         norm() method which normalizes the scale factor acceleration
         to that of a matter only model
@@ -203,7 +204,7 @@ class model():
 
     
     def chi_value(self, dm_method: str = 'int', chi_method: str = 'formula', 
-                  eval_both: bool = True):
+                  eval_both: bool = False):
         """
         Method to calculate the chi squared value of the model compared to the
         SN data set
@@ -218,19 +219,13 @@ class model():
         :return: chi squared value of model compared to SN data set
         """
 
-        if eval_both:
-            self.chi_int = np.nan if np.isnan(self.dm_int).all() else \
-                                    rchi2(obs=self.dm_int, method=chi_method)
-            self.chi_tay = np.nan if np.isnan(self.dm_tay).all() else \
-                                    rchi2(obs=self.dm_tay, method=chi_method)
-        else:
-            distmod = self.dm_int if dm_method == 'int' else self.dm_tay
-
-            self.chi = np.nan if np.isnan(distmod).all() else \
-                                        rchi2(obs=distmod, method=chi_method)
+        self.chi_int = np.nan if np.isnan(self.dm_int).all() else \
+                                rchi2(obs=self.dm_int, method=chi_method)
+        self.chi_tay = np.nan if np.isnan(self.dm_tay).all() else \
+                                rchi2(obs=self.dm_tay, method=chi_method)
 
 
-    def plot(self, lcdm: object, matter: object, which: str = 'acc'):
+    def plot(self, which: str, lcdm: object, matter: object):
         """
         This method plots the acceleration of the scale factor or the distance
         modulus, depending on the input "which". When plotting acceleration it
@@ -324,25 +319,26 @@ class model():
 
 
 # Functions
-def chi_comp(parameter, space, beta=3., kappa=0., lam=lam0, dm_effort=False,
-              dm_method='int', chi_method='formula', plot=True):
+def chi_comp(parameter: str, space: list, beta: float = 3., kappa: float = 0.,
+             lam: float = lam0, dm_effort: bool = False, dm_method: str='int',
+             chi_method: str = 'formula', plot: bool = True):
     """
     This function calculates the chi^2 value for a given parameter space and
     plots the chi^2 value as a function of the parameter space. It also prints
     the lowest chi^2 value and the corresponding parameter value.
     :param parameter: string, options are 'l', 'b' or 'k', corresponding to
     lambda, beta or kappa
-    :param space: array, parameter space to be explored
-    :param beta: float, beta value
-    :param kappa: float, kappa value
-    :param lam: float, lambda value
-    :param dm_effort: bool, if True, uses the "true" method of calculating the
+    :param space: parameter space to be explored
+    :param beta: beta value
+    :param kappa: kappa value
+    :param lam: lambda value
+    :param dm_effort: if True, uses the "true" method of calculating the
     distance modulus, if False, uses a faster method
-    :param dm_method: string, options are 'int' or 'tay', corresponding to the
+    :param dm_method: options are 'int' or 'tay', corresponding to the
     integration method or Taylor expansion method
-    :param chi_method: string, options are 'formula' or 'poly' corresponding to
-    the formula method or polynomial method
-    :param plot: bool, if True, plots the chi^2 value as a function of the
+    :param chi_method: options are 'formula' or 'poly' corresponding to the
+    formula method or polynomial method
+    :param plot: if True, plots the chi^2 value as a function of the
     parameter space
     :return: model object, model with the lowest chi^2 value   
     """
@@ -354,7 +350,8 @@ def chi_comp(parameter, space, beta=3., kappa=0., lam=lam0, dm_effort=False,
             tmod = model(lam=value, beta=beta, kappa=kappa)
             tmod.distance_modulus(effort=dm_effort)
             tmod.chi_value(dm_method=dm_method, chi_method=chi_method)
-            array[index] = tmod.chi
+            array[index] = tmod.chi_int if dm_method == 'int' \
+                                        else tmod.chi_tay
         
         model_optimized = model(lam=space[np.argmin(array)], beta=beta,
                                 kappa=kappa)
@@ -370,7 +367,8 @@ def chi_comp(parameter, space, beta=3., kappa=0., lam=lam0, dm_effort=False,
             tmod = model(lam=lam, beta=value, kappa=kappa)
             tmod.distance_modulus(effort=dm_effort)
             tmod.chi_value(dm_method=dm_method, chi_method=chi_method)
-            array[index] = tmod.chi
+            array[index] = tmod.chi_int if dm_method == 'int' \
+                                        else tmod.chi_tay
         
         model_optimized = model(lam=lam, beta=space[np.argmin(array)],
                                 kappa=kappa)
@@ -385,7 +383,8 @@ def chi_comp(parameter, space, beta=3., kappa=0., lam=lam0, dm_effort=False,
             tmod = model(lam=lam, beta=beta, kappa=value)
             tmod.distance_modulus(effort=dm_effort)
             tmod.chi_value(dm_method=dm_method, chi_method=chi_method)
-            array[index] = tmod.chi
+            array[index] = tmod.chi_int if dm_method == 'int' \
+                                        else tmod.chi_tay
         
         model_optimized = model(lam=lam, beta=beta,
                                 kappa=space[np.argmin(array)])
@@ -430,10 +429,11 @@ def chi_comp(parameter, space, beta=3., kappa=0., lam=lam0, dm_effort=False,
     return model_optimized
 
 
-def chi_search(fname, length=10, blim=(2., 4.), klim=(1., 10.), l=0.,
-               dm_effort=False, dm_method='int', chi_method='formula',
-               plot=True, round=1, scale=LogNorm(), double_eval=False,
-               fdir='../../Data/model_data/'):
+def chi_search(fname: str, length: int = 10, blim: tuple = (2., 4.),
+               klim: tuple = (1., 10.), l: int = 0., dm_effort: bool = False,
+               dm_method: str = 'int', chi_method: str = 'formula',
+               plot: bool = True, round: int = 1, scale: function = LogNorm(),
+               double_eval: bool = False, fdir: str='../../Data/model_data/'):
     """
     chi_search() function. Calculates chi^2 value for models with different
     combinations (beta, kappa). This function creates a linear range of beta
@@ -658,12 +658,14 @@ def chi_search(fname, length=10, blim=(2., 4.), klim=(1., 10.), l=0.,
     # Compute optimal model based on chi results
     model_optimized = model(lam=l, beta=beta_low, kappa=kappa_low)
     model_optimized.distance_modulus(effort=dm_effort)
-    model_optimized.chi2value(dm_method=dm_method, chi_method=chi_method)
+    model_optimized.chi_value(dm_method=dm_method, chi_method=chi_method)
 
     return model_optimized
 
-def chi_search_a(fname, length=10, blim=(2., 4.), klim=(1., 10.),
-                 lam=0., plot=True, fdir='../../Data/model_data/'):
+def chi_search_a(fname: str, length: int = 10,
+                 blim: tuple = (2., 4.), klim: tuple = (1., 10.),
+                 lam: int = 0., plot: bool = True, 
+                 fdir: str = '../../Data/model_data/'):
     """
     chi_search_a() function. Iterates over all combinations (beta, kappa) and
     for each creates a model and calculates the chi^2 fit of the acceleration
@@ -680,10 +682,9 @@ def chi_search_a(fname, length=10, blim=(2., 4.), klim=(1., 10.),
 
     if len(fname) == 0:
         raise Exception('fname must be a string of at least one character')
-    
-    if fname == 'nosave':
+    elif fname == 'nosave':
         nosave = True
-    
+
     fname += '.txt'
 
     # Create beta and kappa ranges
@@ -770,9 +771,11 @@ def chi_search_a(fname, length=10, blim=(2., 4.), klim=(1., 10.),
     return top_mod
 
 
-def q_surface(length=20, blim=(2., 4.), klim=(1., 10.), qlim=(-1.0, 0.0),
-              lam=0., dm_method='int', dm_effort=False, chi_method='formula', 
-              splot=True, mplot=True):
+def q_surface(length: int = 20, blim: tuple = (2., 4.),
+              klim: tuple = (1., 10.), qlim: tuple = (-1.0, 0.0),
+              lam: float = 0., dm_method: str = 'int', dm_effort: bool = False, 
+              chi_method: str = 'formula', splot: bool = True, 
+              mplot: bool = True):
     """
     q_surface() function. Plots a surface of q values for a given range of
     beta and kappa values.
@@ -816,11 +819,11 @@ def q_surface(length=20, blim=(2., 4.), klim=(1., 10.), qlim=(-1.0, 0.0),
             qcd.append(temp_mod.q)
             bcd.append(temp_mod.b)
             kcd.append(temp_mod.k)
-            xcd.append(temp_mod.chi)
+            xcd.append(temp_mod.chi_int if dm_method == 'int'
+                                        else temp_mod.chi_tay)
 
-            top_mod = temp_mod if temp_mod.chi < current_chi else top_mod
-            current_chi = temp_mod.chi if temp_mod.chi < current_chi \
-                                        else current_chi
+            top_mod = temp_mod if xcd[-1] < current_chi else top_mod
+            current_chi = xcd[-1] if xcd[-1]< current_chi else current_chi
 
     q_save = np.reshape(q_save, (length, length))
 
@@ -895,8 +898,8 @@ def q_surface(length=20, blim=(2., 4.), klim=(1., 10.), qlim=(-1.0, 0.0),
         plot_mod = model(beta=bred[np.argmin(xred)], 
                          kappa=kred[np.argmin(xred)],lam=lam)                 
         plot_mod.distance_modulus(effort=dm_effort)
-        plot_mod.plot('acc', model(), model(lam=0.))
-        plot_mod.plot('dm', model(), model(lam=0.))
+        plot_mod.plot(which='acc', lcdm=model(), matter=model(lam=0.))
+        plot_mod.plot(which='dm', lcdm=model(), matter=model(lam=0.))
 
     return top_mod
 
@@ -923,8 +926,7 @@ def main():
     Main function
     """
 
-    lcdm = model()
-    print(type(lcdm))
+    pass
 
 
 main()
