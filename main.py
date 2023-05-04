@@ -603,16 +603,16 @@ def chi_search(fname: str, length: int = 10, blim: tuple = (2., 4.),
         cmap = matplotlib.cm.get_cmap('viridis_r').copy()
         cmap.set_bad(color='r')
 
-        # intf
+        # int
         im1 = f1.imshow(chi_plot_z_int, cmap=cmap, origin='lower',
                         interpolation='nearest', norm=scale)
         f1.text(x=np.array(range(length))[np.where(brange == beta_low)],
                 y=np.array(range(length))[np.where(krange == kappa_low)],
                 s=r'$\ast$', color='r', ha='center', va='center', fontsize=16)
-        f1.set_xticks(np.linspace(0, length-0.5, 10),
+        f1.set_xticks(np.linspace(0, length-1, 10),
                       np.round(np.linspace(brange[0], brange[-1], 10), round),
                       rotation=45, fontsize=12)
-        f1.set_yticks(np.linspace(0, length-0.5, 10),
+        f1.set_yticks(np.linspace(0, length-1, 10),
                       np.round(np.linspace(krange[0], krange[-1], 10), round),
                       fontsize=12)
         f1.set_xlabel(r'$\beta$')
@@ -630,10 +630,10 @@ def chi_search(fname: str, length: int = 10, blim: tuple = (2., 4.),
         f2.text(x=np.array(range(length))[np.where(brange == beta_low)],
                 y=np.array(range(length))[np.where(krange == kappa_low)],
                 s=r'$\ast$', color='r', ha='center', va='center', fontsize=16)
-        f2.set_xticks(np.linspace(0, length-0.5, 10),
+        f2.set_xticks(np.linspace(0, length-1, 10),
                       np.round(np.linspace(brange[0], brange[-1], 10), round),
                       rotation=45, fontsize=12)
-        f2.set_yticks(np.linspace(0, length-0.5, 10),
+        f2.set_yticks(np.linspace(0, length-1, 10),
                       np.round(np.linspace(krange[0], krange[-1], 10), round),
                       fontsize=12)
         f2.set_xlabel(r'$\beta$')
@@ -650,10 +650,10 @@ def chi_search(fname: str, length: int = 10, blim: tuple = (2., 4.),
         f3.text(x=np.array(range(length))[np.where(brange == beta_low)],
                 y=np.array(range(length))[np.where(krange == kappa_low)],
                 s=r'$\ast$', color='r', ha='center', va='center', fontsize=16)
-        f3.set_xticks(np.linspace(0, length-0.5, 10),
+        f3.set_xticks(np.linspace(0, length-1, 10),
                       np.round(np.linspace(brange[0], brange[-1], 10), round),
                       rotation=45, fontsize=12)
-        f3.set_yticks(np.linspace(0, length-0.5, 10),
+        f3.set_yticks(np.linspace(0, length-1, 10),
                       np.round(np.linspace(krange[0], krange[-1], 10), round),
                       fontsize=12)
         f3.set_xlabel(r'$\beta$')
@@ -677,10 +677,10 @@ def chi_search(fname: str, length: int = 10, blim: tuple = (2., 4.),
         ax.text(x=np.array(range(length))[np.where(brange == beta_low)],
                 y=np.array(range(length))[np.where(krange == kappa_low)],
                 s=r'$\ast$', color='r', ha='center', va='center', fontsize=20)
-        ax.set_xticks(np.linspace(0, length, 10),
+        ax.set_xticks(np.linspace(0, length-1, 10),
                       np.round(np.linspace(brange[0], brange[-1], 10), 1),
                       rotation=45, fontsize=14)
-        ax.set_yticks(np.linspace(0, length, 10),
+        ax.set_yticks(np.linspace(0, length-1, 10),
                       np.round(np.linspace(krange[0], krange[-1], 10), 1),
                       fontsize=14)
         ax.set_xlabel(r'$\beta$')
