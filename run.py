@@ -52,11 +52,11 @@ from main import *
 # to a decent looking plot. Let's try that.
 
 # Start by fixing beta and looking at different kappa
-beta = 2
-kappa = 2
+# beta = 2
+# kappa = 2
 
-klook = (0.1, 0.2, 0.3, 0.4, 0.5)
-blook = (1, 2, 3, 4, 5)
+# klook = (0.1, 0.2, 0.3, 0.4, 0.5)
+# blook = (1, 2, 3, 4, 5)
 
 # for i in tqdm(klook):
 #     temp_mod = model(beta=beta, kappa=i, lam=0.)
@@ -85,21 +85,78 @@ blook = (1, 2, 3, 4, 5)
 
 
 # Test our functions
-test_model = model(beta=2, kappa=2, lam=1.)
-print('Done')
-test_model.norm(matter=matter)
-print('Done')
-test_model.distance_modulus(effort=False)
-print('Done')
-test_model.chi_value(eval_both=False)
-print('Done')
-test_model.plot('acc', lcdm, matter)
-print('Done')
-test_model.plot('dm', lcdm, matter)
-print('Done')
-test_model = chi_comp('k', [np.linspace(0, 10, 10)])
-print('Done')
-test_model = chi_search('nosave')
-print('Done')
-test_model = chi_search_a('nosave')
-print('Done')
+# test_model = model(beta=2, kappa=2, lam=1.)
+# print('Done')
+# test_model.norm(matter=matter)
+# print('Done')
+# test_model.distance_modulus(effort=False)
+# print('Done')
+# test_model.chi_value(eval_both=False)
+# print('Done')
+# test_model.plot('acc', lcdm, matter)
+# print('Done')
+# test_model.plot('dm', lcdm, matter)
+# print('Done')
+# test_model = chi_comp('k', [np.linspace(0, 10, 10)])
+# print('Done')
+# test_model = chi_search('nosave')
+# print('Done')
+# test_model = chi_search_a('nosave')
+# print('Done')
+
+
+def main():
+    """
+    Main function
+    """
+    lcdm = model()
+    matter = model(lam=0.)
+
+    m1 = auto_optimize('auto-opt-acc-3', it_num=3, length=50,
+                       beta_lim_init=(1, 10), kappa_lim_init=(0,1, 100),
+                       require_decreasing_chi=True)
+    m1.distance_modulus()
+    m1.plot('dm', lcdm, matter)
+
+    # Look at multiple k values
+    # beta = 2
+    # kappa = 2
+
+    # klook = np.linspace(0.5, 5, 10)
+    # blook = (1, 2, 3, 4, 5)
+
+    # for i in tqdm(klook):
+    #     temp_mod = model(beta=beta, kappa=i, lam=0.)
+    #     temp_mod.norm(matter=matter)
+    #     plt.plot(temp_mod.a, temp_mod.a2norm, label='kappa = {}'.format(i))
+
+    # # for i in tqdm(blook):
+    # #     temp_mod = model(beta=i, kappa=kappa, lam=0.)
+    # #     temp_mod.norm(matter=matter)
+    # #     plt.plot(temp_mod.a, temp_mod.a2norm, label='beta = {}'.format(i))
+
+    # plt.text(x=0.01, y=-1.6, s=r'$\beta = {}$'.format(beta))
+    # plt.xlabel(r'$a$')
+    # plt.ylabel(r'$\ddot{a}$')
+    # plt.ylim([-5, 2])
+    # plt.legend(loc='lower left')
+    # plt.grid()
+    # plt.tick_params(axis='both', which='both', direction='in', bottom=True,
+    #                 top=True, left=True, right=True)
+    # plt.show()
+
+    # Read model data
+    # data = read_model_data('test_again.txt')
+    # b1, k1 = specific_function(data, 2)
+    # m1 = model(beta=b1, kappa=k1, lam=0.)
+    # m1.plot('acc', lcdm, matter)
+
+
+
+    # Chi comp search
+    # space = np.linspace(0.5, 5, 100)
+    # m1 = chi_comp('k', space, beta=3., lam=0.)
+    # m1.distance_modulus()
+    # m1.plot('dm', lcdm, matter)
+
+main()
