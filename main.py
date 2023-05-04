@@ -976,6 +976,12 @@ def q_surface(length: int = 20, blim: tuple = (2., 4.),
     return top_mod
 
 
+def chi_search_both(
+        
+):
+    pass
+
+
 def auto_optimize(fname: str, it_num: int = 2,
                   search_method: str = 'acc', length: int = 20,
                   beta_lim_init: tuple = (1, 4),
@@ -1023,6 +1029,7 @@ def auto_optimize(fname: str, it_num: int = 2,
     """
 
     # Validate arguments
+    save = True
     if fname == 'nosave':
         save = False
     elif len(fname) < 1:
@@ -1062,7 +1069,7 @@ def auto_optimize(fname: str, it_num: int = 2,
 
     # Initial search
     if verbose:
-        print('Initial search (1 / {})'.format(it_num))
+        print('Initial search (1/{})'.format(it_num))
 
     model_initial = chi_search_a(fname='nosave', length=length,
                                  blim=beta_lim_init, klim=kappa_lim_init,
@@ -1086,7 +1093,7 @@ def auto_optimize(fname: str, it_num: int = 2,
     
     # Subsequent searches
     if verbose:
-        print('Subsequent search (2 / {})'.format(it_num))
+        print('Subsequent search (2/{})'.format(it_num))
     model_mid = chi_search_a(fname='nosave', length=length, 
                                 blim=(li*model_initial.b, ui*model_initial.b),
                                 klim=(li*model_initial.k, ui*model_initial.k),
@@ -1098,12 +1105,11 @@ def auto_optimize(fname: str, it_num: int = 2,
                                dm_effort=dm_effort, plot=plot_notfinal,
                                double_eval=double_eval)
     
-    model_mid_int = np.interp(lcdm.a, model_mid.a, model_mid.a2norm) if acc \
-                    else None
+    model_mid_int = np.interp(lcdm.a, model_mid.a, model_mid.a2norm)
     model_mid_chi = rchi2(model_mid_int, lcdm.a2norm) if acc \
                     else (model_mid.chi_int + model_mid.chi_tay) \
                     if double_eval else model_mid.chi_int \
-                        if dm_method == 'int' else model_mid.chi_tay
+                    if dm_method == 'int' else model_mid.chi_tay
     
     if model_mid_chi > running_chi and require_decreasing_chi:
         raise Exception('model_mid has higher chi^2 than model_initial\n'
@@ -1117,7 +1123,7 @@ def auto_optimize(fname: str, it_num: int = 2,
     if it_num > 3:
         for i in range(it_num - 3):
             if verbose:
-                print('Subsequent search ({} / {})'.format(2 + i, it_num))
+                print('Subsequent search ({}/{})'.format(2 + i, it_num))
             model_mid = chi_search_a(fname='nosave', length=length,
                                     blim=(lm*model_mid.b, um*model_mid.b),
                                     klim=(lm*model_mid.k, um*model_mid.k),
@@ -1148,7 +1154,7 @@ def auto_optimize(fname: str, it_num: int = 2,
 
     # Final search
     if verbose:
-        print('Final search ({} / {})'.format(it_num, it_num))
+        print('Final search ({}/{})'.format(it_num, it_num))
     model_final = chi_search_a(fname=fname if save else 'nosave',length=length,
                                 blim=(lf*model_mid.b, uf*model_mid.b),
                                 klim=(lf*model_mid.k, uf*model_mid.k),

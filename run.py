@@ -109,17 +109,28 @@ def main():
     """
     Main function
     """
+    lcdm = model()
+    matter = model(lam=0.)
 
-    m1 = chi_search('nosave', length=15, blim=(2,3), klim=(1,5), double_eval=True)
-
-    # lcdm = model()
-    # matter = model(lam=0.)
-
-    # m1 = auto_optimize('auto-opt-acc-3', it_num=3, length=50,
-    #                    beta_lim_init=(1, 10), kappa_lim_init=(0,1, 100),
-    #                    require_decreasing_chi=True)
+    # m1 = chi_search_a('saving_this_one', length=100, blim=(2.8, 3.0), 
+    #                   klim=(0.4, 0.6),)
     # m1.distance_modulus()
+    # m1.plot('acc', lcdm, matter)
     # m1.plot('dm', lcdm, matter)
+
+    m1 = auto_optimize('auto-opt-acc-4', it_num=4, length=50,
+                       search_method='acc',
+                       beta_lim_init=(1, 10), kappa_lim_init=(0.1, 100),
+                       require_decreasing_chi=False)
+    m1.distance_modulus()
+    m1.plot('dm', lcdm, matter)
+
+    m2 = auto_optimize('auto-opt-acc-5', it_num=4, length=50,
+                       search_method='dm',
+                       beta_lim_init=(1, 10), kappa_lim_init=(0.1, 100),
+                       require_decreasing_chi=False)
+    m2.distance_modulus()
+    m2.plot('acc', lcdm, matter)
 
     # Look at multiple k values
     # beta = 2
