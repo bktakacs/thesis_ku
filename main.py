@@ -1149,7 +1149,7 @@ def auto_optimize(fname: str, it_num: int = 2,
     # Final search
     if verbose:
         print('Final search ({} / {})'.format(it_num, it_num))
-    model_final = chi_search_a(fname=fname, length=length,
+    model_final = chi_search_a(fname=fname if save else 'nosave',length=length,
                                 blim=(lf*model_mid.b, uf*model_mid.b),
                                 klim=(lf*model_mid.k, uf*model_mid.k),
                                 lam=o_lambda, plot=plot_final, fdir=fdir)\
