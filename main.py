@@ -19,10 +19,12 @@ class model():
     model. A matter dominated model is returned by model(lam=0.)
     """
 
-    def __init__(self, a_start: float = 1e-3, mat: float = mat0, 
-                 rad: float = rad0, lam: float = lam0, beta: float = 3.,
-                 kappa: float = 0., n: float = 1, xaxis: str = 'a', 
-                 xmax: float = 1.5, xlen: int = 50000):
+    def __init__(
+            self, a_start: float = 1e-3, mat: float = mat0, rad: float = rad0,
+            lam: float = lam0, beta: float = 3., kappa: float = 0.,
+            n: float = 1, xaxis: str = 'a', xmax: float = 1.5,
+            xlen: int = 50000
+    ):
         """
         initialization method for model class
 
@@ -66,7 +68,7 @@ class model():
         self.r = rad
         self.l = lam
         self.b = beta
-        self.k = kappa
+        self.k = kappa  # nice
         self.axis = xaxis
 
         # gamma and p variables used in acceleration equation
@@ -125,7 +127,9 @@ class model():
         self.s = self.a4[-1] * self.a[-1]**3 * self.a1[-1]**-4 # snap s
 
 
-    def norm(self, matter: object):
+    def norm(
+            self, matter: object
+    ):
         """
         norm() method which normalizes the scale factor acceleration
         to that of a matter only model
@@ -142,7 +146,9 @@ class model():
         self.a2norm = self.a2 / np.interp(self.a, matter.a, matter.a2)
 
     
-    def distance_modulus(self, effort: bool = True):
+    def distance_modulus(
+            self, effort: bool = True
+    ):
         """
         distance_modulus() method which calculates the distance modulus of
         scale factor values calculated in the initialization in two ways.
@@ -200,10 +206,10 @@ class model():
                                                        (self.m, self.r, self.l,
                                                         f[index], self.k))[0]
 
-        elif not effort:
+        else:
             # calculate E(z)
             ez = self.a1 / self.a
-            
+
             # calculate dl
             dl = np.zeros_like(z)
             for index, redshift in enumerate(z):
@@ -233,13 +239,15 @@ class model():
         in the chi_int and chi_tay attributes respectively
         """
 
-        self.chi_int = np.nan if np.isnan(self.dm_int).all() else \
-                                rchi2(obs=self.dm_int)
-        self.chi_tay = np.nan if np.isnan(self.dm_tay).all() else \
-                                rchi2(obs=self.dm_tay)
+        self.chi_int = np.nan if np.isnan(self.dm_int).all() \
+                                else rchi2(obs=self.dm_int)
+        self.chi_tay = np.nan if np.isnan(self.dm_tay).all() \
+                                else rchi2(obs=self.dm_tay)
 
 
-    def plot(self, which: str, lcdm: object, matter: object):
+    def plot(
+            self, which: str, lcdm: object, matter: object
+    ):
         """
         This method plots the acceleration of the scale factor or the distance
         modulus, depending on the input "which". When plotting acceleration it
@@ -260,11 +268,11 @@ class model():
 
         if which not in ('acc', 'dm'):
             raise Exception('Bad input for "which" in "plot" method in "model"'
-                            'class. Input must be "acc" or "dm".')
+                            ' class. Input must be "acc" or "dm".')
         
-        if type(lcdm) != model and type(matter) != model:
-            raise Exception('Bad input for "lcdm" and "matter" in "plot"'
-                            'method in "model" class. Input must be a model'
+        if type(lcdm) != model or type(matter) != model:
+            raise Exception('Bad input for "lcdm" and "matter" in "plot" '
+                            'method in "model" class. Input must be a model '
                             'object.')
 
         # normalize acceleration
@@ -343,9 +351,11 @@ class model():
 
 
 # Functions
-def chi_comp(parameter: str, space: list, beta: float = 3., kappa: float = 0.,
-             lam: float = lam0, dm_effort: bool = False, dm_method: str='int',
-             plot: bool = True):
+def chi_comp(
+        parameter: str, space: list, beta: float = 3., kappa: float = 0.,
+        lam: float = lam0, dm_effort: bool = False, dm_method: str='int',
+        plot: bool = True
+):
     """
     This function calculates the chi^2 value for a given parameter space and
     plots the chi^2 value as a function of the parameter space. It also prints
@@ -461,11 +471,13 @@ def chi_comp(parameter: str, space: list, beta: float = 3., kappa: float = 0.,
     return model_optimized
 
 
-def chi_search(fname: str, length: int = 10, blim: tuple = (2., 4.),
-               klim: tuple = (1., 10.), lam: int = 0., dm_effort: bool = False,
-               dm_method: str = 'int', plot: bool = True, round: int = 1,
-               scale = LogNorm(), double_eval: bool = False,
-               fdir: str='../../Data/model_data/'):
+def chi_search(
+        fname: str, length: int = 10, blim: tuple = (2., 4.),
+        klim: tuple = (1., 10.), lam: float = 0., dm_effort: bool = False,
+        dm_method: str = 'int', plot: bool = True, round: int = 1,
+        scale = LogNorm(), double_eval: bool = False,
+        fdir: str='../../Data/model_data/'
+):
     """
     chi_search() function. Calculates chi^2 value for models with different
     combinations (beta, kappa). This function creates a linear range of beta
@@ -509,12 +521,19 @@ def chi_search(fname: str, length: int = 10, blim: tuple = (2., 4.),
         Directory to save data to. The default is '../../Data/model_data/'.
     """
 
-    if fname == 'nosave':
-        save = False
-    else:
-        fname = fname + '.txt'
-        save = True
+    # Check inputs
+    if type(fname) != str:
+        raise TypeError('fname must be a string')
+    elif len(fname) == 0:
+        raise Exception('fname must be a string of at least one character')
 
+    save = False if fname == 'nosave' else True
+    fname += '.txt'
+
+    if blim[0] > blim[1] or klim[0] > klim[1]:
+        raise Exception('blim and klim must be increasing tuples')
+
+    # Create beta and kappa arrays
     brange = np.linspace(np.min(blim), np.max(blim), length)
     krange = np.linspace(np.min(klim), np.max(klim), length)
 
@@ -524,16 +543,12 @@ def chi_search(fname: str, length: int = 10, blim: tuple = (2., 4.),
     nan_count = 0
 
     matter = model(lam=0.)
-    top_mod = model(lam=lam, beta=brange[0], kappa=krange[0])
-    top_mod.distance_modulus(effort=dm_effort)
-    top_mod.chi_value()
-    running_chi = (top_mod.chi_int + top_mod.chi_tay) if double_eval \
-            else top_mod.chi_int if dm_method == 'int' else top_mod.chi_tay
 
     # Iterate over all (b, k), store chi value for each
     for index, param in enumerate(itertools.product(brange, krange)):
         tmod = model(lam=lam, beta=param[0], kappa=param[1])
         tmod.norm(matter=matter)
+        # if model is not physical, store nan
         if (np.max(tmod.a2norm) > 3 or np.min(tmod.a2norm) < -10):
             chival_int[index] = np.nan
             chival_tay[index] = np.nan
@@ -544,13 +559,6 @@ def chi_search(fname: str, length: int = 10, blim: tuple = (2., 4.),
             tmod.chi_value()
             chival_int[index] = tmod.chi_int
             chival_tay[index] = tmod.chi_tay
-            # update top model if desired chi < running_chi
-            top_mod = tmod if ((tmod.chi_int + tmod.chi_tay) < running_chi and
-                               double_eval) \
-                            else tmod if (tmod.chi_int < running_chi and
-                                          dm_method == 'int') \
-                            else tmod if (tmod.chi_tay < running_chi and
-                                          dm_method == 'tay') else top_mod
     
     # Raise exception if only NaN values were returned
     if nan_count == length**2:
@@ -660,7 +668,7 @@ def chi_search(fname: str, length: int = 10, blim: tuple = (2., 4.),
         f3.set_ylabel(r'$k$')
         f3.set_title(r'Combined')
         f3.tick_params(axis='both', which='both', direction='in',
-                        bottom=True, top=True, left=True, right=True)
+                       bottom=True, top=True, left=True, right=True)
         f3.grid()      
         fig.colorbar(im3, label=r'$\chi^{2}_{r}$', ax=f3)
         plt.show()
@@ -674,21 +682,29 @@ def chi_search(fname: str, length: int = 10, blim: tuple = (2., 4.),
         cmap.set_bad(color='r')
         im = ax.imshow(chi_plot_z, cmap=cmap, origin='lower',
                        interpolation='nearest', norm=scale)
-        ax.text(x=np.array(range(length))[np.where(brange == beta_low)],
-                y=np.array(range(length))[np.where(krange == kappa_low)],
-                s=r'$\ast$', color='r', ha='center', va='center', fontsize=20)
-        ax.set_xticks(np.linspace(0, length-1, 10),
-                      np.round(np.linspace(brange[0], brange[-1], 10), 1),
-                      rotation=45, fontsize=14)
-        ax.set_yticks(np.linspace(0, length-1, 10),
-                      np.round(np.linspace(krange[0], krange[-1], 10), 1),
-                      fontsize=14)
+        ax.text(
+            x=np.array(range(length))[np.where(brange == beta_low)],
+            y=np.array(range(length))[np.where(krange == kappa_low)],
+            s=r'$\ast$', color='r', ha='center', va='center', fontsize=20
+        )
+        ax.set_xticks(
+            np.linspace(0, length-1, 10),
+            np.round(np.linspace(brange[0], brange[-1], 10), round),
+            rotation=45, fontsize=14
+        )
+        ax.set_yticks(
+            np.linspace(0, length-1, 10),
+            np.round(np.linspace(krange[0], krange[-1], 10), round),
+            fontsize=14
+        )
         ax.set_xlabel(r'$\beta$')
         ax.set_ylabel(r'$k$')
         cbar = fig.colorbar(im)
         cbar.set_label(r'$\chi^{2}_{r}$', rotation='90')
-        ax.tick_params(axis='both', which='both', direction='in',
-                       bottom=True, top=True, left=True, right=True)
+        ax.tick_params(
+            axis='both', which='both', direction='in', bottom=True, top=True,
+            left=True, right=True
+        )
         ax.grid()
         plt.show()
 
@@ -711,11 +727,18 @@ def chi_search(fname: str, length: int = 10, blim: tuple = (2., 4.),
                    delimiter=' ', comments=f_comment)
 
     # Return the optimized model
-    return top_mod
+    model_optimized = model(beta=beta_low, kappa=kappa_low, lam=lam)
+    model_optimized.distance_modulus(effort=dm_effort)
+    model_optimized.chi_value()
+    model_optimized.norm(matter)
+    
+    return model_optimized
 
-def chi_search_a(fname: str, length: int = 10, blim: tuple = (2., 4.),
-                 klim: tuple = (1., 10.), lam: int = 0., plot: bool = True, 
-                 fdir: str = '../../Data/model_data/'):
+def chi_search_a(
+        fname: str, length: int = 10, blim: tuple = (2., 4.),
+        klim: tuple = (1., 10.), lam: int = 0., plot: bool = True, 
+        fdir: str = '../../Data/model_data/'
+):
     """
     chi_search_a() function. Iterates over all combinations (beta, kappa) and
     for each creates a model and calculates the chi^2 fit of the acceleration
@@ -740,17 +763,20 @@ def chi_search_a(fname: str, length: int = 10, blim: tuple = (2., 4.),
         directory to save results to, by default '../../Data/model_data/'
     """
 
-    if len(fname) == 0:
+    # Check inputs
+    if type(fname) != str:
+        raise TypeError('fname must be a string')
+    elif len(fname) == 0:
         raise Exception('fname must be a string of at least one character')
     
     save = False if fname == 'nosave' else True
+    fname += '.txt'
 
     if blim[0] > blim[1] or klim[0] > klim[1]:
         raise Exception('blim and klim must be increasing tuples')
 
-    fname += '.txt'
 
-    # Create beta and kappa ranges
+    # Create beta and kappa arrays
     brange = np.linspace(blim[0], blim[1], length)
     krange = np.linspace(klim[0], klim[1], length)
 
@@ -762,10 +788,10 @@ def chi_search_a(fname: str, length: int = 10, blim: tuple = (2., 4.),
     lcdm = model()
     lcdm.norm(matter)
     nan_count = 0
-    top_mod = model(lam=lam, beta=blim[0], kappa=klim[0])
-    top_mod.norm(matter=matter)
-    top_mod_a2norm_interp = np.interp(lcdm.a, top_mod.a, top_mod.a2norm)
-    running_chi = rchi2(top_mod_a2norm_interp, lcdm.a2norm)
+    # top_mod = model(lam=lam, beta=blim[0], kappa=klim[0])
+    # top_mod.norm(matter=matter)
+    # top_mod_a2norm_interp = np.interp(lcdm.a, top_mod.a, top_mod.a2norm)
+    # running_chi = rchi2(top_mod_a2norm_interp, lcdm.a2norm)
 
     # Iterate over all combinations of beta and kappa
     for index, param in enumerate(itertools.product(brange, krange)):
@@ -777,7 +803,6 @@ def chi_search_a(fname: str, length: int = 10, blim: tuple = (2., 4.),
         else:
             tmod_a2norm_interp = np.interp(lcdm.a, tmod.a, tmod.a2norm)
             chival[index] = rchi2(tmod_a2norm_interp, lcdm.a2norm)
-            top_mod = tmod if chival[index] < running_chi else top_mod
 
     # Raise exception if only Nans are returned
     if nan_count == length**2:
@@ -789,6 +814,12 @@ def chi_search_a(fname: str, length: int = 10, blim: tuple = (2., 4.),
     lowest = np.argmin(np.abs(chival - chi_low))
     beta_low = np.repeat(brange, length)[lowest]
     kappa_low = np.tile(krange, length)[lowest]
+
+    top_mod = model(beta=beta_low, kappa=kappa_low, lam=lam)
+    top_mod.chi_acc = chi_low
+    top_mod.distance_modulus()
+    top_mod.chi_value()
+    top_mod.norm(matter=matter)
 
     # Print results
     print('The lowest chi^2 value is {:.5f} for beta = {:.3f} & mu = {:.3f} in'
@@ -830,16 +861,15 @@ def chi_search_a(fname: str, length: int = 10, blim: tuple = (2., 4.),
                     beta_low, kappa_low)
         np.savetxt(fname=fdir+fname, X=f_save, header='chi beta kappa',
                    delimiter=' ', comments=f_comment)
-    
-    top_mod.norm(matter=matter)
 
     return top_mod
 
 
-def q_surface(length: int = 20, blim: tuple = (2., 4.),
-              klim: tuple = (1., 10.), qlim: tuple = (-1., 0.),lam: float = 0.,
-              dm_method: str = 'int', dm_effort: bool = False,
-              splot: bool = True, mplot: bool = True):
+def q_surface(
+        length: int = 20, blim: tuple = (2., 4.), klim: tuple = (1., 10.),
+        qlim: tuple = (-1., 0.),lam: float = 0., dm_method: str = 'int',
+        dm_effort: bool = False, splot: bool = True, mplot: bool = True
+):
     """
     q_surface() function. Plots a surface of q values for a given range of
     beta and kappa values.
@@ -982,14 +1012,14 @@ def chi_search_both(
     pass
 
 
-def auto_optimize(fname: str, it_num: int = 2,
-                  search_method: str = 'acc', length: int = 20,
-                  beta_lim_init: tuple = (1, 4),
-                  kappa_lim_init: tuple = (1, 10), o_lambda: float = 0.,
-                  dm_effort: bool = False, dm_method: str = 'int',
-                  plot: int = 1, double_eval: bool = False,
-                  require_decreasing_chi: bool = False,
-                  fdir: str = '../../Data/model_data/', verbose=True):
+def auto_optimize(
+        fname: str, it_num: int = 2, search_method: str = 'acc',
+        length: int = 20, beta_lim_init: tuple = (1, 4), 
+        kappa_lim_init: tuple = (1, 10), o_lambda: float = 0., 
+        dm_effort: bool = False, dm_method: str = 'int', plot: int = 1,
+        double_eval: bool = False, require_decreasing_chi: bool = False,
+        fdir: str = '../../Data/model_data/', verbose=True
+):
     """
     Automatically optimize model parameters for a given number of iterations
     it_num >=3  using search_method method. First call search_method with
@@ -1030,31 +1060,40 @@ def auto_optimize(fname: str, it_num: int = 2,
 
     # Validate arguments
     save = True
+    if type(fname) != str:
+        raise TypeError('fname must be a string')
+    
     if fname == 'nosave':
         save = False
     elif len(fname) < 1:
-        raise ValueError('fname must be a string')
+        raise ValueError('fname must be have at least one (1) character')
     
-    if it_num < 2:
-        raise ValueError('it_num must be a positive integer greater than 1')
+    if it_num < 3:
+        raise ValueError('it_num must be a positive integer greater than 2')
     
     if plot not in (0, 1, 2):
         raise ValueError('plot must be 0, 1 or 2')
     
-    if search_method != 'acc' and search_method != 'dm':
+    if search_method not in ('acc', 'dm'):
         raise ValueError('search_method must be "acc" or "dm"')
     
     if search_method == 'acc':
         acc = True
+        double_eval = False
     else:
         acc = False
+
+    if beta_lim_init[0] < 1:
+        raise ValueError('beta_lim_init[0] must be greater than or equal to 1 '
+                         'otherwise integrator will fail')
     
+    # Some initializations for later
     matter = model(lam=0.)
     lcdm = model()
     lcdm.norm(matter=matter)
 
     # Limits on initial search
-    li = 0.6
+    li = 0.7
     ui = 1 + (1 - li)
     # Limits on middle search  
     lm = 0.7
@@ -1069,47 +1108,52 @@ def auto_optimize(fname: str, it_num: int = 2,
 
     # Initial search
     if verbose:
-        print('Initial search (1/{})'.format(it_num))
-
-    model_initial = chi_search_a(fname='nosave', length=length,
-                                 blim=beta_lim_init, klim=kappa_lim_init,
-                                 lam=o_lambda,
-                                 plot=plot_notfinal) \
-        if acc else chi_search(fname='nosave', length=length,
-                               blim=beta_lim_init, klim=kappa_lim_init,
-                               lam=o_lambda, dm_method=dm_method, round=2,
-                               dm_effort=dm_effort, plot=plot_notfinal,
-                               double_eval=double_eval)
+        print('Running initial search (1/{}) for '
+              'beta ∈ ({:.3f}, {:.3f}) & kappa ∈ ({:.3f}, {:.3f})'
+              ''.format(
+                    it_num, beta_lim_init[0], beta_lim_init[1],
+                    kappa_lim_init[0], kappa_lim_init[1]
+              ))
+    model_initial = chi_search_a(
+        fname='nosave', length=length, blim=beta_lim_init, klim=kappa_lim_init,
+        lam=o_lambda, plot=plot_notfinal
+    ) if acc else chi_search(
+        fname='nosave', length=length, blim=beta_lim_init, klim=kappa_lim_init,
+        lam=o_lambda, dm_method=dm_method, round=2, dm_effort=dm_effort,
+        plot=plot_notfinal, double_eval=double_eval
+        )
     
     # Get correct chi^2 value for initial model
-    if acc:
-        model_init_int = np.interp(lcdm.a, model_initial.a,
-                                           model_initial.a2norm)
-
-    running_chi = rchi2(model_init_int, lcdm.a2norm) if acc \
-                    else (model_initial.chi_int + model_initial.chi_tay) \
-                    if double_eval else model_initial.chi_int \
-                        if dm_method == 'int' else model_initial.chi_tay
+    running_chi = model_initial.chi_acc if acc \
+        else (model_initial.chi_int + model_initial.chi_tay) if double_eval \
+        else model_initial.chi_int if dm_method == 'int' \
+        else model_initial.chi_tay
     
-    # Subsequent searches
+    # Second search
+    beta_lower = li*model_initial.b if li*model_initial.b > 1 else 1
     if verbose:
-        print('Subsequent search (2/{})'.format(it_num))
-    model_mid = chi_search_a(fname='nosave', length=length, 
-                                blim=(li*model_initial.b, ui*model_initial.b),
-                                klim=(li*model_initial.k, ui*model_initial.k),
-                                lam=o_lambda, plot=plot_notfinal) \
-        if acc else chi_search(fname='nosave', length=length,
-                               blim=(li*model_initial.b, ui*model_initial.b),
-                               klim=(li*model_initial.k, ui*model_initial.k),
-                               lam=o_lambda, dm_method=dm_method, round=2,
-                               dm_effort=dm_effort, plot=plot_notfinal,
-                               double_eval=double_eval)
+        print('Running subsequent search (2/{}) for '
+              'beta ∈ ({:.3f}, {:.3f}) & kappa ∈ ({:.3f}, {:.3f})'.format(
+                    it_num, beta_lower, ui*model_initial.b,
+                    li*model_initial.k, ui*model_initial.k
+              ))
+    model_mid = chi_search_a(
+        fname='nosave', length=length, 
+        blim=(beta_lower, ui*model_initial.b),
+        klim=(li*model_initial.k, ui*model_initial.k),
+        lam=o_lambda, plot=plot_notfinal
+    ) if acc else chi_search(
+        fname='nosave', length=length,
+        blim=(beta_lower, ui*model_initial.b),
+        klim=(li*model_initial.k, ui*model_initial.k),
+        lam=o_lambda, dm_method=dm_method, round=2, dm_effort=dm_effort,
+        plot=plot_notfinal, double_eval=double_eval
+    )
     
-    model_mid_int = np.interp(lcdm.a, model_mid.a, model_mid.a2norm)
-    model_mid_chi = rchi2(model_mid_int, lcdm.a2norm) if acc \
-                    else (model_mid.chi_int + model_mid.chi_tay) \
-                    if double_eval else model_mid.chi_int \
-                    if dm_method == 'int' else model_mid.chi_tay
+    model_mid_chi = model_mid.chi_acc if acc \
+                else (model_mid.chi_int + model_mid.chi_tay) if double_eval \
+                else model_mid.chi_int if dm_method == 'int' \
+                else model_mid.chi_tay
     
     if model_mid_chi > running_chi and require_decreasing_chi:
         raise Exception('model_mid has higher chi^2 than model_initial\n'
@@ -1122,27 +1166,32 @@ def auto_optimize(fname: str, it_num: int = 2,
     # More middle searches
     if it_num > 3:
         for i in range(it_num - 3):
+            beta_lower = lm*model_mid.b if lm*model_mid.b > 1 else 1
             if verbose:
-                print('Subsequent search ({}/{})'.format(2 + i, it_num))
-            model_mid = chi_search_a(fname='nosave', length=length,
-                                    blim=(lm*model_mid.b, um*model_mid.b),
-                                    klim=(lm*model_mid.k, um*model_mid.k),
-                                    lam=o_lambda, plot=plot_notfinal) \
-                    if search_method == 'acc' \
-                    else chi_search(fname='nosave', length=length,
-                                    blim=(lm*model_mid.b, um*model_mid.b),
-                                    klim=(lm*model_mid.k, um*model_mid.k),
-                                    lam=o_lambda, dm_method=dm_method,
-                                    dm_effort=dm_effort, round=2,
-                                    plot=plot_notfinal,double_eval=double_eval)
+                print('Running subsequent search ({}/{}) for '
+                      'beta ∈ ({:.3f}, {:.3f}) & kappa ∈ ({:.3f}, {:.3f})'
+                      ''.format(
+                            i+3, it_num, beta_lower, um*model_mid.b,
+                            lm*model_mid.k, um*model_mid.k
+                      ))
+            model_mid = chi_search_a(
+                fname='nosave', length=length,
+                blim=(beta_lower, um*model_mid.b),
+                klim=(lm*model_mid.k, um*model_mid.k),
+                lam=o_lambda, plot=plot_notfinal
+            ) if acc else chi_search(
+                fname='nosave', length=length,
+                blim=(beta_lower, um*model_mid.b),
+                klim=(lm*model_mid.k, um*model_mid.k),
+                lam=o_lambda, dm_method=dm_method, dm_effort=dm_effort,
+                round=2, plot=plot_notfinal, double_eval=double_eval
+            )
             
             # compare chi^2 values
-            model_mid_int = np.interp(lcdm.a,model_mid.a,model_mid.a2norm) if \
-                            acc else None
-            model_mid_chi = rchi2(model_mid_int, lcdm.a2norm) if acc \
-                            else (model_mid.chi_int + model_mid.chi_tay) \
-                            if double_eval else model_mid.chi_int \
-                                if dm_method == 'int' else model_mid.chi_tay
+            model_mid_chi = model_mid.chi_acc if acc \
+                else (model_mid.chi_int + model_mid.chi_tay) if double_eval \
+                else model_mid.chi_int if dm_method == 'int' \
+                else model_mid.chi_tay
             
             if model_mid_chi > running_chi and require_decreasing_chi:
                 raise Exception('model_mid has higher chi^2 than previous '
@@ -1153,27 +1202,31 @@ def auto_optimize(fname: str, it_num: int = 2,
             running_chi = model_mid_chi
 
     # Final search
+    beta_lower = lf*model_mid.b if lf*model_mid.b > 1 else 1
     if verbose:
-        print('Final search ({}/{})'.format(it_num, it_num))
-    model_final = chi_search_a(fname=fname if save else 'nosave',length=length,
-                                blim=(lf*model_mid.b, uf*model_mid.b),
-                                klim=(lf*model_mid.k, uf*model_mid.k),
-                                lam=o_lambda, plot=plot_final, fdir=fdir)\
-            if acc else chi_search(fname=fname, length=length,
-                                   blim=(lf*model_mid.b, uf*model_mid.b),
-                                   klim=(lf*model_mid.k, uf*model_mid.k),
-                                   lam=o_lambda, dm_method=dm_method,
-                                   round = 3 if it_num > 3 else 2,
-                                   dm_effort=dm_effort, plot=plot_final,
-                                   double_eval=double_eval, fdir=fdir)
+        print('Running final search ({}/{}) for '
+              'beta ∈ ({:.3f}, {:.3f}) & kappa ∈ ({:.3f}, {:.3f})'.format(
+                    it_num, it_num, beta_lower, uf*model_mid.b,
+                    lf*model_mid.k, uf*model_mid.k
+              ))
+    model_final = chi_search_a(
+        fname=fname if save else 'nosave',length=length,
+        blim=(beta_lower, uf*model_mid.b), 
+        klim=(lf*model_mid.k, uf*model_mid.k),
+        lam=o_lambda, plot=plot_final, fdir=fdir
+    ) if acc else chi_search(
+        fname=fname, length=length,
+        blim=(beta_lower, uf*model_mid.b),
+        klim=(lf*model_mid.k, uf*model_mid.k),
+        lam=o_lambda, dm_method=dm_method, round = 3 if it_num > 3 else 2,
+        dm_effort=dm_effort, plot=plot_final,
+        double_eval=double_eval, fdir=fdir
+    )
     
-    if acc:
-        model_fin_int = np.interp(lcdm.a, model_final.a, model_final.a2norm)
-
-    model_fin_chi = rchi2(model_fin_int, lcdm.a2norm) if acc \
-            else (model_final.chi_int + model_final.chi_tay) if double_eval \
-            else model_final.chi_int if dm_method == 'int' \
-            else model_final.chi_tay
+    model_fin_chi = model_final.chi_acc if acc \
+        else (model_final.chi_int + model_final.chi_tay) if double_eval \
+        else model_final.chi_int if dm_method == 'int' \
+        else model_final.chi_tay
 
     if model_fin_chi > running_chi and require_decreasing_chi:
         raise Exception('model_final has higher chi^2 than model_mid\n'
@@ -1184,7 +1237,8 @@ def auto_optimize(fname: str, it_num: int = 2,
     
     print('After {} iterations, the best fit model has parameters '
           'beta = {:.4f} and kappa = {:.4f}\n'
-          'with a chi^2 value of {:.5f}'.format(it_num, model_final.b,
-                                                model_final.k, running_chi))
+          'with a chi^2 value of {:.5f}. '.format(
+                it_num, model_final.b, model_final.k, running_chi
+          ))
     
     return model_final

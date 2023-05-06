@@ -118,19 +118,76 @@ def main():
     # m1.plot('acc', lcdm, matter)
     # m1.plot('dm', lcdm, matter)
 
-    m1 = auto_optimize('auto-opt-acc-4', it_num=4, length=50,
-                       search_method='acc',
-                       beta_lim_init=(1, 10), kappa_lim_init=(0.1, 100),
-                       require_decreasing_chi=False)
-    m1.distance_modulus()
-    m1.plot('dm', lcdm, matter)
+    # m1 = auto_optimize(
+    #     'auto-opt-acc-4-30', it_num=4, length=30, search_method='acc',
+    #     beta_lim_init=(1, 10), kappa_lim_init=(0.1, 100),
+    #     require_decreasing_chi=False
+    # )
+    # m1.distance_modulus()
+    # m1.plot('dm', lcdm, matter)
 
-    m2 = auto_optimize('auto-opt-acc-5', it_num=4, length=50,
-                       search_method='dm',
-                       beta_lim_init=(1, 10), kappa_lim_init=(0.1, 100),
-                       require_decreasing_chi=False)
-    m2.distance_modulus()
-    m2.plot('acc', lcdm, matter)
+    # int no effort
+    a = auto_optimize(
+        'nosave', it_num=3, dm_effort=False, dm_method='int',
+        double_eval=False, search_method='dm'
+    )
+    a.plot('acc', lcdm, matter)
+
+    # int effort
+    a = auto_optimize(
+        'nosave', it_num=3, dm_effort=True, dm_method='int',
+        double_eval=False, search_method='dm'
+    )
+    a.plot('acc', lcdm, matter)
+
+    # tay
+    a = auto_optimize(
+        'nosave', it_num=3, dm_effort=False, dm_method='tay',
+        double_eval=False, search_method='dm'
+    )
+    a.plot('acc', lcdm, matter)
+
+    # double eval
+    a = auto_optimize(
+        'nosave', it_num=3, dm_effort=False, dm_method='int',
+        double_eval=True, search_method='dm'
+    )
+    a.plot('acc', lcdm, matter)
+
+    # acc
+    a = auto_optimize(
+        'nosave', it_num=3, search_method='acc'
+    )
+    a.plot('acc', lcdm, matter)
+
+
+
+    # test = chi_search('nosave', dm_effort=False, dm_method='int',
+    #                   double_eval=False, plot=False)
+    # test2 = model(beta=test.b, kappa=test.k, lam=0.)
+    # test.distance_modulus()
+    # test.chi_value()
+    # test.plot('dm', lcdm, matter)
+
+    # test2.norm(matter=matter)
+    # test2.distance_modulus()
+    # test2.plot('dm', lcdm, matter)
+    # test2.chi_value()
+
+    # print(test.chi_int, test2.chi_int)
+    # test.plot('acc', lcdm, matter)
+    # test.distance_modulus(effort=False)
+    # test.plot('dm', lcdm, matter)
+    # test.chi_value()
+    # print(test.b, test.k, test.chi_int)
+    # test.plot('dm', lcdm, matter)
+
+    # m2 = auto_optimize('auto-opt-acc-5-20', it_num=4, length=20,
+    #                    search_method='dm',
+    #                    beta_lim_init=(1, 10), kappa_lim_init=(0.1, 100),
+    #                    require_decreasing_chi=True)
+    # m2.distance_modulus()
+    # m2.plot('acc', lcdm, matter)
 
     # Look at multiple k values
     # beta = 2
