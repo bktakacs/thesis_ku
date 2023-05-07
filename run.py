@@ -133,32 +133,32 @@ def main():
     )
     a.plot('acc', lcdm, matter)
 
-    # int effort
-    a = auto_optimize(
-        'nosave', it_num=3, dm_effort=True, dm_method='int',
-        double_eval=False, search_method='dm'
-    )
-    a.plot('acc', lcdm, matter)
+    # # int effort
+    # a = auto_optimize(
+    #     'nosave', it_num=3, dm_effort=True, dm_method='int',
+    #     double_eval=False, search_method='dm'
+    # )
+    # a.plot('acc', lcdm, matter)
 
-    # tay
-    a = auto_optimize(
-        'nosave', it_num=3, dm_effort=False, dm_method='tay',
-        double_eval=False, search_method='dm'
-    )
-    a.plot('acc', lcdm, matter)
+    # # tay
+    # a = auto_optimize(
+    #     'nosave', it_num=3, dm_effort=False, dm_method='tay',
+    #     double_eval=False, search_method='dm'
+    # )
+    # a.plot('acc', lcdm, matter)
 
-    # double eval
-    a = auto_optimize(
-        'nosave', it_num=3, dm_effort=False, dm_method='int',
-        double_eval=True, search_method='dm'
-    )
-    a.plot('acc', lcdm, matter)
+    # # double eval
+    # a = auto_optimize(
+    #     'nosave', it_num=3, dm_effort=False, dm_method='int',
+    #     double_eval=True, search_method='dm'
+    # )
+    # a.plot('acc', lcdm, matter)
 
-    # acc
-    a = auto_optimize(
-        'nosave', it_num=3, search_method='acc'
-    )
-    a.plot('acc', lcdm, matter)
+    # # acc
+    # a = auto_optimize(
+    #     'nosave', it_num=3, search_method='acc'
+    # )
+    # a.plot('acc', lcdm, matter)
 
 
 
