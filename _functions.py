@@ -128,3 +128,23 @@ def specific_function(array: list, number: int):
     kappa_chosen = float(np.array(kappa)[np.where(chi == chi_chosen)])
 
     return beta_chosen, kappa_chosen
+
+###############################################################################
+
+def timer(func):
+    """
+    Timer function to time how long a function takes to run
+    :return: float, time taken
+    """
+    def wrapper(*args, **kwargs):
+        start = time.time()
+        result = func(*args, **kwargs)
+        end = time.time()
+        delta = end - start
+        time_elapsed = delta / 60 if delta > 60 else delta
+        print('\n\t{} took {:.1f} {}'.format(
+            func.__name__, time_elapsed,
+            'seconds' if delta < 60 else 'minutes'
+        ))
+        return result
+    return wrapper
