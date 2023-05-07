@@ -3,7 +3,7 @@
 # Import
 from _icd import *
 from _functions import modified_friedmann, acceleration, dm_z_o4, rchi2,\
-                       read_model_data, specific_function
+                       read_model_data, specific_function, timer
 
 
 # Classes
@@ -1011,7 +1011,7 @@ def chi_search_both(
 ):
     pass
 
-
+@timer
 def auto_optimize(
         fname: str, it_num: int = 2, search_method: str = 'acc',
         length: int = 20, beta_lim_init: tuple = (1, 4), 
@@ -1093,7 +1093,7 @@ def auto_optimize(
     lcdm.norm(matter=matter)
 
     # Limits on initial search
-    li = 0.7
+    li = 0.6
     ui = 1 + (1 - li)
     # Limits on middle search  
     lm = 0.7
@@ -1108,7 +1108,7 @@ def auto_optimize(
 
     # Initial search
     if verbose:
-        print('Running initial search (1/{}) for '
+        print('\nRunning initial search (1/{}) for '
               'beta ∈ ({:.3f}, {:.3f}) & kappa ∈ ({:.3f}, {:.3f})'
               ''.format(
                     it_num, beta_lim_init[0], beta_lim_init[1],
