@@ -3,6 +3,7 @@
 # Imports
 from scipy.integrate import solve_ivp, odeint, quad
 from scipy.stats import chisquare
+import time
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.cm
