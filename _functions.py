@@ -30,17 +30,19 @@ def modified_friedmann(time, var: list, m: float, r: float, l: float, k: float,
     dvar = np.zeros(2)
 
     dvar[0] = var[1]           
-    g_lcdm = (var[1]**2 * var[0] * m**-1 -
-              r * m**-1 * var[0]**-1 -
-              l * m**-1 * var[0]**3 -
-              1)
+    g_lcdm = (
+        var[1]**2 * var[0] * m**-1 - 
+        r * m**-1 * var[0]**-1 -
+        l * m**-1 * var[0]**3 - 
+        1
+    )
 
-    numerator = (np.sign(k) * np.abs(k)**p * np.abs(g_lcdm)**(1 - p) - 
-                 g_lcdm * var[1]**2 - var[1]**4 * var[0] * p * m**-1 - 
-                 r * m**-1 * var[1]**2 * var[0]**-1 * p + 
-                 3 * var[1]**2 * var[0]**3 * l * m**-1 * p)
-
-    # numerator = 10
+    numerator = (
+        np.sign(k) * np.abs(k)**p * np.abs(g_lcdm)**(1 - p) - 
+        g_lcdm * var[1]**2 - var[1]**4 * var[0] * p * m**-1 - 
+        r * m**-1 * var[1]**2 * var[0]**-1 * p + 
+        3 * var[1]**2 * var[0]**3 * l * m**-1 * p
+    )
     
     denominator = 2 * var[1]**2 * var[0]**2 * p * m**-1 - var[0] * g_lcdm
     dvar[1] = numerator / denominator
@@ -80,11 +82,13 @@ def acceleration(
 
     g = ap**2 * a * m**-1 - r * m**-1 * a**-1 - l * m**-1 * a**3 - 1
 
-    numerator = (np.sign(k) * np.abs(k)**p * np.sign(g) * np.abs(g)**(1-p) -
-                 g * ap**2 -
-                 ap**4 * a * p * m**-1 -
-                 r * m**-1 * ap**2 * a**-1 * p +
-                 3 * ap**2 * a**3 * l * m**-1 * p)
+    numerator = (
+        np.sign(k) * np.abs(k)**p * np.sign(g) * np.abs(g)**(1-p) -
+        g * ap**2 - 
+        ap**4 * a * p * m**-1 -
+        r * m**-1 * ap**2 * a**-1 * p +
+        3 * ap**2 * a**3 * l * m**-1 * p
+    )
     
     denominator = (2 * ap**2 * a**2 * p * m**-1) - (a * g)
 
@@ -102,10 +106,12 @@ def dm_z_o4(z: list = z_sn, q: float = -0.55, j: float = 1., s: float = 0.):
     :param s: snap
     :return: array, distance modulus
     """
-    dl =  (c * z / h0 * (1 + 0.5 * z * (1 - q) - 
-                         (1/6) * z**2 * (1 - q - 3 * q**2 + j) + 
-                         (1/24) * z**3 * (2 - 2 * q - 15 * q**2 - 15 * q**3 + 
-                                          5 * j + 10*j*q + s)))
+    dl =  (
+        c * z / h0 * (1 + 0.5 * z * (1 - q) - 
+                      (1/6) * z**2 * (1 - q - 3 * q**2 + j) + 
+                      (1/24) * z**3 * (2 - 2 * q - 15 * q**2 - 15 * q**3 + 
+                                       5 * j + 10*j*q + s))
+    )
 
     return 5 * np.log10(dl) + 25
 
@@ -211,16 +217,16 @@ def timer(func):
     function
         wrapper
     """
-    
+
     def wrapper(*args, **kwargs):
         start = time.time()
         result = func(*args, **kwargs)
         end = time.time()
         delta = end - start
         time_elapsed = delta / 60 if delta > 60 else delta
-        print('\n\t{} took {:.1f} {}\n'.format(
-            func.__name__, time_elapsed,
-            'seconds' if delta < 60 else 'minutes'
+        print('\n\t{} took {} m {} s\n'.format(
+            func.__name__, int(time_elapsed) if delta > 60 else 0,
+            round(time_elapsed % 1 * 60, 2) if delta > 60 else round(delta, 1)
         ))
         return result
     

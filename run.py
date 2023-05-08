@@ -127,14 +127,11 @@ def main():
     # m1.plot('dm', lcdm, matter)
 
     # int no effort
-    a = auto_optimize(
-        'auto-opt-6-acc', it_num=3, dm_effort=False, dm_method='int',
-        double_eval=False, search_method='acc',
-        beta_lim_init=(2.8, 3.0), kappa_lim_init=(0.5, 0.6),
-        length=50,
-    )
-    a.distance_modulus()
-    a.plot('dm', lcdm, matter)
+    # a = auto_optimize(
+    #     'auto-opt-8-acc', it_num=4, dm_effort=False, dm_method='int',
+    #     double_eval=False, search_method='dm', length=30,
+    # )
+    # a.plot('acc', lcdm, matter)
 
     # # int effort
     # a = auto_optimize(
@@ -228,9 +225,10 @@ def main():
 
 
     # Chi comp search
-    # space = np.linspace(0.5, 5, 100)
-    # m1 = chi_comp('k', space, beta=3., lam=0.)
-    # m1.distance_modulus()
-    # m1.plot('dm', lcdm, matter)
+    space = np.linspace(0.4, 0.8, 10000)
+    m1 = chi_comp('k', space, beta=2.900783794692044, lam=0., method='acc')
+    m1.distance_modulus()
+    m1.plot('acc', lcdm, matter)
+    m1.plot('dm', lcdm, matter)
 
 main()
