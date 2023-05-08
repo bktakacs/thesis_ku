@@ -5,15 +5,28 @@ def modified_friedmann(time, var: list, m: float, r: float, l: float, k: float,
                        p: float):
     """
     friedmann equations from alternative model
-    :param time: time
-    :param var: array of variables a, adot
-    :param m: matter density
-    :param r: radiation density
-    :param l: lambda density
-    :param k: constant
-    :param p: power
-    :return: array of derivatives [a, adot]
+    Parameters
+    ----------
+    time : float
+        time
+    var : list
+        list of variables [a, adot]
+    m : float
+        matter density
+    r : float
+        radiation density
+    l : float
+        lambda density
+    k : float
+        constant
+    p : float
+        power
+    Returns
+    -------
+    list
+        list of derivatives [a, adot]
     """
+
     dvar = np.zeros(2)
 
     dvar[0] = var[1]           
@@ -36,8 +49,35 @@ def modified_friedmann(time, var: list, m: float, r: float, l: float, k: float,
 
 ###############################################################################
 
-def acceleration(a: list, ap: list, m: float, r: float, l: float, k: float,
-                 p: float):
+def acceleration(
+        a: list, ap: list, m: float, r: float, l: float, k: float, p: float
+):
+    """
+    Acceleration as a function of scale factor and its derivative
+
+    Parameters
+    ----------
+    a : list
+        scale factor
+    ap : list
+        derivative of scale factor
+    m : float
+        matter density
+    r : float
+        radiation density
+    l : float
+        lambda density
+    k : float
+        constant
+    p : float
+        power
+
+    Returns
+    -------
+    float
+        acceleration
+    """
+
     g = ap**2 * a * m**-1 - r * m**-1 * a**-1 - l * m**-1 * a**3 - 1
 
     numerator = (np.sign(k) * np.abs(k)**p * np.sign(g) * np.abs(g)**(1-p) -
@@ -74,11 +114,22 @@ def dm_z_o4(z: list = z_sn, q: float = -0.55, j: float = 1., s: float = 0.):
 def rchi2(obs: list, exp: list = sndat, method: str = 'formula'):
     """
     Reduced chi squared
-    :param obs: observed data
-    :param exp: expected data
-    :param method: method to calculate chi squared
-    :return: float, reduced chi squared
+
+    Parameters
+    ----------
+    obs : list
+        observed data
+    exp : list
+        expected data
+    method : str
+        method to calculate chi squared
+
+    Returns
+    -------
+    float
+        reduced chi squared
     """
+
     if method == 'formula':
         chi = np.sum((obs - exp)**2)
         answer = chi / len(obs)
@@ -98,9 +149,17 @@ def read_model_data(fname: str, fdir: str = '../../Data/model_data/'):
     """
     Read model data quickly
 
-    :param fname: string, name of file
-    :param fdir: string, directory of file
-    :return: pandas dataframe, data
+    Parameters
+    ----------
+    fname : str
+        name of file
+    fdir : str
+        directory of file
+
+    Returns
+    -------
+    pandas dataframe
+        data
     """
 
     file = pd.read_csv(fdir+fname, delim_whitespace=True, comment='#')
@@ -113,10 +172,17 @@ def specific_function(array: list, number: int):
     """
     Function to do something specific and time consuming
 
-    :param array: array of data
-    :param number: which sorted chi^2 value to choose from which beta and kappa
-    are returned
-    :return: float, beta, kappa
+    Parameters
+    ----------
+    array : list
+        list of data
+    number : int
+        number to choose from array
+
+    Returns
+    -------
+    float
+        number chosen from array
     """
 
     chi = array['chi']
@@ -133,18 +199,31 @@ def specific_function(array: list, number: int):
 
 def timer(func):
     """
-    Timer function to time how long a function takes to run
-    :return: float, time taken
+    Decorator to time functions
+
+    Parameters
+    ----------
+    func : function
+        function to time
+
+    Returns
+    -------
+    function
+        wrapper
     """
+    
     def wrapper(*args, **kwargs):
         start = time.time()
         result = func(*args, **kwargs)
         end = time.time()
         delta = end - start
         time_elapsed = delta / 60 if delta > 60 else delta
-        print('\n\t{} took {:.1f} {}'.format(
+        print('\n\t{} took {:.1f} {}\n'.format(
             func.__name__, time_elapsed,
             'seconds' if delta < 60 else 'minutes'
         ))
         return result
+    
     return wrapper
+
+###############################################################################

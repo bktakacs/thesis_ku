@@ -138,6 +138,11 @@ class model():
         ----------
         matter : object
             matter class object
+
+        Returns
+        -------
+        a2norm : array
+            normalized scale factor acceleration array
         """
 
         if type(matter) != model:
@@ -159,6 +164,11 @@ class model():
         effort : bool, optional
             if True, uses the "true" method of calculating the distance
             modulus, if False, uses a faster method. The default is True.
+
+        Returns
+        -------
+        dm : array
+            distance modulus array
         
         Note on effort parameter:
         "True" way is calculating f and using the integrand function. "False"
@@ -193,18 +203,19 @@ class model():
             # calculate f
             integral_f = np.zeros_like(z)
             for index, scale in enumerate(self.a):
-                integral_f[index] = quad(lambda x, y: y**-2, 0, scale,
-                                         (self.a1[index],))[0]
+                integral_f[index] = quad(
+                    lambda x, y: y**-2, 0, scale, (self.a1[index],)
+                )[0]
             f = (self.a1 / self.a * integral_f)**(self.p)
 
             # calculate dl
-            integrand = lambda x, m, r, l, f, k: \
-                (m * (1 + x) * (1 + k * f) + r * (1 + x)**4 + l)**-0.5
+            integrand = lambda x, m, r, l, f, k: (m * (1 + x) * 
+                                    (1 + k * f) + r * (1 + x)**4 + l)**-0.5
             dl = np.zeros_like(z)
             for index, redshift in enumerate((z)):
-                dl[index] = (1 + redshift) * dh * quad(integrand, 0, redshift,
-                                                       (self.m, self.r, self.l,
-                                                        f[index], self.k))[0]
+                dl[index] = (1 + redshift) * dh * quad(
+                    integrand, 0, redshift, (self.m, self.r, self.l, f[index],
+                                                self.k))[0]
 
         else:
             # calculate E(z)
@@ -213,9 +224,8 @@ class model():
             # calculate dl
             dl = np.zeros_like(z)
             for index, redshift in enumerate(z):
-                dl[index] = (1 + redshift) * dh * quad(lambda x, y: y**-0.5, 0,
-                                                       redshift,
-                                                       (ez[index],))[0]
+                dl[index] = (1 + redshift) * dh * quad(
+                    lambda x, y: y**-0.5, 0, redshift, (ez[index],))[0]
     
         # calculate dm
         dm_int = 5 * np.log10(dl) + 25
@@ -382,6 +392,11 @@ def chi_comp(
         Taylor expansion method
     plot : bool
         if True, plots the chi^2 value as a function of the parameter space
+
+    Returns
+    -------
+    array : array
+        array of chi^2 values for the given parameter space
     """
 
     if parameter not in ('l', 'b', 'k'):
@@ -519,6 +534,11 @@ def chi_search(
         Whether to evaluate on both chi^2 values for each model.
     fdir : str, optional
         Directory to save data to. The default is '../../Data/model_data/'.
+
+    Returns
+    -------
+    model_optimized : Model
+        Model object with optimized parameters.
     """
 
     # Check inputs
@@ -761,6 +781,11 @@ def chi_search_a(
         if True, plot best fit acceleration, by default True
     fdir : str, optional
         directory to save results to, by default '../../Data/model_data/'
+
+    Returns
+    -------
+    model_optimized : model
+        model object with beta and kappa values that minimize chi^2
     """
 
     # Check inputs
@@ -894,6 +919,11 @@ def q_surface(
         if True, plot surface plot of q values
     mplot : bool
         if True, plot acceleration and dist mod of opt model
+    
+    Returns
+    -------
+    top_mod : model
+        model object of model with lowest chi^2 value
     """
 
     if (blim[0] > blim[1] or klim[0] > klim[1] or qlim[0] > qlim[1]):
@@ -1006,11 +1036,6 @@ def q_surface(
     return top_mod
 
 
-def chi_search_both(
-        
-):
-    pass
-
 @timer
 def auto_optimize(
         fname: str, it_num: int = 2, search_method: str = 'acc',
@@ -1056,6 +1081,11 @@ def auto_optimize(
         Directory to save data to.
     verbose : bool
         Whether to print progress.
+
+    Returns
+    -------
+    top_mod : Model
+        Best model from final iteration.
     """
 
     # Validate arguments

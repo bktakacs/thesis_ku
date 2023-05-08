@@ -128,10 +128,13 @@ def main():
 
     # int no effort
     a = auto_optimize(
-        'nosave', it_num=3, dm_effort=False, dm_method='int',
-        double_eval=False, search_method='dm'
+        'auto-opt-6-acc', it_num=3, dm_effort=False, dm_method='int',
+        double_eval=False, search_method='acc',
+        beta_lim_init=(2.8, 3.0), kappa_lim_init=(0.5, 0.6),
+        length=50,
     )
-    a.plot('acc', lcdm, matter)
+    a.distance_modulus()
+    a.plot('dm', lcdm, matter)
 
     # # int effort
     # a = auto_optimize(
