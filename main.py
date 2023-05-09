@@ -929,7 +929,7 @@ def chi_search_a(
 
     return top_mod
 
-
+@timer
 def q_surface(
         length: int = 20, blim: tuple = (2., 4.), klim: tuple = (1., 10.),
         qlim: tuple = (-1., 0.),lam: float = 0., dm_method: str = 'int',
@@ -969,6 +969,9 @@ def q_surface(
     if (blim[0] > blim[1] or klim[0] > klim[1] or qlim[0] > qlim[1]):
         raise Exception('blim, klim, and qlim tuples must be of form (a, b) '
                         'where a < b')
+    
+    lcdm = model()
+    matter = model(lam=0.)
 
     brange = np.linspace(np.min(blim), np.max(blim), length)
     krange = np.linspace(np.min(klim), np.max(klim), length)
@@ -1023,16 +1026,17 @@ def q_surface(
 
     for i in range(len(qred)):
         if xred[i] == np.min(xred):
-            print('   **** q = {:.3f}\tfor\tbeta = {:.3f}\tk = {:.3f}\twith'
+            print('   **** q = {:.3f}\tfor\tbeta = {:.3f}\tk = {:.3f}\twith '
                   'chi^2 = {:.4f} *****'.format(
                                         qred[i], bred[i], kred[i], xred[i]))
         else:
-            print('\tq = {:.3f}\tfor\tbeta = {:.3f}\tk = {:.3f}\twith'
+            print('\tq = {:.3f}\tfor\tbeta = {:.3f}\tk = {:.3f}\twith '
                   'chi^2 = {:.4f}'.format(
                                         qred[i], bred[i], kred[i], xred[i]))
             
     
     if splot:
+        zlim = (qlim[0]-0.5, qlim[1]+0.5)
         bplot = np.reshape((np.tile(brange, length)), (length, length)).T
         kplot = np.reshape((np.tile(krange, length)), (length, length)).T
         X, Y = np.meshgrid(bplot[:, 0], kplot[:, 0])
@@ -1042,7 +1046,7 @@ def q_surface(
         ax.set_xlabel(r'$\beta$', labelpad=15)
         ax.set_ylabel(r'$k$', labelpad=15)
         ax.set_zlabel(r'$q$')
-        ax.set_zlim([-2, 0])
+        ax.set_zlim(zlim)
         ax.set_title(r'$\beta, k, q$')
         ax.view_init(elev=20, azim=-45)
 
@@ -1051,7 +1055,7 @@ def q_surface(
         ax1.plot_surface(X, Y, q_save, rstride=1, cstride=1, antialiased=True)
         ax1.set_xlabel(r'$\beta$', labelpad=15)
         ax1.set_zlabel(r'$q$')
-        ax1.set_zlim([-2, 0])
+        ax1.set_zlim(zlim)
         ax1.set_title(r'$\beta, q$')
         ax1.view_init(elev=0, azim=-90)#, roll=0)
 
@@ -1060,18 +1064,19 @@ def q_surface(
         ax2.plot_surface(X, Y, q_save, rstride=1, cstride=1, antialiased=True)
         ax2.set_ylabel(r'$k$', labelpad=15)
         ax2.set_zlabel(r'$q$')
-        ax2.set_zlim([-2, 0])
+        ax2.set_zlim(zlim)
         ax2.set_title(r'$k, q$')
         ax2.view_init(elev=0, azim=0)
         plt.show()
 
 
     if mplot:
-        plot_mod = model(beta=bred[np.argmin(xred)],
-                         kappa=kred[np.argmin(xred)],lam=lam)                 
+        plot_mod = model(
+            beta=bred[np.argmin(xred)], kappa=kred[np.argmin(xred)], lam=lam
+        )                 
         plot_mod.distance_modulus(effort=dm_effort)
-        plot_mod.plot(which='acc', lcdm=model(), matter=model(lam=0.))
-        plot_mod.plot(which='dm', lcdm=model(), matter=model(lam=0.))
+        plot_mod.plot(which='acc', lcdm=lcdm, matter=matter)
+        plot_mod.plot(which='dm', lcdm=lcdm, matter=matter)
 
     return top_mod
 

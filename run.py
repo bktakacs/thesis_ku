@@ -42,7 +42,9 @@ from main import *
 
 
 # Testing q surface function
-# m1 = q_surface(length=30, blim=(1, 2), klim=(0.1, 7))
+m = q_surface(
+    length=50, blim=(1, 4), klim=(0.1, 5), qlim=(-0.75, -0.25)
+)
 
 
 
@@ -225,10 +227,10 @@ def main():
 
 
     # Chi comp search
-    space = np.linspace(0.4, 0.8, 10000)
-    m1 = chi_comp('k', space, beta=2.900783794692044, lam=0., method='acc')
-    m1.distance_modulus()
-    m1.plot('acc', lcdm, matter)
-    m1.plot('dm', lcdm, matter)
+    # space = np.linspace(0.4, 0.8, 10000)
+    # m1 = chi_comp('k', space, beta=2.900783794692044, lam=0., method='acc')
+    # m1.distance_modulus()
+    # m1.plot('acc', lcdm, matter)
+    # m1.plot('dm', lcdm, matter)
 
 main()
