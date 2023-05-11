@@ -42,9 +42,9 @@ from main import *
 
 
 # Testing q surface function
-m = q_surface(
-    length=50, blim=(1, 4), klim=(0.1, 5), qlim=(-0.75, -0.25)
-)
+# m = q_surface(
+#     length=50, blim=(1, 4), klim=(0.1, 5), qlim=(-0.75, -0.25)
+# )
 
 
 
@@ -111,6 +111,7 @@ def main():
     """
     Main function
     """
+
     lcdm = model()
     matter = model(lam=0.)
 
@@ -184,39 +185,38 @@ def main():
     # print(test.b, test.k, test.chi_int)
     # test.plot('dm', lcdm, matter)
 
-    # m2 = auto_optimize('auto-opt-acc-5-20', it_num=4, length=20,
-    #                    search_method='dm',
+    # m2 = auto_optimize('auto-opt-acc-6-20-x', it_num=3, length=20,
+    #                    search_method='acc',
     #                    beta_lim_init=(1, 10), kappa_lim_init=(0.1, 100),
     #                    require_decreasing_chi=True)
     # m2.distance_modulus()
     # m2.plot('acc', lcdm, matter)
 
     # Look at multiple k values
-    # beta = 2
-    # kappa = 2
+    beta = 2.900783794692044
+    # kappa = 0.5473237318686281
 
-    # klook = np.linspace(0.5, 5, 10)
+    klook = np.linspace(0.546, 0.548, 15)
     # blook = (1, 2, 3, 4, 5)
 
-    # for i in tqdm(klook):
-    #     temp_mod = model(beta=beta, kappa=i, lam=0.)
-    #     temp_mod.norm(matter=matter)
-    #     plt.plot(temp_mod.a, temp_mod.a2norm, label='kappa = {}'.format(i))
+    for i in tqdm(klook):
+        temp_mod = model(beta=beta, kappa=i, lam=0.)
+        plt.plot(temp_mod.a, temp_mod.a2norm, label='kappa = {}'.format(i))
 
     # # for i in tqdm(blook):
     # #     temp_mod = model(beta=i, kappa=kappa, lam=0.)
-    # #     temp_mod.norm(matter=matter)
     # #     plt.plot(temp_mod.a, temp_mod.a2norm, label='beta = {}'.format(i))
 
-    # plt.text(x=0.01, y=-1.6, s=r'$\beta = {}$'.format(beta))
-    # plt.xlabel(r'$a$')
-    # plt.ylabel(r'$\ddot{a}$')
-    # plt.ylim([-5, 2])
-    # plt.legend(loc='lower left')
-    # plt.grid()
-    # plt.tick_params(axis='both', which='both', direction='in', bottom=True,
-    #                 top=True, left=True, right=True)
-    # plt.show()
+    plt.plot(lcdm.a, lcdm.a2norm, label='LCDM', c='k', ls='--')
+    plt.text(x=0.01, y=-1.6, s=r'$\beta = {}$'.format(beta))
+    plt.xlabel(r'$a$')
+    plt.ylabel(r'$\ddot{a}$')
+    plt.ylim([-5, 2])
+    plt.legend(loc='lower left', fontsize=8)
+    plt.grid()
+    plt.tick_params(axis='both', which='both', direction='in', bottom=True,
+                    top=True, left=True, right=True)
+    plt.show()
 
     # Read model data
     # data = read_model_data('test_again.txt')
@@ -227,10 +227,10 @@ def main():
 
 
     # Chi comp search
-    # space = np.linspace(0.4, 0.8, 10000)
+    # space = np.linspace(0.5, 0.6, 1000)
     # m1 = chi_comp('k', space, beta=2.900783794692044, lam=0., method='acc')
     # m1.distance_modulus()
-    # m1.plot('acc', lcdm, matter)
-    # m1.plot('dm', lcdm, matter)
+    # m1.plot('acc')
+    # m1.plot('dm')
 
 main()

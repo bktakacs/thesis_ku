@@ -22,7 +22,7 @@ class model():
     def __init__(
             self, a_start: float = 1e-3, mat: float = mat0, rad: float = rad0,
             lam: float = lam0, beta: float = 3., kappa: float = 0.,
-            n: float = 2, xaxis: str = 'a', xmax: float = 1.5,
+            n: float = 1, xaxis: str = 'a', xmax: float = 1.5,
             xlen: int = 50000
     ):
         """
@@ -68,7 +68,7 @@ class model():
         self.r = rad
         self.l = lam
         self.b = beta
-        self.k = kappa  # nice
+        self.k = kappa
         self.axis = xaxis
 
         # gamma and p variables used in acceleration equation
@@ -126,28 +126,26 @@ class model():
         self.j = self.a3[-1] * self.a[-1]**2 * self.a1[-1]**-3 # jerk j
         self.s = self.a4[-1] * self.a[-1]**3 * self.a1[-1]**-4 # snap s
 
+        if (self.b != 3. or self.k != 0. or lam != 0.):
+            self.norm()
 
-    def norm(
-            self, matter: object
-    ):
+
+    def norm(self):
         """
         norm() method which normalizes the scale factor acceleration
         to that of a matter only model
 
         Parameters
         ----------
-        matter : object
-            matter class object
+        None
 
         Returns
         -------
         a2norm : array
-            normalized scale factor acceleration array
+            scale factor acceleration normalized to matter only model
         """
 
-        if type(matter) != model:
-            raise TypeError("matter must be a class object")
-
+        matter = model(lam=0.)
         self.a2norm = self.a2 / np.interp(self.a, matter.a, matter.a2)
 
     
@@ -254,9 +252,12 @@ class model():
         self.chi_tay = np.nan if np.isnan(self.dm_tay).all() \
                                 else rchi2(obs=self.dm_tay)
 
+        lcdm = model()
+        self.chi_acc = np.interp(lcdm.a, self.a, self.a2norm)
+
 
     def plot(
-            self, which: str, lcdm: object, matter: object
+            self, which: str, 
     ):
         """
         This method plots the acceleration of the scale factor or the distance
@@ -279,15 +280,9 @@ class model():
         if which not in ('acc', 'dm'):
             raise Exception('Bad input for "which" in "plot" method in "model"'
                             ' class. Input must be "acc" or "dm".')
-        
-        if type(lcdm) != model or type(matter) != model:
-            raise Exception('Bad input for "lcdm" and "matter" in "plot" '
-                            'method in "model" class. Input must be a model '
-                            'object.')
 
         # normalize acceleration
-        self.norm(matter)
-        lcdm.norm(matter)
+        lcdm = model()
 
         x_mod = self.a if self.axis == 'a' else self.t
         x_lcdm = lcdm.a if lcdm.axis == 'a' else lcdm.t
@@ -364,7 +359,7 @@ class model():
 @timer
 def chi_comp(
         parameter: str, space: list, method: str = 'dm', 
-        beta: float = 3., kappa: float = 0., lam: float = lam0,
+        beta: float = 3., kappa: float = 0., lam: float = 0.,
         dm_effort: bool = False, dm_method: str = 'int', plot: bool = True
 ):
     """
@@ -415,14 +410,12 @@ def chi_comp(
     acc = True if method == 'acc' else False
     matter = model(lam=0.)
     lcdm = model()
-    lcdm.norm(matter)
     array = np.zeros_like(space)
 
     if parameter == 'l':
         for index, value in enumerate(tqdm(space)):
             tmod = model(lam=value, beta=beta, kappa=kappa)
             if acc:
-                tmod.norm(matter)
                 tmod_a2norm_int = np.interp(lcdm.a, tmod.a, tmod.a2norm)
                 array[index] = rchi2(obs=lcdm.a2norm, exp=tmod_a2norm_int)
             else:
@@ -445,7 +438,6 @@ def chi_comp(
         for index, value in enumerate(tqdm(space)):
             tmod = model(lam=lam, beta=value, kappa=kappa)
             if acc:
-                tmod.norm(matter)
                 tmod_a2norm_int = np.interp(lcdm.a, tmod.a, tmod.a2norm)
                 array[index] = rchi2(obs=lcdm.a2norm, exp=tmod_a2norm_int)
             else:
@@ -469,7 +461,6 @@ def chi_comp(
         for index, value in enumerate(tqdm(space)):
             tmod = model(lam=lam, beta=beta, kappa=value)
             if acc:
-                tmod.norm(matter)
                 tmod_a2norm_int = np.interp(lcdm.a, tmod.a, tmod.a2norm)
                 array[index] = rchi2(obs=lcdm.a2norm, exp=tmod_a2norm_int)
             else:
@@ -607,7 +598,6 @@ def chi_search(
     # Iterate over all (b, k), store chi value for each
     for index, param in enumerate(itertools.product(brange, krange)):
         tmod = model(lam=lam, beta=param[0], kappa=param[1])
-        tmod.norm(matter=matter)
         # if model is not physical, store nan
         if (np.max(tmod.a2norm) > 3 or np.min(tmod.a2norm) < -10):
             chival_int[index] = np.nan
@@ -790,7 +780,6 @@ def chi_search(
     model_optimized = model(beta=beta_low, kappa=kappa_low, lam=lam)
     model_optimized.distance_modulus(effort=dm_effort)
     model_optimized.chi_value()
-    model_optimized.norm(matter)
     
     return model_optimized
 
@@ -851,17 +840,11 @@ def chi_search_a(
     # Initialize some things
     matter = model(lam=0.)
     lcdm = model()
-    lcdm.norm(matter)
     nan_count = 0
-    # top_mod = model(lam=lam, beta=blim[0], kappa=klim[0])
-    # top_mod.norm(matter=matter)
-    # top_mod_a2norm_interp = np.interp(lcdm.a, top_mod.a, top_mod.a2norm)
-    # running_chi = rchi2(top_mod_a2norm_interp, lcdm.a2norm)
 
     # Iterate over all combinations of beta and kappa
     for index, param in enumerate(itertools.product(brange, krange)):
         tmod = model(lam=lam, beta=param[0], kappa=param[1])
-        tmod.norm(matter=matter)
         if (np.max(tmod.a2norm) > 3 or np.min(tmod.a2norm) < -10):
             chival[index] = np.nan
             nan_count += 1
@@ -881,10 +864,8 @@ def chi_search_a(
     kappa_low = np.tile(krange, length)[lowest]
 
     top_mod = model(beta=beta_low, kappa=kappa_low, lam=lam)
-    top_mod.chi_acc = chi_low
     top_mod.distance_modulus()
     top_mod.chi_value()
-    top_mod.norm(matter=matter)
 
     # Print results
     print('The lowest chi^2 value is {:.5f} for beta = {:.3f} & mu = {:.3f} in'
@@ -1162,11 +1143,6 @@ def auto_optimize(
         raise ValueError('beta_lim_init[0] must be greater than or equal to 1 '
                          'otherwise integrator will fail')
     
-    # Some initializations for later
-    matter = model(lam=0.)
-    lcdm = model()
-    lcdm.norm(matter=matter)
-
     # Limits on initial search
     li = 0.6
     ui = 1 + (1 - li)
