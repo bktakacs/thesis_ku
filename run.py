@@ -193,30 +193,30 @@ def main():
     # m2.plot('acc', lcdm, matter)
 
     # Look at multiple k values
-    beta = 2.900783794692044
-    # kappa = 0.5473237318686281
+    # beta = 2.900783794692044
+    # # kappa = 0.5473237318686281
 
-    klook = np.linspace(0.546, 0.548, 15)
-    # blook = (1, 2, 3, 4, 5)
+    # klook = np.linspace(0.5, 0.6, 20)
+    # # blook = (1, 2, 3, 4, 5)
 
-    for i in tqdm(klook):
-        temp_mod = model(beta=beta, kappa=i, lam=0.)
-        plt.plot(temp_mod.a, temp_mod.a2norm, label='kappa = {}'.format(i))
+    # for i in tqdm(klook):
+    #     temp_mod = model(beta=beta, kappa=i, lam=0.)
+    #     plt.plot(temp_mod.a, temp_mod.a2norm, label='kappa = {}'.format(i))
 
-    # # for i in tqdm(blook):
-    # #     temp_mod = model(beta=i, kappa=kappa, lam=0.)
-    # #     plt.plot(temp_mod.a, temp_mod.a2norm, label='beta = {}'.format(i))
+    # # # for i in tqdm(blook):
+    # # #     temp_mod = model(beta=i, kappa=kappa, lam=0.)
+    # # #     plt.plot(temp_mod.a, temp_mod.a2norm, label='beta = {}'.format(i))
 
-    plt.plot(lcdm.a, lcdm.a2norm, label='LCDM', c='k', ls='--')
-    plt.text(x=0.01, y=-1.6, s=r'$\beta = {}$'.format(beta))
-    plt.xlabel(r'$a$')
-    plt.ylabel(r'$\ddot{a}$')
-    plt.ylim([-5, 2])
-    plt.legend(loc='lower left', fontsize=8)
-    plt.grid()
-    plt.tick_params(axis='both', which='both', direction='in', bottom=True,
-                    top=True, left=True, right=True)
-    plt.show()
+    # plt.plot(lcdm.a, lcdm.a2norm, label='LCDM', c='k', ls='--')
+    # plt.text(x=0.01, y=-1.6, s=r'$\beta = {}$'.format(beta))
+    # plt.xlabel(r'$a$')
+    # plt.ylabel(r'$\ddot{a}$')
+    # plt.ylim([-5, 2])
+    # plt.legend(loc='lower left', fontsize=8)
+    # plt.grid()
+    # plt.tick_params(axis='both', which='both', direction='in', bottom=True,
+    #                 top=True, left=True, right=True)
+    # plt.show()
 
     # Read model data
     # data = read_model_data('test_again.txt')
@@ -232,5 +232,12 @@ def main():
     # m1.distance_modulus()
     # m1.plot('acc')
     # m1.plot('dm')
+
+    m = chi_search(
+        'nosave', length=20, blim=(1.7541915731156146, 2.6312873596734216), 
+        klim=(2.124624580842688, 3.1869368712640322)
+    )
+    m.plot('acc')
+    m.plot('dm')
 
 main()
