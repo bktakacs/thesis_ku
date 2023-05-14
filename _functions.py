@@ -224,9 +224,9 @@ def timer(func):
         end = time.time()
         delta = end - start
         time_elapsed = delta / 60 if delta > 60 else delta
-        print('\n\t{} took {} m {} s\n'.format(
+        print('\n\t{} took {:2.0f} m {:2.5f} s\n'.format(
             func.__name__, int(time_elapsed) if delta > 60 else 0,
-            round(time_elapsed % 1 * 60, 2) if delta > 60 else round(delta, 1)
+            time_elapsed % 1 * 60 if delta > 60 else delta
         ))
         return result
     
