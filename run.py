@@ -233,9 +233,9 @@ def main():
     # m1.plot('acc')
     # m1.plot('dm')
 
-    m = chi_search(
+    m = chi_search_a(
         'nosave', length=20, blim=(1.7541915731156146, 2.6312873596734216), 
-        klim=(2.124624580842688, 3.1869368712640322)
+        klim=(2.124624580842688, 3.1869368712640322), 
     )
     m.plot('acc')
     m.plot('dm')
