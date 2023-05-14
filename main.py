@@ -155,7 +155,8 @@ class model():
         # only calculate chi^2 if we are not LCDM
         if (self.b != 3. or self.k != 0. or self.l != lam0):
             lcdm = model()
-            self.chi_acc = np.interp(lcdm.a, self.a, self.a2norm)
+            a2norm_intp = np.interp(lcdm.a, self.a, self.a2norm)
+            self.chi_acc = rchi2(obs=a2norm_intp, exp=lcdm.a2norm)
 
     
     def distance_modulus(
