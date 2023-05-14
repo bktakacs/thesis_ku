@@ -126,6 +126,7 @@ class model():
         self.j = self.a3[-1] * self.a[-1]**2 * self.a1[-1]**-3 # jerk j
         self.s = self.a4[-1] * self.a[-1]**3 * self.a1[-1]**-4 # snap s
 
+        # only normalize if not matter only model
         if (self.b != 3. or self.k != 0. or lam != 0.):
             self.norm()
 
@@ -133,7 +134,8 @@ class model():
     def norm(self):
         """
         norm() method which normalizes the scale factor acceleration
-        to that of a matter only model
+        to that of a matter only model. Also calculates chi^2 compared to
+        LCDM acceleration
 
         Parameters
         ----------
@@ -143,10 +145,17 @@ class model():
         -------
         a2norm : array
             scale factor acceleration normalized to matter only model
+        chi_acc : float
+            chi^2 of scale factor acceleration compared to LCDM
         """
 
         matter = model(lam=0.)
         self.a2norm = self.a2 / np.interp(self.a, matter.a, matter.a2)
+        
+        # only calculate chi^2 if we are not LCDM
+        if (self.b != 3. or self.k != 0. or self.l != lam0):
+            lcdm = model()
+            self.chi_acc = np.interp(lcdm.a, self.a, self.a2norm)
 
     
     def distance_modulus(
@@ -251,9 +260,6 @@ class model():
                                 else rchi2(obs=self.dm_int)
         self.chi_tay = np.nan if np.isnan(self.dm_tay).all() \
                                 else rchi2(obs=self.dm_tay)
-
-        lcdm = model()
-        self.chi_acc = np.interp(lcdm.a, self.a, self.a2norm)
 
 
     def plot(
