@@ -164,10 +164,14 @@ def main():
     # a.plot('acc', lcdm, matter)
 
 
-    m1 = chi_search('14may-1', length=30, blim=(1, 4), klim=(0.1, 100))
-    m1.distance_modulus()
-    m1.plot('acc')
-    m1.plot('dm')
+    # m1 = chi_search('14may-2', length=50, blim=(1, 4), klim=(0.1, 100))
+    # m1.distance_modulus()
+    # m1.plot('acc')
+    # m1.plot('dm')
+
+    m2 = chi_search_a('14may-3', length=50, blim=(1, 4), klim=(0.1, 100))
+    # m2.distance_modulus()
+    # m2.plot('dm')
 
     # test = chi_search('nosave', dm_effort=False, dm_method='int',
     #                   double_eval=False, plot=True)
