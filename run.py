@@ -106,7 +106,7 @@ from main import *
 # test_model = chi_search_a('nosave')
 # print('Done')
 
-
+@timer
 def main():
     """
     Main function
@@ -115,11 +115,11 @@ def main():
     lcdm = model()
     matter = model(lam=0.)
 
-    # m1 = chi_search_a('saving_this_one', length=100, blim=(2.8, 3.0), 
-    #                   klim=(0.4, 0.6),)
+    # m1 = chi_search_a('nosave', length=40, blim=(2.8, 3.0), 
+    #                   klim=(0.4, 0.6), plot=False)
     # m1.distance_modulus()
-    # m1.plot('acc', lcdm, matter)
-    # m1.plot('dm', lcdm, matter)
+    # m1.plot('acc')
+    # m1.plot('dm')
 
     # m1 = auto_optimize(
     #     'auto-opt-acc-4-30', it_num=4, length=30, search_method='acc',
@@ -164,9 +164,13 @@ def main():
     # a.plot('acc', lcdm, matter)
 
 
+    m1 = chi_search('14may-1', length=30, blim=(1, 4), klim=(0.1, 100))
+    m1.distance_modulus()
+    m1.plot('acc')
+    m1.plot('dm')
 
     # test = chi_search('nosave', dm_effort=False, dm_method='int',
-    #                   double_eval=False, plot=False)
+    #                   double_eval=False, plot=True)
     # test2 = model(beta=test.b, kappa=test.k, lam=0.)
     # test.distance_modulus()
     # test.chi_value()
@@ -233,11 +237,11 @@ def main():
     # m1.plot('acc')
     # m1.plot('dm')
 
-    m = chi_search_a(
-        'nosave', length=20, blim=(1.7541915731156146, 2.6312873596734216), 
-        klim=(2.124624580842688, 3.1869368712640322), 
-    )
-    m.plot('acc')
-    m.plot('dm')
+    # m = chi_search_a(
+    #     'nosave', length=20, blim=(1.7541915731156146, 2.6312873596734216), 
+    #     klim=(2.124624580842688, 3.1869368712640322), 
+    # )
+    # m.plot('acc')
+    # m.plot('dm')
 
 main()
