@@ -23,7 +23,7 @@ class model():
             self, a_start: float = 1e-3, mat: float = mat0, rad: float = rad0,
             lam: float = lam0, beta: float = 3., kappa: float = 0.,
             n: float = 1, xaxis: str = 'a', xmax: float = 1.5,
-            xlen: int = 50000
+            xlen: int = 5000, solver: str = 'RK45'
     ):
         """
         initialization method for model class
@@ -85,15 +85,17 @@ class model():
         # time_array = np.logspace(-5, np.log10(xmax), xlen)
 
         # integrate modified friedmann equations
-        solution = solve_ivp(modified_friedmann, y0=initial_conditions,
-                             t_span=(0, xmax), t_eval=time_array,
-                             args=(self.m, self.r, self.l, self.k, self.p))
+        solution = solve_ivp(
+            modified_friedmann, y0=initial_conditions, t_span=(0, xmax),
+            t_eval=time_array, args=(self.m, self.r, self.l, self.k, self.p),
+            method=solver
+        )
         # following lines are for odeint
-        # solution = odeint(modified_friedmann, y0=initial_conditions,
-        #                   t=time_array,
-        #                   args=(self.m, self.r, self.l, self.k, self.p),
-        #                   tfirst=True)
-
+        # solution = odeint(
+        #     modified_friedmann, y0=initial_conditions, t=time_array,
+        #     args=(self.m, self.r, self.l, self.k, self.p), tfirst=True
+        # )
+    
         # extract model parameters
         self.a  = solution.y[0, :]
         self.a1 = solution.y[1, :]
@@ -792,8 +794,8 @@ def chi_search(
 
 def chi_search_a(
         fname: str, length: int = 10, blim: tuple = (2., 4.),
-        klim: tuple = (1., 10.), lam: int = 0., plot: bool = True, 
-        fdir: str = '../../Data/model_data/'
+        klim: tuple = (1., 10.), lam: int = 0., plot: bool = True,
+        round: int = 1, fdir: str = '../../Data/model_data/'
 ):
     """
     chi_search_a() function. Iterates over all combinations (beta, kappa) and
@@ -845,7 +847,6 @@ def chi_search_a(
     chival = np.zeros(length**2)
 
     # Initialize some things
-    matter = model(lam=0.)
     lcdm = model()
     nan_count = 0
 
@@ -883,22 +884,56 @@ def chi_search_a(
     
     # Plot results
     if plot:
-        plt.figure()
-        plt.plot(top_mod.a, top_mod.a2norm, c='r', ls='-', 
-                    label=r'Alt. Model, $\beta={:.2f}, k={:.2f}$'.format(
-                                                        top_mod.b, top_mod.k))
-        
-        plt.plot(lcdm.a, lcdm.a2norm, c='k', ls='--',
-                 label=r'$\Lambda$CDM Model')
+        chi_plot = np.reshape(chival, (length, length)).T
 
-        plt.xlabel(r'$a$')
-        plt.ylabel(r'$\ddot{a}/\ddot{a}_{\mathrm{M}}$')
-        plt.ylim([-5, 2])
-        plt.tick_params(axis='both', which='both', direction='in', bottom=True,
-                        top=True, left=True, right=True)
-        plt.legend(loc='lower left')
-        plt.grid()
+        fig, ax = plt.subplots()
+        cmap = matplotlib.cm.get_cmap('viridis_r').copy()
+        cmap.set_bad(color='r')
+        im = ax.imshow(chi_plot, cmap=cmap, origin='lower',
+                       interpolation='nearest', norm=LogNorm())
+        ax.text(
+            x=np.array(range(length))[np.where(brange == beta_low)],
+            y=np.array(range(length))[np.where(krange == kappa_low)],
+            s=r'$\ast$', color='k', ha='center', va='center', fontsize=20
+        )
+        ax.set_xticks(
+            np.linspace(0, length-1, 10),
+            np.round(np.linspace(brange[0], brange[-1], 10), round),
+            rotation=45, fontsize=14
+        )
+        ax.set_yticks(
+            np.linspace(0, length-1, 10),
+            np.round(np.linspace(krange[0], krange[-1], 10), round),
+            fontsize=14
+        )
+        ax.set_xlabel(r'$\beta$')
+        ax.set_ylabel(r'$k$')
+        cbar = fig.colorbar(im)
+        cbar.set_label(r'$\chi^{2}_{r}$', rotation='90')
+        ax.tick_params(
+            axis='both', which='both', direction='in', bottom=True, top=True,
+            left=True, right=True
+        )
+        ax.grid()
         plt.show()
+
+
+        # plt.figure()
+        # plt.plot(top_mod.a, top_mod.a2norm, c='r', ls='-', 
+        #             label=r'Alt. Model, $\beta={:.2f}, k={:.2f}$'.format(
+        #                                                 top_mod.b, top_mod.k))
+        
+        # plt.plot(lcdm.a, lcdm.a2norm, c='k', ls='--',
+        #          label=r'$\Lambda$CDM Model')
+
+        # plt.xlabel(r'$a$')
+        # plt.ylabel(r'$\ddot{a}/\ddot{a}_{\mathrm{M}}$')
+        # plt.ylim([-5, 2])
+        # plt.tick_params(axis='both', which='both', direction='in', bottom=True,
+        #                 top=True, left=True, right=True)
+        # plt.legend(loc='lower left')
+        # plt.grid()
+        # plt.show()
 
     # Save results (maybe)
     if save:
@@ -1208,18 +1243,20 @@ def auto_optimize(
         plot=plot_notfinal, double_eval=double_eval
     )
     
+    # Get correct chi^2 value for middle model
     model_mid_chi = model_mid.chi_acc if acc \
                 else (model_mid.chi_int + model_mid.chi_tay) if double_eval \
                 else model_mid.chi_int if dm_method == 'int' \
                 else model_mid.chi_tay
     
+    # Check that chi^2 is decreasing
     if model_mid_chi > running_chi and require_decreasing_chi:
         raise Exception('model_mid has higher chi^2 than model_initial\n'
                         '\t{:.3f} > {:.3f}\n'
                         'Check initial search parameters'.format(model_mid_chi,
                                                                  running_chi))
     
-    running_chi = model_mid_chi
+    running_chi = np.copy(model_mid_chi)
 
     # More middle searches
     if it_num > 3:
@@ -1257,7 +1294,7 @@ def auto_optimize(
                                 'Check initial search parameters'.format(
                                                 model_mid_chi, running_chi))
             
-            running_chi = model_mid_chi
+            running_chi = np.copy(model_mid_chi)
 
     # Final search
     beta_lower = lf*model_mid.b if lf*model_mid.b > 1 else 1
@@ -1291,7 +1328,7 @@ def auto_optimize(
                         '\t{:.3f} > {:.3f}\nCheck initial search parameters'
                         ''.format(model_mid_chi, running_chi))
 
-    running_chi = model_fin_chi
+    running_chi = np.copy(model_fin_chi)
     
     print('After {} iterations, the best fit model has parameters '
           'beta = {:.4f} and kappa = {:.4f}\n'

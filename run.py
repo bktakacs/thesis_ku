@@ -115,6 +115,20 @@ def main():
     lcdm = model()
     matter = model(lam=0.)
 
+    klook = np.linspace(0.5, 0.6, 20)
+    # klook = (0.5363157894736842, 1)
+
+    # for i in klook:
+    #     m = model(beta=2.900783794692044, kappa=i, lam=0.)
+    #     print(i)
+    #     plt.plot(m.a, m.a2norm, label=i)
+
+    # plt.plot(lcdm.a, lcdm.a2norm, 'k--', label='LCDM')
+    # plt.legend(fontsize=8)
+    # plt.ylim(-10, 3)
+    # plt.grid()
+    # plt.show()
+
     # m1 = chi_search_a('nosave', length=40, blim=(2.8, 3.0), 
     #                   klim=(0.4, 0.6), plot=False)
     # m1.distance_modulus()
@@ -163,13 +177,18 @@ def main():
     # )
     # a.plot('acc', lcdm, matter)
 
-
-    # m1 = chi_search('14may-2', length=50, blim=(1, 4), klim=(0.1, 100))
+    # m = model(beta=2.900783794692044, kappa=0.5473237318686281, lam=0.)
+    # m.plot('acc')
+    # m.distance_modulus()
+    # m.plot('dm')
+    # m1 = chi_search('16may-3-bdf', length=50, blim=(1, 4), klim=(0.1, 100))
     # m1.distance_modulus()
     # m1.plot('acc')
     # m1.plot('dm')
 
-    m2 = chi_search_a('14may-3', length=50, blim=(1, 4), klim=(0.1, 100))
+    m = model(beta=1.94736842, kappa=9.05263158, lam=0.)
+    m.plot('acc')
+    # m2 = chi_search_a('16may-4-odeint', length=20, blim=(1, 4), klim=(1, 10))
     # m2.distance_modulus()
     # m2.plot('dm')
 
@@ -193,12 +212,12 @@ def main():
     # print(test.b, test.k, test.chi_int)
     # test.plot('dm', lcdm, matter)
 
-    # m2 = auto_optimize('auto-opt-acc-6-20-x', it_num=3, length=20,
+    # m2 = auto_optimize('auto-opt-acc-odeint-2', it_num=3, length=30,
     #                    search_method='acc',
     #                    beta_lim_init=(1, 10), kappa_lim_init=(0.1, 100),
-    #                    require_decreasing_chi=True)
+    #                    require_decreasing_chi=False)
     # m2.distance_modulus()
-    # m2.plot('acc', lcdm, matter)
+    # m2.plot('dm')
 
     # Look at multiple k values
     # beta = 2.900783794692044
