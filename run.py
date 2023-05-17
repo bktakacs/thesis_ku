@@ -115,7 +115,7 @@ def main():
     lcdm = model()
     matter = model(lam=0.)
 
-    klook = np.linspace(0.5, 0.6, 20)
+    # klook = np.linspace(0.5, 0.6, 20)
     # klook = (0.5363157894736842, 1)
 
     # for i in klook:
@@ -135,6 +135,18 @@ def main():
     # m1.plot('acc')
     # m1.plot('dm')
 
+    # m1 = chi_search(
+    #     'nosave', length=20, acc=True, solver='Radau'
+    # )
+
+    # m2 = chi_search(
+    #     'nosave', length=20, acc=True, solver='BDF'
+    # )
+    # plt.figure()
+    # plt.plot(m1.a, m1.a2norm, label='Radau')
+    # plt.plot(m2.a, m2.a2norm, label='BDF')
+    # plt.show()
+
     # m1 = auto_optimize(
     #     'auto-opt-acc-4-30', it_num=4, length=30, search_method='acc',
     #     beta_lim_init=(1, 10), kappa_lim_init=(0.1, 100),
@@ -143,39 +155,40 @@ def main():
     # m1.distance_modulus()
     # m1.plot('dm', lcdm, matter)
 
-    # int no effort
+    # # int no effort
     # a = auto_optimize(
     #     'auto-opt-8-acc', it_num=4, dm_effort=False, dm_method='int',
-    #     double_eval=False, search_method='dm', length=30,
+    #     double_eval=False, search_method='dm', length=10,
     # )
-    # a.plot('acc', lcdm, matter)
+    # a.plot('acc')
 
-    # # int effort
+    # # # int effort
     # a = auto_optimize(
     #     'nosave', it_num=3, dm_effort=True, dm_method='int',
-    #     double_eval=False, search_method='dm'
+    #     double_eval=False, search_method='dm', length=10
     # )
-    # a.plot('acc', lcdm, matter)
+    # a.plot('acc')
 
-    # # tay
+    # # # tay
     # a = auto_optimize(
     #     'nosave', it_num=3, dm_effort=False, dm_method='tay',
-    #     double_eval=False, search_method='dm'
+    #     double_eval=False, search_method='dm', length=10
     # )
-    # a.plot('acc', lcdm, matter)
+    # a.plot('acc')
 
-    # # double eval
+    # # # double eval
     # a = auto_optimize(
     #     'nosave', it_num=3, dm_effort=False, dm_method='int',
-    #     double_eval=True, search_method='dm'
+    #     double_eval=True, search_method='dm', length=10
     # )
-    # a.plot('acc', lcdm, matter)
+    # a.plot('acc')
 
-    # # acc
+    # # # acc
     # a = auto_optimize(
     #     'nosave', it_num=3, search_method='acc'
     # )
-    # a.plot('acc', lcdm, matter)
+    # a.distance_modulus()
+    # a.plot('dm')
 
     # m = model(beta=2.900783794692044, kappa=0.5473237318686281, lam=0.)
     # m.plot('acc')
@@ -186,8 +199,6 @@ def main():
     # m1.plot('acc')
     # m1.plot('dm')
 
-    m = model(beta=1.94736842, kappa=9.05263158, lam=0.)
-    m.plot('acc')
     # m2 = chi_search_a('16may-4-odeint', length=20, blim=(1, 4), klim=(1, 10))
     # m2.distance_modulus()
     # m2.plot('dm')
@@ -212,12 +223,22 @@ def main():
     # print(test.b, test.k, test.chi_int)
     # test.plot('dm', lcdm, matter)
 
-    # m2 = auto_optimize('auto-opt-acc-odeint-2', it_num=3, length=30,
-    #                    search_method='acc',
-    #                    beta_lim_init=(1, 10), kappa_lim_init=(0.1, 100),
-    #                    require_decreasing_chi=False)
-    # m2.distance_modulus()
-    # m2.plot('dm')
+    m1 = auto_optimize('auto-opt-acc-radau-4', it_num=3, length=50,
+                       search_method='acc',
+                       beta_lim_init=(1, 4), kappa_lim_init=(0.1, 50),
+                       require_decreasing_chi=False)
+    m1.distance_modulus()
+    m1.plot('acc')
+    m1.plot('dm')
+
+    m2 = auto_optimize('auto-opt-acc-radau-3', it_num=3, length=50,
+                       search_method='dm',
+                       beta_lim_init=(1, 4), kappa_lim_init=(0.1, 50),
+                       require_decreasing_chi=False)
+    m2.distance_modulus()
+    m2.plot('acc')
+    m2.plot('dm')
+
 
     # Look at multiple k values
     # beta = 2.900783794692044
