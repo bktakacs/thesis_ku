@@ -23,7 +23,7 @@ class model():
             self, a_start: float = 1e-3, mat: float = mat0, rad: float = rad0,
             lam: float = lam0, beta: float = 3., kappa: float = 0.,
             n: float = 1, xaxis: str = 'a', xmax: float = 1.5,
-            xlen: int = 5000, solver: str = 'Radau'
+            xlen: int = 5000, solver: str = 'BDF'
     ):
         """
         initialization method for model class
@@ -636,7 +636,7 @@ def chi_search(
               else np.copy(chival_tay))
 
     lowest = (np.nanargmin(chival_int + chival_tay) if double_eval else
-            np.nanargmin(chival))
+              np.nanargmin(chival))
     
     # Find beta and kappa values for lowest chi^2 value
     chi_low_int = chival[lowest]
@@ -1292,18 +1292,6 @@ def auto_optimize(
                 dm_method=dm_method, dm_effort=dm_effort, round=2,
                 plot=plot_notfinal, double_eval=double_eval, solver=solver,
             )
-            # chi_search_a(
-            #     fname='nosave', length=length,
-            #     blim=(beta_lower, um*model_mid.b),
-            #     klim=(lm*model_mid.k, um*model_mid.k),
-            #     lam=o_lambda, plot=plot_notfinal
-            # ) if acc else chi_search(
-                # fname='nosave', length=length,
-                # blim=(beta_lower, um*model_mid.b),
-                # klim=(lm*model_mid.k, um*model_mid.k),
-                # lam=o_lambda, dm_method=dm_method, dm_effort=dm_effort,
-                # round=2, plot=plot_notfinal, double_eval=double_eval
-            # )
             
             # compare chi^2 values
             model_mid_chi = model_mid.chi_acc if acc \
@@ -1311,8 +1299,6 @@ def auto_optimize(
                 else model_mid.chi_int if dm_method == 'int' \
                 else model_mid.chi_tay
             
-            # print('model mid = {:.3f}, running chi = {:.3f}'.format(model_mid_chi,
-            #                                             running_chi))
             if model_mid_chi > running_chi and require_decreasing_chi:
                 raise Exception('model_mid has higher chi^2 than previous '
                                 'iteration\n\t{:.3f} > {:.3f}\n'
@@ -1343,8 +1329,6 @@ def auto_optimize(
         else model_final.chi_int if dm_method == 'int' \
         else model_final.chi_tay
 
-    # print('model mid = {:.3f}, running chi = {:.3f}'.format(model_fin_chi,
-    #                                                     running_chi))
     if model_fin_chi > running_chi and require_decreasing_chi:
         raise Exception('model_final has higher chi^2 than model_mid\n'
                         '\t{:.3f} > {:.3f}\nCheck initial search parameters'

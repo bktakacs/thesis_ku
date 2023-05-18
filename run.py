@@ -223,17 +223,17 @@ def main():
     # print(test.b, test.k, test.chi_int)
     # test.plot('dm', lcdm, matter)
 
-    m1 = auto_optimize('auto-opt-acc-radau-4', it_num=3, length=50,
+    m1 = auto_optimize('auto-opt-acc-lsoda-6-acc', it_num=3, length=50,
                        search_method='acc',
-                       beta_lim_init=(1, 4), kappa_lim_init=(0.1, 50),
+                       beta_lim_init=(1, 4), kappa_lim_init=(0.1, 10),
                        require_decreasing_chi=False)
     m1.distance_modulus()
     m1.plot('acc')
     m1.plot('dm')
 
-    m2 = auto_optimize('auto-opt-acc-radau-3', it_num=3, length=50,
+    m2 = auto_optimize('auto-opt-acc-lsoda-6-dm', it_num=3, length=50,
                        search_method='dm',
-                       beta_lim_init=(1, 4), kappa_lim_init=(0.1, 50),
+                       beta_lim_init=(1, 4), kappa_lim_init=(0.1, 10),
                        require_decreasing_chi=False)
     m2.distance_modulus()
     m2.plot('acc')
