@@ -136,8 +136,13 @@ def main():
     # m1.plot('dm')
 
     # m1 = chi_search(
-    #     'nosave', length=20, acc=True, solver='Radau'
+    #     'save-for-paper', length=50, acc=True
     # )
+    # m1.plot('acc')
+    # m1.distance_modulus()
+    # m1.plot('dm')
+    # m1.chi_value()
+    # print(m1.b, m1.k, m1.chi_int, m1.chi_tay, m1.chi_acc)
 
     # m2 = chi_search(
     #     'nosave', length=20, acc=True, solver='BDF'
@@ -223,22 +228,28 @@ def main():
     # print(test.b, test.k, test.chi_int)
     # test.plot('dm', lcdm, matter)
 
-    m1 = auto_optimize('auto-opt-acc-lsoda-6-acc', it_num=3, length=50,
-                       search_method='acc',
-                       beta_lim_init=(1, 4), kappa_lim_init=(0.1, 10),
-                       require_decreasing_chi=False)
-    m1.distance_modulus()
-    m1.plot('acc')
-    m1.plot('dm')
+    # m1 = auto_optimize('auto-opt-acc-lsoda-6-acc', it_num=3, length=50,
+    #                    search_method='acc',
+    #                    beta_lim_init=(1, 4), kappa_lim_init=(0.1, 10),
+    #                    require_decreasing_chi=False)
+    # m1.distance_modulus()
+    # m1.plot('acc')
+    # m1.plot('dm')
 
-    m2 = auto_optimize('auto-opt-acc-lsoda-6-dm', it_num=3, length=50,
-                       search_method='dm',
-                       beta_lim_init=(1, 4), kappa_lim_init=(0.1, 10),
-                       require_decreasing_chi=False)
-    m2.distance_modulus()
-    m2.plot('acc')
-    m2.plot('dm')
+    # m2 = auto_optimize('auto-opt-acc-lsoda-6-dm', it_num=3, length=50,
+    #                    search_method='dm',
+    #                    beta_lim_init=(1, 4), kappa_lim_init=(0.1, 10),
+    #                    require_decreasing_chi=False)
+    # m2.distance_modulus()
+    # m2.plot('acc')
+    # m2.plot('dm')
 
+    # m1 = auto_optimize(fname='auto-opt-dbl-bdf-7', it_num=4, length=50,
+    #                    search_method='dm', double_eval=True)
+    # m1.distance_modulus()
+    # m1.plot('acc')
+    # m1.plot('dm')
+    # print(m1.b, m1.k, m1.chi_int, m1.chi_tay, m1.chi_acc)
 
     # Look at multiple k values
     # beta = 2.900783794692044
