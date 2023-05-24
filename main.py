@@ -419,76 +419,41 @@ def chi_comp(
                         'Inputs are "dm" or "acc".')
     
     acc = True if method == 'acc' else False
-    lcdm = model()
     array = np.zeros_like(space)
 
-    if parameter == 'l':
-        for index, value in enumerate(tqdm(space)):
-            tmod = model(lam=value, beta=beta, kappa=kappa)
-            if acc:
-                tmod_a2norm_int = np.interp(lcdm.a, tmod.a, tmod.a2norm)
-                array[index] = rchi2(obs=lcdm.a2norm, exp=tmod_a2norm_int)
-            else:
-                tmod.distance_modulus(effort=dm_effort)
-                tmod.chi_value()
-                array[index] = tmod.chi_int if dm_method == 'int' \
-                                            else tmod.chi_tay
-        
-        model_optimized = model(
-            lam=space[np.argmin(array)], beta=beta, kappa=kappa
+    for index, value in enumerate(tqdm(space)):
+        temp_mod = model(
+            lam=value if parameter == 'l' else lam,
+            beta=value if parameter == 'b' else beta,
+            kappa=value if parameter == 'k' else kappa,
         )
-
-        print('The lowest chi^2 value is {:.3f} for beta = {:.3f}, k = {:.3f}'
-              ' and Omg_Lambda = {:.3f} \nfor Omg_Lambda in the range '
-              '[{:.1f}, {:.1f}]'.format(
-                        np.min(array), beta, kappa, space[np.argmin(array)],
-                        space[0], space[-1]))
-
-    elif parameter == 'b':
-        for index, value in enumerate(tqdm(space)):
-            tmod = model(lam=lam, beta=value, kappa=kappa)
-            if acc:
-                tmod_a2norm_int = np.interp(lcdm.a, tmod.a, tmod.a2norm)
-                array[index] = rchi2(obs=lcdm.a2norm, exp=tmod_a2norm_int)
-            else:
-                tmod.distance_modulus(effort=dm_effort)
-                tmod.chi_value()
-                array[index] = tmod.chi_int if dm_method == 'int' \
-                                            else tmod.chi_tay
+        if (np.max(temp_mod.a2norm) > 3) or (np.min(temp_mod.a2norm) < -10):
+            array[index] = np.nan
+        elif acc:
+            array[index] = temp_mod.chi_acc
+        else:
+            temp_mod.distance_modulus(effort=dm_effort)
+            temp_mod.chi_value()
+            array[index] = (temp_mod.chi_int if dm_method == 'int'
+                            else temp_mod.chi_tay)
         
-        model_optimized = model(
-            lam=lam, beta=space[np.argmin(array)], kappa=kappa
-        )
+    model_optimized = model(
+        lam=space[np.nanargmin(array)] if parameter == 'l' else lam,
+        beta=space[np.nanargmin(array)] if parameter == 'b' else beta,
+        kappa=space[np.nanargmin(array)] if parameter == 'k' else kappa,
+    )
+    model_optimized.distance_modulus(effort=dm_effort)
+    model_optimized.chi_value()
 
-        print('The lowest chi^2 value is {:.3f} for beta = {:.3f}, k = {:.3f}'
-              ' and Omg_Lambda = {:.3f}\nfor beta in the range [{:.1f}, {:.1f}]'
-                ''.format(
-                    np.min(array), space[np.argmin(array)], kappa, lam, 
-                    space[0], space[-1]
-                ))
-    
-    elif parameter == 'k':
-        for index, value in enumerate(tqdm(space)):
-            tmod = model(lam=lam, beta=beta, kappa=value)
-            if acc:
-                tmod_a2norm_int = np.interp(lcdm.a, tmod.a, tmod.a2norm)
-                array[index] = rchi2(obs=lcdm.a2norm, exp=tmod_a2norm_int)
-            else:
-                tmod.distance_modulus(effort=dm_effort)
-                tmod.chi_value()
-                array[index] = tmod.chi_int if dm_method == 'int' \
-                                            else tmod.chi_tay
-        
-        model_optimized = model(
-            lam=lam, beta=beta, kappa=space[np.argmin(array)]
+    print(
+        'The lowest chi^2 value is {:.3f} for beta = {:.5f}, k = {:.5f} and '
+        'O_Lambda = {:.1f} \nfor {} in the range [{:.1f}, {:.1f}]'.format(
+        np.nanmin(array), model_optimized.b, model_optimized.k,
+        model_optimized.l, ('O_Lambda' if parameter == 'l'
+                            else 'beta' if parameter == 'b' else 'kappa'),
+        space[0], space[-1]   
         )
-
-        print('The lowest chi^2 value is {:.5f} for beta = {:.3f}, k = {:.3f} '
-              'and Omg_Lambda = {:.3f}\nfor kappa in the range [{:.1f}, {:.1f}]'
-              ''.format(
-                    np.min(array), beta, space[np.argmin(array)], lam,
-                    space[0], space[-1]
-              ))
+    )
 
     if plot:
         xlab = (
@@ -520,9 +485,6 @@ def chi_comp(
         plt.tick_params(axis='both', which='both', direction='in',
                         bottom=True, top=True, left=True, right=True)
         plt.show()
-
-    # model_optimized.distance_modulus(effort=dm_effort)
-    # model_optimized.chi_value()
 
     return model_optimized
 
