@@ -184,10 +184,9 @@ class model():
         
         Note on effort parameter:
         "True" way is calculating f and using the integrand function. "False"
-        way method calculates E(z) as an array of data and simply integrates
-        that. It is a bit mysterious however because it uses the inverse
-        function which returns x**(-0.5) when it should just be x**(-1). For
-        some reason though, -0.5 just works.
+        way calculates E(z) simply integrates that. It is a bit mysterious
+        however because it uses a function which returns x**(-0.5) when it
+        should just be x**(-1). For some reason though, -0.5 just works.
         
         The distance modulus is calculated through two methods, here called
         integration and taylor: DM through integration is calculated through a
@@ -205,7 +204,7 @@ class model():
         """
 
         if type(effort) != bool:
-            raise ValueError('effort must be True or False')
+            raise ValueError('effort must be boolean')
 
         z = (1 / self.a - 1)
         idx0 = np.argmin(np.abs(z - z_sn[-1]))
@@ -221,13 +220,16 @@ class model():
             f = (self.a1 / self.a * integral_f)**(self.p)
 
             # calculate dl
-            integrand = lambda x, m, r, l, f, k: (m * (1 + x) * 
-                                    (1 + k * f) + r * (1 + x)**4 + l)**-0.5
+            integrand = lambda x, m, r, l, f, k: (
+                m * (1 + x) * (1 + k * f) + r * (1 + x)**4 + l
+            )**-0.5
             dl = np.zeros_like(z)
             for index, redshift in enumerate((z)):
                 dl[index] = (1 + redshift) * dh * quad(
-                    integrand, 0, redshift, (self.m, self.r, self.l, f[index],
-                                                self.k))[0]
+                    integrand, 0, redshift, (
+                        self.m, self.r, self.l, f[index], self.k
+                    )
+                )[0]
 
         else:
             # calculate E(z)
@@ -237,7 +239,8 @@ class model():
             dl = np.zeros_like(z)
             for index, redshift in enumerate(z):
                 dl[index] = (1 + redshift) * dh * quad(
-                    lambda x, y: y**-0.5, 0, redshift, (ez[index],))[0]
+                    lambda x, y: y**-0.5, 0, redshift, (ez[index],)
+                )[0]
     
         # calculate dm
         dm_int = 5 * np.log10(dl) + 25
@@ -421,15 +424,29 @@ def chi_comp(
     acc = True if method == 'acc' else False
     array = np.zeros_like(space)
 
+    # for index, value in enumerate(tqdm(space)):
+    #     temp_mod = model(
+    #         lam = value if parameter == 'l' else lam,
+    #         beta = value if parameter == 'b' else beta,
+    #         kappa = value if parameter == 'k' else kappa,
+    #     )
+    #     if (np.max(temp_mod.a2norm) > 3) or (np.min(temp_mod.a2norm) < -10):
+    #         array[index] = np.nan
+    #     elif acc:
+    #         array[index] = temp_mod.chi_acc
+    #     else:
+    #         temp_mod.distance_modulus(effort=dm_effort)
+    #         temp_mod.chi_value()
+    #         array[index] = (temp_mod.chi_int if dm_method == 'int'
+    #                         else temp_mod.chi_tay)
+
     for index, value in enumerate(tqdm(space)):
         temp_mod = model(
-            lam=value if parameter == 'l' else lam,
-            beta=value if parameter == 'b' else beta,
-            kappa=value if parameter == 'k' else kappa,
+            lam = value if parameter == 'l' else lam,
+            beta = value if parameter == 'b' else beta,
+            kappa = value if parameter == 'k' else kappa,
         )
-        if (np.max(temp_mod.a2norm) > 3) or (np.min(temp_mod.a2norm) < -10):
-            array[index] = np.nan
-        elif acc:
+        if acc:
             array[index] = temp_mod.chi_acc
         else:
             temp_mod.distance_modulus(effort=dm_effort)

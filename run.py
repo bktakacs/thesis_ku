@@ -115,6 +115,21 @@ def main():
     lcdm = model()
     matter = model(lam=0.)
 
+    # lcdm1 = model(kappa=1.)
+    # lcdm0 = model(kappa=1., n=0)
+    # lcdm12 = model(kappa=1., n=1.2)
+    lcdm1 = model(kappa=0.)
+    lcdm0 = model(kappa=0., n=0)
+    lcdm12 = model(kappa=0., n=1.2)
+
+    plt.figure()
+    plt.plot(lcdm1.a, lcdm1.a2norm, label=r'$n = 1$')
+    plt.plot(lcdm0.a, lcdm0.a2norm, label=r'$n = 0$')
+    plt.plot(lcdm12.a, lcdm12.a2norm, label=r'$n = 1.2$')
+    plt.grid()
+    plt.legend()
+    plt.show()
+
     # klook = np.linspace(0.5, 0.6, 20)
     # klook = (0.5363157894736842, 1)
 
