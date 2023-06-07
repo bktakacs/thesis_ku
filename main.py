@@ -23,7 +23,7 @@ class model():
             self, a_start: float = 1e-3, mat: float = mat0, rad: float = rad0,
             lam: float = lam0, beta: float = 3., kappa: float = 0.,
             n: float = 1, xaxis: str = 'a', xmax: float = 1.5,
-            xlen: int = 5000, solver: str = 'BDF'
+            xlen: int = 10000, solver: str = 'BDF'
     ):
         """
         initialization method for model class
@@ -292,8 +292,10 @@ class model():
         """
 
         if which not in ('acc', 'dm'):
-            raise Exception('Bad input for "which" in "plot" method in "model"'
-                            ' class. Input must be "acc" or "dm".')
+            raise Exception(
+                'Bad input for "which" in "plot" method in "model" class. ' 
+                'Input must be "acc" or "dm".'
+            )
 
         # normalize acceleration
         lcdm = model()
@@ -304,18 +306,22 @@ class model():
         if which == 'acc':
 
             plt.figure()
-            plt.plot(x_mod, self.a2norm, c='r', ls='-', 
-                     label=r'Alt. Model, $\beta={:.2f}, k={:.2f}$'
-                     ''.format(self.b, self.k))
-            
-            plt.plot(x_lcdm, lcdm.a2norm, c='k', ls='--',
-                     label=r'$\Lambda$CDM Model')
-            
+            plt.plot(
+                x_lcdm, lcdm.a2norm, c='k', ls='--', label=r'$\Lambda$CDM Model'
+            )
+            plt.plot(
+                x_mod, self.a2norm, c='r', ls='-', 
+                label=r'Alt. Model, $\beta={:.2f}, k={:.2f}$'.format(
+                    self.b, self.k
+                )
+            )
             plt.xlabel(r'$a$')
             plt.ylabel(r'$\ddot{a}/\ddot{a}_{\mathrm{M}}$')
             plt.ylim([-5, 2])
-            plt.tick_params(axis='both', which='both', direction='in',
-                            bottom=True, top=True, left=True, right=True)
+            plt.tick_params(
+                axis='both', which='both', direction='in', 
+                bottom=True, top=True, left=True, right=True
+            )
             plt.legend(loc='lower left')
             plt.grid()
             plt.show()
