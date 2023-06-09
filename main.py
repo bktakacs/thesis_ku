@@ -23,7 +23,7 @@ class model():
             self, a_start: float = 1e-3, mat: float = mat0, rad: float = rad0,
             lam: float = lam0, beta: float = 3., kappa: float = 0.,
             n: float = 1, xaxis: str = 'a', xmax: float = 1.5,
-            xlen: int = 10000, solver: str = 'BDF'
+            xlen: int = 10000, stop: int = 1, solver: str = 'BDF'
     ):
         """
         initialization method for model class
@@ -76,8 +76,9 @@ class model():
         self.p = gamma / (2 * beta)
         
         # set initial condtions from a_start
-        a1_start = np.sqrt(self.m * a_start**-1 + self.r * a_start**-2 + \
-                                                        self.l * a_start**2)
+        a1_start = np.sqrt(
+            self.m * a_start**-1 + self.r * a_start**-2 + self.l * a_start**2
+        )
         initial_conditions = (a_start, a1_start)
 
         # time array upon which to integrate
@@ -106,14 +107,17 @@ class model():
         # self.t  = np.copy(time_array)
 
         # time derivatives
-        self.a2 = acceleration(self.a, self.a1, self.m, self.r, 
-                               self.l, self.k, self.p)
+        self.a2 = acceleration(
+            self.a, self.a1, self.m, self.r, self.l, self.k, self.p
+        )
         self.a3 = np.diff(self.a2) / np.diff(self.t)
         self.a4 = np.diff(self.a3) / np.diff(self.t[:-1])
 
         # find where today is in terms of a or t
-        hoy = np.argmin(np.abs(1 - self.a)) if xaxis == 'a' else \
-                                                  np.argmin(np.abs(1 - self.t))
+        hoy = (
+            np.argmin(np.abs(stop - self.a)) if xaxis == 'a'
+            else np.argmin(np.abs(stop - self.t))
+        )
         
         # truncate arrays to today
         self.a = self.a[:hoy]
