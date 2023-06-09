@@ -769,8 +769,8 @@ def chi_search(
             'inputs:\n' +\
             '#acc = {}, length={}, blim=({}, {}), klim=({}, {}), '.format(
                 acc, length, blim[0], blim[1], klim[0], klim[1]) +\
-            'lambda={}, effort={}, dm_method={}, \n'.format(
-                lam, dm_effort, dm_method) +\
+            'lambda={}, effort={}, dm_method={}, double_eval={} \n'.format(
+                lam, dm_effort, dm_method, double_eval) +\
             '#Lowest chi^2 was with beta = {} & k = {}\n'.format(
                                                         beta_low, kappa_low)
         np.savetxt(fname=fdir+fname, X=f_save, header='chi beta kappa',
