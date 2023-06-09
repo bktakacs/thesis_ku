@@ -62,6 +62,11 @@ class model():
             length of time array for integration, chosen to be sufficiently
             large so that when we go to redshift there are values similar to
             those of the z_sn array (1e-3, 2.2). The default is 50000.
+        stop : int, optional
+            where to stop the model, either at a = 1 or t = 1. The default is
+            1.
+        solver : str, optional
+            which solver to use in solve_ivp. The default is 'BDF'.
         """
         # properties of this model
         self.m = mat
