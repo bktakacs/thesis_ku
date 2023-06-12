@@ -489,14 +489,14 @@ def chi_comp(
 
     if plot:
         xlab = (
-            r'$\beta$' if parameter == 'b' else r'$k$' if parameter == 'k' 
+            r'$\beta$' if parameter == 'b' else r'$\mu$' if parameter == 'k' 
                         else r'$\Omega_{\Lambda}$'
         )
         yscale = 'log' if np.max(array)/np.min(array) > 50 else 'linear'
         plotlab = (
-            r'$k={:.3f},\Omega_{{\Lambda}}={:.1f}$' if parameter == 'b' 
+            r'$\mu={:.3f},\Omega_{{\Lambda}}={:.1f}$' if parameter == 'b' 
             else r'$\beta={:.3f},\Omega_{{\Lambda}}={:.1f}$'
-            if parameter == 'k' else r'$\beta={:.3f},k={:.3f}$'
+            if parameter == 'k' else r'$\beta={:.3f},\mu={:.3f}$'
         )
         plotform = (kappa, lam) if parameter == 'b'\
                     else (beta, lam) if parameter == 'k'\
@@ -679,7 +679,7 @@ def chi_search(
                       np.round(np.linspace(krange[0], krange[-1], 10), round),
                       fontsize=12)
         f1.set_xlabel(r'$\beta$')
-        f1.set_ylabel(r'$k$')
+        f1.set_ylabel(r'$\mu$')
         f1.set_title(r'Integration method')
         f1.tick_params(axis='both', which='both', direction='in',
                         bottom=True, top=True, left=True, right=True)
@@ -700,7 +700,7 @@ def chi_search(
                       np.round(np.linspace(krange[0], krange[-1], 10), round),
                       fontsize=12)
         f2.set_xlabel(r'$\beta$')
-        f2.set_ylabel(r'$k$')
+        f2.set_ylabel(r'$\mu$')
         f2.set_title(r'Taylor expansion')
         f2.tick_params(axis='both', which='both', direction='in',
                        bottom=True, top=True, left=True, right=True)
@@ -720,7 +720,7 @@ def chi_search(
                       np.round(np.linspace(krange[0], krange[-1], 10), round),
                       fontsize=12)
         f3.set_xlabel(r'$\beta$')
-        f3.set_ylabel(r'$k$')
+        f3.set_ylabel(r'$\mu$')
         f3.set_title(r'Combined')
         f3.tick_params(axis='both', which='both', direction='in',
                        bottom=True, top=True, left=True, right=True)
@@ -757,7 +757,7 @@ def chi_search(
             fontsize=14
         )
         ax.set_xlabel(r'$\beta$')
-        ax.set_ylabel(r'$k$')
+        ax.set_ylabel(r'$\mu$')
         cbar = fig.colorbar(im)
         cbar.set_label(r'$\chi^{2}_{r}$', rotation='90')
         ax.tick_params(
@@ -780,7 +780,7 @@ def chi_search(
             'effort={}, dm_method={}, double_eval={}, solver={}\n'
             '#Lowest chi^2 was with beta ={} & k = {}\n'.format(
                 acc, length, blim[0], blim[1], klim[0], klim[1], lam,
-                dm_effort, dm_method, double_eval, solver
+                dm_effort, dm_method, double_eval, solver, beta_low, kappa_low
             )
         )
         
@@ -911,7 +911,7 @@ def chi_search_a(
             fontsize=14
         )
         ax.set_xlabel(r'$\beta$')
-        ax.set_ylabel(r'$k$')
+        ax.set_ylabel(r'$\mu$')
         cbar = fig.colorbar(im)
         cbar.set_label(r'$\chi^{2}_{r}$', rotation='90')
         ax.tick_params(
@@ -1071,7 +1071,7 @@ def q_surface(
         ax = fig.add_subplot(1, 3, 1, projection='3d')
         ax.plot_surface(X, Y, q_save, rstride=1, cstride=1, antialiased=True)
         ax.set_xlabel(r'$\beta$', labelpad=15)
-        ax.set_ylabel(r'$k$', labelpad=15)
+        ax.set_ylabel(r'$\mu$', labelpad=15)
         ax.set_zlabel(r'$q$')
         ax.set_zlim(zlim)
         ax.set_title(r'$\beta, k, q$')
@@ -1089,7 +1089,7 @@ def q_surface(
         ax2 = fig.add_subplot(1, 3, 3, projection='3d')
         ax2.set_xticklabels('')
         ax2.plot_surface(X, Y, q_save, rstride=1, cstride=1, antialiased=True)
-        ax2.set_ylabel(r'$k$', labelpad=15)
+        ax2.set_ylabel(r'$\mu$', labelpad=15)
         ax2.set_zlabel(r'$q$')
         ax2.set_zlim(zlim)
         ax2.set_title(r'$k, q$')
