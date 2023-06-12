@@ -774,16 +774,20 @@ def chi_search(
         f_beta = np.repeat(brange, length)
         f_kappa = np.tile(krange, length)
         f_save = np.vstack((f_chi, f_beta, f_kappa)).T
-        f_comment = '#Results of "chi_search" called with the following' +\
-            'inputs:\n' +\
-            '#acc = {}, length={}, blim=({}, {}), klim=({}, {}), '.format(
-                acc, length, blim[0], blim[1], klim[0], klim[1]) +\
-            'lambda={}, effort={}, dm_method={}, double_eval={} \n'.format(
-                lam, dm_effort, dm_method, double_eval) +\
-            '#Lowest chi^2 was with beta = {} & k = {}\n'.format(
-                                                        beta_low, kappa_low)
-        np.savetxt(fname=fdir+fname, X=f_save, header='chi beta kappa',
-                   delimiter=' ', comments=f_comment)
+        f_comment = (
+            '#Results of "chi_search" called with the following inputs:\n'
+            '#acc = {}, length={}, blim=({}, {}), klim=({}, {}), lambda={}, '
+            'effort={}, dm_method={}, double_eval={}, solver={}\n'
+            '#Lowest chi^2 was with beta ={} & k = {}\n'.format(
+                acc, length, blim[0], blim[1], klim[0], klim[1], lam,
+                dm_effort, dm_method, double_eval, solver
+            )
+        )
+        
+        np.savetxt(
+            fname=fdir+fname, X=f_save, header='chi beta kappa', delimiter=' ',
+            comments=f_comment
+        )
 
     # Return the optimized model
     model_optimized = model(beta=beta_low, kappa=kappa_low, lam=lam)
