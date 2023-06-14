@@ -263,7 +263,7 @@ class model():
             self.dm_int = np.nan
 
         # calculate dm_tay
-        self.dm_tay = dm_z_o4(z=z_sn, q=self.q, j=self.j, s=self.s)
+        self.dm_tay = dm_z_o4(q=self.q, j=self.j, s=self.s)
 
     
     def chi_value(self):
@@ -273,10 +273,10 @@ class model():
         in the chi_int and chi_tay attributes respectively
         """
 
-        self.chi_int = np.nan if np.isnan(self.dm_int).all() \
-                                else rchi2(obs=self.dm_int)
-        self.chi_tay = np.nan if np.isnan(self.dm_tay).all() \
-                                else rchi2(obs=self.dm_tay)
+        self.chi_int = (np.nan if np.isnan(self.dm_int).all()
+                        else rchi2(obs=self.dm_int))
+        self.chi_tay = (np.nan if np.isnan(self.dm_tay).all()
+                        else rchi2(obs=self.dm_tay))
 
 
     def plot(
@@ -364,17 +364,23 @@ class model():
             frame1.set_xticklabels([])
 
             frame2 = fig.add_axes((.1, .1, .8, .2))
-            plt.errorbar(z_sn, sndat - dm_astro, yerr=snerr, lw=0.5, ls='',
-                         marker='.', markersize=2, label=r'Supernova',zorder=0)
-            plt.plot(z_sn, (self.dm_int - dm_astro)/dm_astro*100, c='k',
-                     ls='-.')
-            plt.plot(z_sn, (self.dm_tay - dm_astro)/dm_astro*100, c='r',
-                     ls='--')
+            plt.errorbar(
+                z_sn, sndat - dm_astro, yerr=snerr, lw=0.5, ls='', marker='.',
+                markersize=2, label=r'Supernova',zorder=0
+            )
+            plt.plot(
+                z_sn, (self.dm_int - dm_astro)/dm_astro*100, c='k', ls='-.'
+            )
+            plt.plot(
+                z_sn, (self.dm_tay - dm_astro)/dm_astro*100, c='r', ls='--'
+            )
             plt.xlabel(r'$z$')
             plt.xscale('log')
             plt.ylabel(r'$\%\Delta{DM}_{\mathrm{flat}\Lambda\mathrm{CDM}}$')
-            plt.tick_params(axis='both', which='both', direction='in',
-                            bottom=True, top=True, left=True, right=True)
+            plt.tick_params(
+                axis='both', which='both', direction='in',
+                bottom=True, top=True, left=True, right=True
+            )
             plt.tick_params(axis='x', pad=7)
             extraticks = [-1, 1]
             plt.yticks(list(plt.yticks()[0]) + extraticks)
@@ -567,12 +573,14 @@ def chi_search(
         LogNorm().
     double_eval : bool, optional
         Whether to evaluate on both chi^2 values for each model. The default is
-        False.
+        False. Mutually exclusive with acc.
     acc : bool, optional
         Whether to evaluate on normalized acceleration instead of DM. The
-        default is False.
+        default is False. Mutually exclusive with double_eval.
     fdir : str, optional
         Directory to save data to. The default is '../../Data/model_data/'.
+    solver : str, optional
+        Which solver to use in solve_ivp. The default is 'BDF'.
 
     Returns
     -------
@@ -591,6 +599,9 @@ def chi_search(
         save = True
         fname += '.txt'
 
+    if acc and double_eval:
+        raise Exception('acc and double_eval are mutually exclusive')
+  
     if blim[0] > blim[1] or klim[0] > klim[1]:
         raise Exception('blim and klim must be increasing tuples')
 
@@ -598,7 +609,9 @@ def chi_search(
     brange = np.linspace(np.min(blim), np.max(blim), length)
     krange = np.linspace(np.min(klim), np.max(klim), length)
 
-    chival_int = chival_tay = chival_acc = np.zeros(length**2)
+    chival_int = np.zeros(length**2)
+    chival_tay = np.zeros(length**2)
+    chival_acc = np.zeros(length**2)
 
     nan_count = 0
 
@@ -625,115 +638,167 @@ def chi_search(
         raise Exception('No real chi values found')
     nan_ratio = nan_count / length**2 * 100
 
-    chival = (np.copy(chival_acc) if acc 
-              else np.copy(chival_int) if dm_method == 'int' 
-              else np.copy(chival_tay))
+    chival = (
+        np.copy(chival_acc) if acc 
+        else (chival_int + chival_tay) if double_eval
+        else np.copy(chival_int) if dm_method == 'int' 
+        else np.copy(chival_tay)
+    )
 
-    lowest = (np.nanargmin(chival_int + chival_tay) if double_eval else
-              np.nanargmin(chival))
     
     # Find beta and kappa values for lowest chi^2 value
-    chi_low_int = chival[lowest]
-    chi_low_tay = chival[lowest]
+    lowest = np.nanargmin(chival)
     chi_low = chival[lowest]
     beta_low  = np.repeat(brange, length)[lowest]
     kappa_low = np.tile(krange, length)[lowest]
 
     # Print results of function call
-    print('The lowest combination of chi^2 values is {:.5f} (int) {:.3f} (tay)'
-          'for beta = {:.3f} & mu = {:.3f} in the range\n\t'
+    print('The lowest combination of chi^2 values is {:.5f} (int) {:.5f} (tay) '
+          'for beta = {:.3f} & mu = {:.3f} in the ranges\n\t'
           '{:.2f} < beta < {:.2f} and {:.2f} < mu < {:.2f}\n\t'
           '{:.1f} % of models had a chi^2 value of NaN. \n'
-          ''.format(chi_low_int, chi_low_tay, beta_low, kappa_low,
-                    np.min(blim), np.max(blim), np.min(klim), np.max(klim),
-                    nan_ratio) if double_eval else
+          ''.format(
+            chival_int[lowest], chival_tay[lowest], beta_low, kappa_low,
+            np.min(blim), np.max(blim), np.min(klim), np.max(klim), nan_ratio
+          ) if double_eval else
           'The lowest chi^2 value is {:.5f} for beta = {:.3f} & mu = '
           '{:.3f} in the range'
           '\n{:.2f} < beta < {:.2f} and {:.2f} < mu < {:.2f}\n\t'
           '{:.1f} % of models had a chi^2 value of NaN. \n'
-          ''.format(chi_low, beta_low, kappa_low, np.min(blim), np.max(blim),
-                    np.min(klim), np.max(klim), nan_ratio))
+          ''.format(
+                chi_low, beta_low, kappa_low, np.min(blim), np.max(blim),
+                np.min(klim), np.max(klim), nan_ratio
+          ))
+    
+    # Save chi, beta, kappa values to file
+    if save:
+        f_chi = (np.copy(chival_int + chival_tay) if double_eval
+                 else np.copy(chival))
+        f_beta = np.repeat(brange, length)
+        f_kappa = np.tile(krange, length)
+        f_save = np.vstack((f_chi, f_beta, f_kappa)).T
+        f_comment = (
+            '#Results of "chi_search" called with the following inputs:\n'
+            '#acc = {}, length={}, blim=({}, {}), klim=({}, {}), lambda={}, '
+            'effort={}, dm_method={}, double_eval={}, solver={}\n'
+            '#Lowest chi^2 was with beta={} & k={}\n'.format(
+                acc, length, blim[0], blim[1], klim[0], klim[1], lam,
+                dm_effort, dm_method, double_eval, solver, beta_low, kappa_low
+            )
+        )
+        
+        np.savetxt(
+            fname=fdir+fname, X=f_save, header='chi beta kappa', delimiter=' ',
+            comments=f_comment
+        )
 
     # Plot heat map of chi values
-    if plot and double_eval: 
+    if plot and double_eval:
+        # reshape chi values into 2D array
+        round=1
         chi_plot_z_int = np.reshape(chival_int, (length, length)).T
         chi_plot_z_tay = np.reshape(chival_tay, (length, length)).T 
         chi_plot_z = np.reshape(chival_int + chival_tay, (length, length)).T
 
-        fig, ax = plt.subplots(2, 2)
-        fig.delaxes(ax[1,1])
-        f1 = ax[0,0]; f2 = ax[0,1]; f3 = ax[1,0]
+        fig, axes = plt.subplots(
+            nrows=1, ncols=3, figsize=(12, 4), sharex=True, sharey=True,
+            constrained_layout=True
+        )
+        f1 = axes[0]; f2 = axes[1]; f3 = axes[2]
         cmap = matplotlib.cm.get_cmap('viridis_r').copy()
         cmap.set_bad(color='r')
 
         # int
         im1 = f1.imshow(chi_plot_z_int, cmap=cmap, origin='lower',
                         interpolation='nearest', norm=scale)
-        f1.text(x=np.array(range(length))[np.where(brange == beta_low)],
-                y=np.array(range(length))[np.where(krange == kappa_low)],
-                s=r'$\ast$', color='r', ha='center', va='center', fontsize=16)
-        f1.set_xticks(np.linspace(0, length-1, 10),
-                      np.round(np.linspace(brange[0], brange[-1], 10), round),
-                      rotation=45, fontsize=12)
-        f1.set_yticks(np.linspace(0, length-1, 10),
-                      np.round(np.linspace(krange[0], krange[-1], 10), round),
-                      fontsize=12)
+        for x in product(range(length), range(length)):
+            highlight_cell(x[0], x[1], ax=f1, color='w', linewidth=0.2)
+        highlight_cell(
+            np.array(range(length))[np.where(brange == beta_low)],
+            np.array(range(length))[np.where(krange == kappa_low)],
+            ax=f1, color='k', linewidth=1
+        )
+        f1.set_xticks(
+            np.linspace(0, length-1, 10),
+            np.round(np.linspace(brange[0], brange[-1], 10), round),
+            rotation=45, fontsize=12
+        )
+        f1.set_yticks(
+            np.linspace(0, length-1, 10),
+            np.round(np.linspace(krange[0], krange[-1], 10), round),
+            fontsize=12
+        )
         f1.set_xlabel(r'$\beta$')
         f1.set_ylabel(r'$\mu$')
-        f1.set_title(r'Integration method')
+        f1.set_title(r'Integration method', fontsize=14)
         f1.tick_params(axis='both', which='both', direction='in',
-                        bottom=True, top=True, left=True, right=True)
-        f1.grid()
-        cbar = fig.colorbar(im1, ax=f1)
-        cbar.set_label(r'$\chi^2$', rotation='90')
+                       bottom=True, top=True, left=True, right=True)
+        # f1.grid()
 
         # tay
         im2 = f2.imshow(chi_plot_z_tay, cmap=cmap, origin='lower',
                         interpolation='nearest', norm=scale)
-        f2.text(x=np.array(range(length))[np.where(brange == beta_low)],
-                y=np.array(range(length))[np.where(krange == kappa_low)],
-                s=r'$\ast$', color='r', ha='center', va='center', fontsize=16)
-        f2.set_xticks(np.linspace(0, length-1, 10),
-                      np.round(np.linspace(brange[0], brange[-1], 10), round),
-                      rotation=45, fontsize=12)
-        f2.set_yticks(np.linspace(0, length-1, 10),
-                      np.round(np.linspace(krange[0], krange[-1], 10), round),
-                      fontsize=12)
+        for x in product(range(length), range(length)):
+            highlight_cell(x[0], x[1], ax=f2, color='w', linewidth=0.2)
+        highlight_cell(
+            np.array(range(length))[np.where(brange == beta_low)],
+            np.array(range(length))[np.where(krange == kappa_low)],
+            ax=f2, color='k', linewidth=1
+        )
+        f2.set_xticks(
+            np.linspace(0, length-1, 10),
+            np.round(np.linspace(brange[0], brange[-1], 10), round),
+            rotation=45, fontsize=12
+        )
+        f2.set_yticks(
+            np.linspace(0, length-1, 10),
+            np.round(np.linspace(krange[0], krange[-1], 10), round),
+            fontsize=12
+        )
         f2.set_xlabel(r'$\beta$')
-        f2.set_ylabel(r'$\mu$')
-        f2.set_title(r'Taylor expansion')
+        # f2.set_ylabel(r'$\mu$')
+        f2.set_title(r'Taylor expansion', fontsize=14)
         f2.tick_params(axis='both', which='both', direction='in',
                        bottom=True, top=True, left=True, right=True)
-        f2.grid()
-        fig.colorbar(im2, label=r'$\chi^{2}_{r}$', ax=f2)
+        # f2.grid()
 
         # both
         im3 = f3.imshow(chi_plot_z, cmap=cmap, origin='lower',
                         interpolation='nearest', norm=scale)
-        f3.text(x=np.array(range(length))[np.where(brange == beta_low)],
-                y=np.array(range(length))[np.where(krange == kappa_low)],
-                s=r'$\ast$', color='r', ha='center', va='center', fontsize=16)
-        f3.set_xticks(np.linspace(0, length-1, 10),
-                      np.round(np.linspace(brange[0], brange[-1], 10), round),
-                      rotation=45, fontsize=12)
-        f3.set_yticks(np.linspace(0, length-1, 10),
-                      np.round(np.linspace(krange[0], krange[-1], 10), round),
-                      fontsize=12)
+        for x in product(range(length), range(length)):
+            highlight_cell(x[0], x[1], ax=f3, color='w', linewidth=0.2)
+        highlight_cell(
+            np.array(range(length))[np.where(brange == beta_low)],
+            np.array(range(length))[np.where(krange == kappa_low)],
+            ax=f3, color='k', linewidth=1
+        )
+        f3.set_xticks(
+            np.linspace(0, length-1, 10),
+            np.round(np.linspace(brange[0], brange[-1], 10), round),
+            rotation=45, fontsize=12
+        )
+        f3.set_yticks(
+            np.linspace(0, length-1, 10),
+            np.round(np.linspace(krange[0], krange[-1], 10), round),
+            fontsize=12
+        )
         f3.set_xlabel(r'$\beta$')
-        f3.set_ylabel(r'$\mu$')
-        f3.set_title(r'Combined')
+        # f3.set_ylabel(r'$\mu$')
+        f3.set_title(r'Combined', fontsize=14)
         f3.tick_params(axis='both', which='both', direction='in',
                        bottom=True, top=True, left=True, right=True)
-        f3.grid()      
-        fig.colorbar(im3, label=r'$\chi^{2}_{r}$', ax=f3)
+        # f3.grid()
+        plt.colorbar(
+            im3, ax=f3, label=r'$\chi^{2}_{r, DM_{E}+DM_{q}}$', shrink=0.56
+        )
         plt.show()
 
     elif plot:
         chi_plot_z = np.reshape(chival, (length, length)).T
-        scale = LogNorm() if (np.log(np.nanmax(chival)/
-                                     np.nanmin(chival))) > 1 else None
+        scale = (LogNorm() if (np.log(np.nanmax(chival)/np.nanmin(chival))) > 1
+                 else None)
 
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(figsize=(6, 5), constrained_layout=True)
         cmap = matplotlib.cm.get_cmap('viridis_r').copy()
         # cmap = matplotlib.cm.get_cmap('binary').copy()
         cmap.set_bad(color='r')
@@ -758,36 +823,30 @@ def chi_search(
         )
         ax.set_xlabel(r'$\beta$')
         ax.set_ylabel(r'$\mu$')
-        cbar = fig.colorbar(im)
-        cbar.set_label(r'$\chi^{2}_{r}$', rotation='90')
+        divider = make_axes_locatable(ax)
+        cax = divider.append_axes("right", size="5%", pad=0.08)
+        cbar = fig.colorbar(im, cax=cax)
+        cbar.set_label(
+            r'$\chi^{{2}}_{{r, {}}}$'.format(
+                '\ddot{a}/\ddot{a}_{\mathrm{M}}' if acc
+                else 'DM_{E}' if dm_method == 'int'
+                else 'DM_{q}'
+            ), rotation='90', labelpad=-1
+        )
+        # plt.colorbar(
+        #     im, cax=cax, label=r'$\chi^{{2}}_{{r, {}}}$'.format(
+        #         '\ddot{a}/\ddot{a}_{\mathrm{M}}' if acc
+        #         else 'DM_{E}' if dm_method == 'int'
+        #         else 'DM_{q}'
+        #     ), labelpad=0.05
+        # )
         ax.tick_params(
-            axis='both', which='both', direction='in', bottom=True, top=True,
-            left=True, right=True
+            axis='both', which='both', direction='in',
+            bottom=True, top=True, left=True, right=True
         )
         # ax.grid()
         plt.show()
 
-    # Save chi, beta, kappa values to file
-    if save:
-        f_chi = (np.copy(chival_int + chival_tay) if double_eval
-                 else np.copy(chival))
-        f_beta = np.repeat(brange, length)
-        f_kappa = np.tile(krange, length)
-        f_save = np.vstack((f_chi, f_beta, f_kappa)).T
-        f_comment = (
-            '#Results of "chi_search" called with the following inputs:\n'
-            '#acc = {}, length={}, blim=({}, {}), klim=({}, {}), lambda={}, '
-            'effort={}, dm_method={}, double_eval={}, solver={}\n'
-            '#Lowest chi^2 was with beta ={} & k = {}\n'.format(
-                acc, length, blim[0], blim[1], klim[0], klim[1], lam,
-                dm_effort, dm_method, double_eval, solver, beta_low, kappa_low
-            )
-        )
-        
-        np.savetxt(
-            fname=fdir+fname, X=f_save, header='chi beta kappa', delimiter=' ',
-            comments=f_comment
-        )
 
     # Return the optimized model
     model_optimized = model(beta=beta_low, kappa=kappa_low, lam=lam)
@@ -796,171 +855,13 @@ def chi_search(
     
     return model_optimized
 
-def chi_search_a(
-        fname: str, length: int = 10, blim: tuple = (2., 4.),
-        klim: tuple = (1., 10.), lam: int = 0., plot: bool = True,
-        round: int = 1, fdir: str = '../../Data/model_data/'
-):
-    """
-    chi_search_a() function. Iterates over all combinations (beta, kappa) and
-    for each creates a model and calculates the chi^2 fit of the acceleration
-    to that of the LCDM model. Just a test and I'm curious to see what comes
-    out of it.
-
-    Parameters
-    ----------
-    fname : str
-        file name to save results to
-    length : int, optional
-        length of beta and kappa ranges, by default 10
-    blim : tuple, optional
-        limit of beta values to plot, by default (2., 4.)
-    klim : tuple, optional
-        limit of kappa values to plot, by default (1., 10.)
-    lam : int, optional
-        lambda value to use, by default 0.
-    plot : bool, optional
-        if True, plot best fit acceleration, by default True
-    fdir : str, optional
-        directory to save results to, by default '../../Data/model_data/'
-
-    Returns
-    -------
-    model_optimized : model
-        model object with beta and kappa values that minimize chi^2
-    """
-
-    # Check inputs
-    if type(fname) != str:
-        raise TypeError('fname must be a string')
-    elif len(fname) == 0:
-        raise Exception('fname must be a string of at least one character')
-    
-    save = False if fname == 'nosave' else True
-    fname += '.txt'
-
-    if blim[0] > blim[1] or klim[0] > klim[1]:
-        raise Exception('blim and klim must be increasing tuples')
-
-
-    # Create beta and kappa arrays
-    brange = np.linspace(blim[0], blim[1], length)
-    krange = np.linspace(klim[0], klim[1], length)
-
-    # Create empty arrays to store chi^2 values
-    chival = np.zeros(length**2)
-
-    # Initialize some things
-    lcdm = model()
-    nan_count = 0
-
-    # Iterate over all combinations of beta and kappa
-    for index, param in enumerate(itertools.product(brange, krange)):
-        tmod = model(lam=lam, beta=param[0], kappa=param[1])
-        if (np.max(tmod.a2norm) > 3 or np.min(tmod.a2norm) < -10):
-            chival[index] = np.nan
-            nan_count += 1
-        else:
-            tmod_a2norm_interp = np.interp(lcdm.a, tmod.a, tmod.a2norm)
-            chival[index] = rchi2(tmod_a2norm_interp, lcdm.a2norm)
-
-    # Raise exception if only Nans are returned
-    if nan_count == length**2:
-        raise Exception('Only NaNs returned. Check input parameters.')
-    nan_ratio = nan_count / length**2 * 100
-
-    # Find lowest chi^2 value and corresponding beta and kappa values
-    chi_low = np.sort(chival)[0]
-    lowest = np.argmin(np.abs(chival - chi_low))
-    beta_low = np.repeat(brange, length)[lowest]
-    kappa_low = np.tile(krange, length)[lowest]
-
-    top_mod = model(beta=beta_low, kappa=kappa_low, lam=lam)
-    top_mod.distance_modulus()
-    top_mod.chi_value()
-
-    # Print results
-    print('The lowest chi^2 value is {:.5f} for beta = {:.3f} & mu = {:.3f} in'
-          ' the range\n{:.2f} < beta < {:.2f} and {:.2f} < mu < {:.2f}\n\t'
-          '{:.1f} % of models had a chi^2 value of NaN. \n'
-          ''.format(chi_low, beta_low, kappa_low, blim[0], blim[1], 
-                    klim[0], klim[1], nan_ratio))
-    
-    # Plot results
-    if plot:
-        chi_plot = np.reshape(chival, (length, length)).T
-
-        fig, ax = plt.subplots()
-        cmap = matplotlib.cm.get_cmap('viridis_r').copy()
-        cmap.set_bad(color='r')
-        im = ax.imshow(chi_plot, cmap=cmap, origin='lower',
-                       interpolation='nearest', norm=LogNorm())
-        ax.text(
-            x=np.array(range(length))[np.where(brange == beta_low)],
-            y=np.array(range(length))[np.where(krange == kappa_low)],
-            s=r'$\ast$', color='k', ha='center', va='center', fontsize=20
-        )
-        ax.set_xticks(
-            np.linspace(0, length-1, 10),
-            np.round(np.linspace(brange[0], brange[-1], 10), round),
-            rotation=45, fontsize=14
-        )
-        ax.set_yticks(
-            np.linspace(0, length-1, 10),
-            np.round(np.linspace(krange[0], krange[-1], 10), round),
-            fontsize=14
-        )
-        ax.set_xlabel(r'$\beta$')
-        ax.set_ylabel(r'$\mu$')
-        cbar = fig.colorbar(im)
-        cbar.set_label(r'$\chi^{2}_{r}$', rotation='90')
-        ax.tick_params(
-            axis='both', which='both', direction='in', bottom=True, top=True,
-            left=True, right=True
-        )
-        ax.grid()
-        plt.show()
-
-
-        # plt.figure()
-        # plt.plot(top_mod.a, top_mod.a2norm, c='r', ls='-', 
-        #             label=r'Alt. Model, $\beta={:.2f}, k={:.2f}$'.format(
-        #                                                 top_mod.b, top_mod.k))
-        
-        # plt.plot(lcdm.a, lcdm.a2norm, c='k', ls='--',
-        #          label=r'$\Lambda$CDM Model')
-
-        # plt.xlabel(r'$a$')
-        # plt.ylabel(r'$\ddot{a}/\ddot{a}_{\mathrm{M}}$')
-        # plt.ylim([-5, 2])
-        # plt.tick_params(axis='both', which='both', direction='in', bottom=True,
-        #                 top=True, left=True, right=True)
-        # plt.legend(loc='lower left')
-        # plt.grid()
-        # plt.show()
-
-    # Save results (maybe)
-    if save:
-        f_chi = chival
-        f_beta = np.repeat(brange, length)
-        f_kappa = np.tile(krange, length)
-        f_save = np.vstack((f_chi, f_beta, f_kappa)).T
-        f_comment = '#Results of "chi_search_a" called with the following' +\
-                'inputs:\n' +\
-                '#length={}, blim=({}, {}), klim=({}, {}), lambda={}\n'.format(
-                    length, blim[0], blim[1], klim[0], klim[1], lam) +\
-                '#Lowest chi^2 was with beta = {} & k = {}\n'.format(
-                    beta_low, kappa_low)
-        np.savetxt(fname=fdir+fname, X=f_save, header='chi beta kappa',
-                   delimiter=' ', comments=f_comment)
-
-    return top_mod
 
 @timer
 def q_surface(
         length: int = 20, blim: tuple = (2., 4.), klim: tuple = (1., 10.),
         qlim: tuple = (-1., 0.),lam: float = 0., dm_method: str = 'int',
-        dm_effort: bool = False, splot: bool = True, mplot: bool = True
+        dm_effort: bool = False, solver: str = 'BDF',
+        splot: bool = True, mplot: bool = True
 ):
     """
     q_surface() function. Plots a surface of q values for a given range of
@@ -1008,10 +909,10 @@ def q_surface(
     bcd = []
     kcd = []
     xcd = []
-    current_chi = 1
+    # current_chi = 1
 
     for index, param in enumerate(itertools.product(brange, krange)):
-        temp_mod = model(lam=lam, beta=param[0], kappa=param[1])
+        temp_mod = model(lam=lam, beta=param[0], kappa=param[1], solver=solver)
         q_save[index] = temp_mod.q
 
         if (qlim[0] < temp_mod.q < qlim[1]):
@@ -1024,8 +925,8 @@ def q_surface(
             xcd.append(temp_mod.chi_int if dm_method == 'int'
                                         else temp_mod.chi_tay)
 
-            top_mod = temp_mod if xcd[-1] < current_chi else top_mod
-            current_chi = xcd[-1] if xcd[-1]< current_chi else current_chi
+            # top_mod = temp_mod if xcd[-1] < current_chi else top_mod
+            # current_chi = xcd[-1] if xcd[-1]< current_chi else current_chi
 
     if len(qcd) < 1:
         raise Exception('No q values found within the range {} < q < {}'
@@ -1105,7 +1006,7 @@ def q_surface(
         plot_mod.plot(which='acc', lcdm=lcdm, matter=matter)
         plot_mod.plot(which='dm', lcdm=lcdm, matter=matter)
 
-    return top_mod
+    return 
 
 
 @timer
@@ -1130,9 +1031,9 @@ def auto_optimize(
         data for final iteration.
     it_num : int
         Number of iterations to run.
-    search_method : function
-        Method to use for searching for best model. Options are chi_search or
-        chi_search_a
+    search_method : str
+        Method to use for searching. 'acc' = normalized acceleration, 'dm' =
+        distance modulus.
     beta_lim_init : tuple
         Initial beta limits for search.
     kappa_lim_init : tuple
@@ -1153,6 +1054,8 @@ def auto_optimize(
         Directory to save data to.
     verbose : bool
         Whether to print progress.
+    solver : str
+        Which solver to use for model integration.
 
     Returns
     -------
@@ -1174,8 +1077,7 @@ def auto_optimize(
     
     if search_method not in ('acc', 'dm'):
         raise ValueError('search_method must be "acc" or "dm"')
-    
-    if search_method == 'acc':
+    elif search_method == 'acc':
         acc = True
         double_eval = False
     else:
