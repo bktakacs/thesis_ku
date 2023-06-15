@@ -619,7 +619,12 @@ def chi_search(
     for index, param in enumerate(itertools.product(brange, krange)):
         tmod = model(lam=lam, beta=param[0], kappa=param[1], solver=solver)
         # if model is not physical, store nan
-        if (np.max(tmod.a2norm) > 3 or np.min(tmod.a2norm) < -10):
+        # if (np.max(tmod.a2norm) > 3 or np.min(tmod.a2norm) < -10):
+        if (
+            np.min(tmod.a2norm) < -10 or
+            np.max(tmod.a2norm > 3) or
+            np.max(np.diff(tmod.a2norm)) > 1
+        ):
             chival_int[index] = np.nan
             chival_tay[index] = np.nan
             chival_acc[index] = np.nan
