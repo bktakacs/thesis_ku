@@ -497,7 +497,7 @@ def chi_comp(
         np.max(model_optimized.a2norm) > 3 or
         np.min(model_optimized.a2norm) < -10 or
         np.mean(np.diff(model_optimized.a2norm)) > 0.01 or
-        np.max(np.diff(model_optimized.a2norm)) > 0.05
+        np.max(np.diff(model_optimized.a2norm)) > 0.02
     ):
         print('Model with lowest chi^2 is not physical')
 
