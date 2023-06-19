@@ -621,9 +621,10 @@ def chi_search(
         # if model is not physical, store nan
         # if (np.max(tmod.a2norm) > 3 or np.min(tmod.a2norm) < -10):
         if (
-            np.min(tmod.a2norm) < -10 or
             np.max(tmod.a2norm > 3) or
-            np.max(np.diff(tmod.a2norm)) > 1
+            np.min(tmod.a2norm) < -10 or
+            np.mean(np.diff(tmod.a2norm)) > 0.01 or
+            np.max(np.diff(tmod.a2norm)) > 0.05
         ):
             chival_int[index] = np.nan
             chival_tay[index] = np.nan
