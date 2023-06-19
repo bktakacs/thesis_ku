@@ -106,7 +106,7 @@ from main import *
 # test_model = chi_search_a('nosave')
 # print('Done')
 
-@timer
+# @timer
 def main():
     """
     Main function
@@ -127,39 +127,55 @@ def main():
     #     m1.chi_value()
     #     print(m1.chi_acc, m1.chi_int, m1.chi_tay)
 
-    m1 = auto_optimize(
-        'auto-opt-19-6-dm-1', it_num=3, length=50, search_method='dm',
-        beta_lim_init=(1, 4), kappa_lim_init=(0.1, 100),
-        dm_effort=True, dm_method='int', double_eval=False,
-        require_decreasing_chi=False,
-    )
-    m1.distance_modulus()
-    m1.plot('acc')
-    m1.plot('dm')
-    m1.chi_value()
-    print(m1.b, m1.k, m1.chi_int, m1.chi_tay, m1.chi_acc)
+    # beta = np.repeat([1, 2], 5)
+    # kappa = np.tile([1, 2, 3, 4, 5], 2)
+    # param = [(beta[i], kappa[i]) for i in range(len(beta))]
 
-    m2 = auto_optimize(
-        'auto-opt-19-6-dm-2', it_num=3, length=50, search_method='dm',
-        beta_lim_init=(1, 4), kappa_lim_init=(0.1, 100),
-        dm_method='tay', double_eval=False,
-    )
-    m2.distance_modulus()
-    m2.plot('acc')
-    m2.plot('dm')
-    m2.chi_value()
-    print(m2.b, m2.k, m2.chi_int, m2.chi_tay, m2.chi_acc)
+    # # print(param)
 
-    m3 = auto_optimize(
-        'auto-opt-19-6-dm-3', it_num=3, length=50, search_method='dm',
-        beta_lim_init=(1, 4), kappa_lim_init=(0.1, 100),
-        double_eval=True,
-    )
-    m3.distance_modulus()
-    m3.plot('acc')
-    m3.plot('dm')
-    m3.chi_value()
-    print(m3.b, m3.k, m3.chi_int, m3.chi_tay, m3.chi_acc)
+    # if __name__ == '__main__':
+    #     with Pool(4) as p:
+    #         chi = []
+    #         chi.append(p.map(chi_search_multi, param))
+        
+    #     print(chi)
+
+    if __name__ == '__main__':
+        chi_search('nosave')
+
+    # m1 = auto_optimize(
+    #     'auto-opt-19-6-dm-1', it_num=3, length=50, search_method='dm',
+    #     beta_lim_init=(1, 4), kappa_lim_init=(0.1, 100),
+    #     dm_effort=True, dm_method='int', double_eval=False,
+    #     require_decreasing_chi=False,
+    # )
+    # m1.distance_modulus()
+    # m1.plot('acc')
+    # m1.plot('dm')
+    # m1.chi_value()
+    # print(m1.b, m1.k, m1.chi_int, m1.chi_tay, m1.chi_acc)
+
+    # m2 = auto_optimize(
+    #     'auto-opt-19-6-dm-2', it_num=3, length=50, search_method='dm',
+    #     beta_lim_init=(1, 4), kappa_lim_init=(0.1, 100),
+    #     dm_method='tay', double_eval=False,
+    # )
+    # m2.distance_modulus()
+    # m2.plot('acc')
+    # m2.plot('dm')
+    # m2.chi_value()
+    # print(m2.b, m2.k, m2.chi_int, m2.chi_tay, m2.chi_acc)
+
+    # m3 = auto_optimize(
+    #     'auto-opt-19-6-dm-3', it_num=3, length=50, search_method='dm',
+    #     beta_lim_init=(1, 4), kappa_lim_init=(0.1, 100),
+    #     double_eval=True,
+    # )
+    # m3.distance_modulus()
+    # m3.plot('acc')
+    # m3.plot('dm')
+    # m3.chi_value()
+    # print(m3.b, m3.k, m3.chi_int, m3.chi_tay, m3.chi_acc)
 
     # chi_search(
     #     'nosave',
