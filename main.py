@@ -565,13 +565,11 @@ def chi_search_multi(
 
     Returns
     -------
-
+    chival : float
     """
 
     tmod = model(lam=lam, beta=param[0], kappa=param[1], solver=solver)
-    # tmod = model(lam=lam, beta=beta, kappa=kappa, solver=solver)
     # if model is not physical, store nan
-    # if (np.max(tmod.a2norm) > 3 or np.min(tmod.a2norm) < -10):
     if (
         np.max(tmod.a2norm > 3) or
         np.min(tmod.a2norm) < -10 or
