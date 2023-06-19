@@ -534,7 +534,7 @@ def chi_comp(
 
     return model_optimized
 
-
+@timer
 def chi_search(
         fname: str, length: int = 10, blim: tuple = (2., 4.),
         klim: tuple = (1., 10.), lam: float = 0., dm_effort: bool = False,
