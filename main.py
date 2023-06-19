@@ -536,8 +536,8 @@ def chi_comp(
 
 
 def chi_search_multi(
-    param, lam: float = 0, solver: str = 'BDF', acc: bool = True,
-    dm_effort: bool = True, dm_method: str = 'int'
+    param, lam: float = 0, solver: str = 'BDF', acc: bool = False,
+    dm_effort: bool = False, dm_method: str = 'int'
 ):
     """
     Multi processing chi search 
@@ -683,12 +683,11 @@ def chi_search(
     #         chival_tay[index] = tmod.chi_tay
 
     # Parallelize
-    with Pool() as pool:
-        chival = []
-        chival.append(pool.map(
-            chi_search_multi, itertools.product(brange, krange)
-        ))
-    chival = chival[0]
+    with Pool(8) as pool:
+        chival = list(tqdm(pool.imap(
+            chi_search_multi, product(brange, krange)
+        )))
+    # chival = chival[0]
 
     # Raise exception if only NaN values were returned
     # if nan_count == length**2:
@@ -701,12 +700,9 @@ def chi_search(
     #     else np.copy(chival_int) if dm_method == 'int' 
     #     else np.copy(chival_tay)
     # )
-
     
     # Find beta and kappa values for lowest chi^2 value
-    print(len(chival))
     lowest = np.nanargmin(chival)
-    print(lowest)
     chi_low = chival[lowest]
     beta_low  = np.repeat(brange, length)[lowest]
     kappa_low = np.tile(krange, length)[lowest]
