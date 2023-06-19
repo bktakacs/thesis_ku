@@ -81,9 +81,9 @@ class model():
         self.p = gamma / (2 * beta)
         
         # set initial condtions from a_start
-        a1_start = np.sqrt(
-            self.m * a_start**-1 + self.r * a_start**-2 + self.l * a_start**2
-        )
+        a1_start = np.sqrt(self.m * a_start**-1 +
+                           self.r * a_start**-2 +
+                           self.l * a_start**2)
         initial_conditions = (a_start, a1_start)
 
         # time array upon which to integrate
@@ -275,6 +275,7 @@ class model():
 
         self.chi_int = (np.nan if np.isnan(self.dm_int).all()
                         else rchi2(obs=self.dm_int))
+        
         self.chi_tay = (np.nan if np.isnan(self.dm_tay).all()
                         else rchi2(obs=self.dm_tay))
 
@@ -492,6 +493,13 @@ def chi_comp(
         space[0], space[-1]   
         )
     )
+    if (
+        np.max(model_optimized.a2norm) > 3 or
+        np.min(model_optimized.a2norm) < -10 or
+        np.mean(np.diff(model_optimized.a2norm)) > 0.01 or
+        np.max(np.diff(model_optimized.a2norm)) > 0.05
+    ):
+        print('Model with lowest chi^2 is not physical')
 
     if plot:
         xlab = (
@@ -511,9 +519,9 @@ def chi_comp(
         plt.figure()
         plt.plot(space, array, c='k', ls='-', label=plotlab.format(*plotform))
         plt.plot(
-            [space[np.argmin(array)], space[np.argmin(array)]],
-            [0.9*np.min(array), 1.01*np.max(array)], c='r', ls='--',
-            label=xlab + r' $= {:.3f}$'.format(space[np.argmin(array)])
+            [space[np.nanargmin(array)], space[np.nanargmin(array)]],
+            [0.9*np.nanmin(array), 1.01*np.nanmax(array)], c='r', ls='--',
+            label=xlab + r' $= {:.3f}$'.format(space[np.nanargmin(array)])
         )
         plt.xlabel(xlab)
         plt.ylabel(r'$\chi^{2}_{r}$')
@@ -624,7 +632,7 @@ def chi_search(
             np.max(tmod.a2norm > 3) or
             np.min(tmod.a2norm) < -10 or
             np.mean(np.diff(tmod.a2norm)) > 0.01 or
-            np.max(np.diff(tmod.a2norm)) > 0.05
+            np.max(np.diff(tmod.a2norm)) > 0.02
         ):
             chival_int[index] = np.nan
             chival_tay[index] = np.nan

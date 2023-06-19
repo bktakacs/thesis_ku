@@ -115,15 +115,95 @@ def main():
     lcdm = model()
     matter = model(lam=0.)
 
-    m1 = chi_search(
-        'chi_searc_9-6-4-dm', length=75, dm_effort=True, dm_method='int',
-        blim=(1, 4), acc=False, klim=(0.1, 10)
+    # for solver in ('RK45', 'Radau', 'BDF', 'LSODA'):
+    #     fname = 'chi_search-12-6-dm-{}'.format(solver)
+    #     m1 = chi_search(
+    #         fname, length=50, dm_effort=True, dm_method='int',
+    #         blim=(1, 4), acc=False, klim=(0.1, 100), solver=solver,
+    #     )
+    #     m1.distance_modulus(effort=True)
+    #     m1.plot('acc')
+    #     m1.plot('dm')
+    #     m1.chi_value()
+    #     print(m1.chi_acc, m1.chi_int, m1.chi_tay)
+
+    m1 = auto_optimize(
+        'auto-opt-19-6-dm-1', it_num=3, length=50, search_method='dm',
+        beta_lim_init=(1, 4), kappa_lim_init=(0.1, 100),
+        dm_effort=True, dm_method='int', double_eval=False,
+        require_decreasing_chi=False,
     )
-    m1.distance_modulus(effort=True)
+    m1.distance_modulus()
     m1.plot('acc')
     m1.plot('dm')
     m1.chi_value()
-    print(m1.chi_acc, m1.chi_int, m1.chi_tay)
+    print(m1.b, m1.k, m1.chi_int, m1.chi_tay, m1.chi_acc)
+
+    m2 = auto_optimize(
+        'auto-opt-19-6-dm-2', it_num=3, length=50, search_method='dm',
+        beta_lim_init=(1, 4), kappa_lim_init=(0.1, 100),
+        dm_method='tay', double_eval=False,
+    )
+    m2.distance_modulus()
+    m2.plot('acc')
+    m2.plot('dm')
+    m2.chi_value()
+    print(m2.b, m2.k, m2.chi_int, m2.chi_tay, m2.chi_acc)
+
+    m3 = auto_optimize(
+        'auto-opt-19-6-dm-3', it_num=3, length=50, search_method='dm',
+        beta_lim_init=(1, 4), kappa_lim_init=(0.1, 100),
+        double_eval=True,
+    )
+    m3.distance_modulus()
+    m3.plot('acc')
+    m3.plot('dm')
+    m3.chi_value()
+    print(m3.b, m3.k, m3.chi_int, m3.chi_tay, m3.chi_acc)
+
+    # chi_search(
+    #     'nosave',
+    #     acc = False, length=50, 
+    #     blim=(2.1412774609218945, 3.211916191382842), klim=(1.53880666728999, 2.308210000934985), 
+    #     lam=0.0, dm_effort=True, dm_method='int', double_eval=False, 
+    #     solver='BDF'
+    # )
+
+    # chi_search(
+    #     'nosave',
+    #     acc = False, length=50, 
+    #     blim=(1.698497190796352, 2.5477457861945276), klim=(28.692277551020414, 43.038416326530616), 
+    #     lam=0.0, dm_effort=False, dm_method='tay', double_eval=False, 
+    #     solver='BDF'
+    # )
+
+    # data = read_model_data('auto-opt-13-6-dm-1.txt')
+    # b1, k1 = specific_function(data, 0)
+    # m1 = model(beta=b1, kappa=k1, lam=0.)
+    # m1.plot('acc')
+
+    # data = read_model_data('auto-opt-13-6-dm-2.txt')
+    # b2, k2 = specific_function(data, 0)
+    # m2 = model(beta=b2, kappa=k2, lam=0.)
+    # m2.plot('acc')
+
+    # data = read_model_data('auto-opt-13-6-dm-3.txt')
+    # b3, k3 = specific_function(data, 0)
+    # m3 = model(beta=b3, kappa=k3, lam=0.)
+    # m3.plot('acc')
+
+    # chi_search('nosave')
+
+
+    # m2 = chi_search(
+    #     'chi_search-12-6-dm-2', length=50, dm_method='tay',
+    #     blim=(1, 4), acc=False, klim=(0.1, 100), solver='RK45',
+    # )
+    # m2.distance_modulus(effort=True)
+    # m2.plot('acc')
+    # m2.plot('dm')
+    # m2.chi_value()
+    # print(m2.chi_acc, m2.chi_int, m2.chi_tay)
 
     # n03 = model(kappa=1, n=-2)
     # n01 = model(kappa=1, n=-1)
