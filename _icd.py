@@ -12,6 +12,7 @@ import pandas as pd
 from tqdm import tqdm
 from tqdm.contrib import itertools
 from itertools import product
+from multiprocessing import Pool
 from astropy.cosmology import FlatLambdaCDM
 import warnings
 warnings.filterwarnings("ignore", category=RuntimeWarning)
