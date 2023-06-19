@@ -161,7 +161,7 @@ def main():
     # m3.chi_value()
     # print(m3.b, m3.k, m3.chi_int, m3.chi_tay, m3.chi_acc)
 
-    chi_search('nosave')
+    chi_search('nosave', plot=False)
 
     # chi_search(
     #     'nosave',
