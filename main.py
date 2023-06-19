@@ -534,7 +534,63 @@ def chi_comp(
 
     return model_optimized
 
-@timer
+
+def chi_search_multi(
+    param, lam: float = 0, solver: str = 'BDF', acc: bool = False,
+    dm_effort: bool = False, dm_method: str = 'int', double_eval: bool = False
+):
+    """
+    Multi processing chi search
+
+    Parameters
+    ----------
+    param : tuple
+        Tuple of parameters to be used in model, beta and kappa
+    lam : float, optional
+        Lambda value to be used for each model. The default is 0.
+    solver : str, optional
+        Which solver to use in solve_ivp. The default is 'BDF'.
+    acc : bool, optional
+        Whether to evaluate on normalized acceleration instead of DM. The
+        default is False. Mutually exclusive with double_eval.
+    dm_effort : bool, optional
+        Whether to use effort or not in calculation of distance modulus.
+        The default is False.
+    dm_method : str, optional
+        'int' or 'tay', which method to use in evaluating distance modulus.
+        The default is 'int'.
+    double_eval : bool, optional
+        Whether to evaluate on both chi^2 values for each model. The default is
+        False. Mutually exclusive with acc.
+
+    Returns
+    -------
+
+    """
+
+    tmod = model(lam=lam, beta=param[0], kappa=param[1], solver=solver)
+    # tmod = model(lam=lam, beta=beta, kappa=kappa, solver=solver)
+    # if model is not physical, store nan
+    # if (np.max(tmod.a2norm) > 3 or np.min(tmod.a2norm) < -10):
+    if (
+        np.max(tmod.a2norm > 3) or
+        np.min(tmod.a2norm) < -10 or
+        np.mean(np.diff(tmod.a2norm)) > 0.01 or
+        np.max(np.diff(tmod.a2norm)) > 0.02
+    ):
+        return np.nan, np.nan, np.nan if double_eval else np.nan
+    # else if model is physical, store chi values
+    elif acc:
+        return tmod.chi_acc
+    else:
+        tmod.distance_modulus(effort=dm_effort)
+        tmod.chi_value()
+        if double_eval:
+            return tmod.chi_int + tmod.chi_tay, tmod.chi_int, tmod.chi_tay
+        else:
+            return tmod.chi_int if dm_method == 'int' else tmod.chi_tay
+
+
 def chi_search(
         fname: str, length: int = 10, blim: tuple = (2., 4.),
         klim: tuple = (1., 10.), lam: float = 0., dm_effort: bool = False,
@@ -617,48 +673,32 @@ def chi_search(
     brange = np.linspace(np.min(blim), np.max(blim), length)
     krange = np.linspace(np.min(klim), np.max(klim), length)
 
-    chival_int = np.zeros(length**2)
-    chival_tay = np.zeros(length**2)
-    chival_acc = np.zeros(length**2)
+    # Parallelize
+    cpu_num = multiprocessing.cpu_count()
+    with Pool(cpu_num) as pool:
 
-    nan_count = 0
+        partial_function = partial(
+            chi_search_multi,
+            lam=lam, solver=solver, acc=acc, dm_effort=dm_effort,
+            dm_method=dm_method, double_eval=double_eval
+        )
 
-    # Iterate over all (b, k), store chi value for each
-    for index, param in enumerate(itertools.product(brange, krange)):
-        tmod = model(lam=lam, beta=param[0], kappa=param[1], solver=solver)
-        # if model is not physical, store nan
-        # if (np.max(tmod.a2norm) > 3 or np.min(tmod.a2norm) < -10):
-        if (
-            np.max(tmod.a2norm > 3) or
-            np.min(tmod.a2norm) < -10 or
-            np.mean(np.diff(tmod.a2norm)) > 0.01 or
-            np.max(np.diff(tmod.a2norm)) > 0.02
-        ):
-            chival_int[index] = np.nan
-            chival_tay[index] = np.nan
-            chival_acc[index] = np.nan
-            nan_count += 1
-        # else if model is physical, store chi values
-        elif acc:
-            chival_acc[index] = tmod.chi_acc
-        else:
-            tmod.distance_modulus(effort=dm_effort)
-            tmod.chi_value()
-            chival_int[index] = tmod.chi_int
-            chival_tay[index] = tmod.chi_tay
-    
+        chival = list(tqdm(
+            pool.imap(partial_function, product(brange, krange)), 
+            total=length**2
+            )
+        )
+
     # Raise exception if only NaN values were returned
-    if nan_count == length**2:
+    if np.isnan(chival).all():
         raise Exception('No real chi values found')
-    nan_ratio = nan_count / length**2 * 100
-
-    chival = (
-        np.copy(chival_acc) if acc 
-        else (chival_int + chival_tay) if double_eval
-        else np.copy(chival_int) if dm_method == 'int' 
-        else np.copy(chival_tay)
-    )
-
+    elif double_eval:
+        nan_ratio = np.count_nonzero(np.isnan(chival)) / (3 * len(chival))*100
+        chival_int = [chival[i][1] for i in range(len(chival))]
+        chival_tay = [chival[i][2] for i in range(len(chival))]
+        chival = [chival[i][0] for i in range(len(chival))]
+    else:
+        nan_ratio = np.count_nonzero(np.isnan(chival)) / len(chival) * 100
     
     # Find beta and kappa values for lowest chi^2 value
     lowest = np.nanargmin(chival)
@@ -686,8 +726,7 @@ def chi_search(
     
     # Save chi, beta, kappa values to file
     if save:
-        f_chi = (np.copy(chival_int + chival_tay) if double_eval
-                 else np.copy(chival))
+        f_chi = chival
         f_beta = np.repeat(brange, length)
         f_kappa = np.tile(krange, length)
         f_save = np.vstack((f_chi, f_beta, f_kappa)).T
@@ -712,7 +751,7 @@ def chi_search(
         round=1
         chi_plot_z_int = np.reshape(chival_int, (length, length)).T
         chi_plot_z_tay = np.reshape(chival_tay, (length, length)).T 
-        chi_plot_z = np.reshape(chival_int + chival_tay, (length, length)).T
+        chi_plot_z = np.reshape(chival, (length, length)).T
 
         fig, axes = plt.subplots(
             nrows=1, ncols=3, figsize=(12, 4), sharex=True, sharey=True,

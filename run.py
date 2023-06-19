@@ -106,7 +106,7 @@ from main import *
 # test_model = chi_search_a('nosave')
 # print('Done')
 
-@timer
+# @timer
 def main():
     """
     Main function
