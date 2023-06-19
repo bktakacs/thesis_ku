@@ -5,9 +5,11 @@ from scipy.integrate import solve_ivp, odeint, quad
 from scipy.stats import chisquare
 import time
 import numpy as np
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.cm
 from matplotlib.colors import LogNorm, NoNorm
+from mpl_toolkits.axes_grid1 import ImageGrid, make_axes_locatable
 import pandas as pd
 from tqdm import tqdm
 from tqdm.contrib import itertools
