@@ -141,7 +141,7 @@ def main():
     #     print(chi)
 
     if __name__ == '__main__':
-        chi_search('nosave')
+        chi_search('nosave', length=10, plot=False)
 
     # m1 = auto_optimize(
     #     'auto-opt-19-6-dm-1', it_num=3, length=50, search_method='dm',
