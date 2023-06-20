@@ -321,7 +321,7 @@ class model():
             )
             plt.plot(
                 x_mod, self.a2norm, c='r', ls='-', 
-                label=r'Alt. Model, $\beta={:.2f}, k={:.2f}$'.format(
+                label=r'Alt. Model, $\beta={:.2f}, \mu={:.2f}$'.format(
                     self.b, self.k
                 )
             )
@@ -445,6 +445,7 @@ def chi_comp(
     
     acc = True if method == 'acc' else False
     array = np.zeros_like(space)
+    nanarray = np.zeros_like(space)
 
     # for index, value in enumerate(tqdm(space)):
     #     temp_mod = model(
@@ -468,6 +469,14 @@ def chi_comp(
             beta = value if parameter == 'b' else beta,
             kappa = value if parameter == 'k' else kappa,
         )
+        if (
+            np.max(temp_mod.a2norm) > 3 or
+            np.min(temp_mod.a2norm) < -10 or
+            np.mean(np.diff(temp_mod.a2norm)) > 0.01 or
+            np.max(np.diff(temp_mod.a2norm)) > 0.02
+        ):
+            nanarray[index] = 1
+
         if acc:
             array[index] = temp_mod.chi_acc
         else:
@@ -493,38 +502,36 @@ def chi_comp(
         space[0], space[-1]   
         )
     )
-    if (
-        np.max(model_optimized.a2norm) > 3 or
-        np.min(model_optimized.a2norm) < -10 or
-        np.mean(np.diff(model_optimized.a2norm)) > 0.01 or
-        np.max(np.diff(model_optimized.a2norm)) > 0.02
-    ):
+    if nanarray[np.nanargmin(array)] == 1:
         print('Model with lowest chi^2 is not physical')
 
     if plot:
-        xlab = (
+        xlabel = (
             r'$\beta$' if parameter == 'b' else r'$\mu$' if parameter == 'k' 
                         else r'$\Omega_{\Lambda}$'
         )
-        yscale = 'log' if np.max(array)/np.min(array) > 50 else 'linear'
+        ylabel = (
+                
+        )
+        yscale = 'log' if np.nanmax(array)/np.nanmin(array) > 50 else 'linear'
         plotlab = (
             r'$\mu={:.3f},\Omega_{{\Lambda}}={:.1f}$' if parameter == 'b' 
             else r'$\beta={:.3f},\Omega_{{\Lambda}}={:.1f}$'
             if parameter == 'k' else r'$\beta={:.3f},\mu={:.3f}$'
         )
-        plotform = (kappa, lam) if parameter == 'b'\
-                    else (beta, lam) if parameter == 'k'\
-                        else (beta, kappa)
+        plotform = ((kappa, lam) if parameter == 'b'
+                    else (beta, lam) if parameter == 'k'
+                    else (beta, kappa))
 
         plt.figure()
         plt.plot(space, array, c='k', ls='-', label=plotlab.format(*plotform))
         plt.plot(
             [space[np.nanargmin(array)], space[np.nanargmin(array)]],
             [0.9*np.nanmin(array), 1.01*np.nanmax(array)], c='r', ls='--',
-            label=xlab + r' $= {:.3f}$'.format(space[np.nanargmin(array)])
+            label=xlabel + r' $= {:.3f}$'.format(space[np.nanargmin(array)])
         )
-        plt.xlabel(xlab)
-        plt.ylabel(r'$\chi^{2}_{r}$')
+        plt.xlabel(xlabel)
+        plt.ylabel(r'$\chi^{{2}}_{{r,{}}}$'.format(ylabel))
         plt.yscale(yscale)
         plt.grid()
         plt.legend(loc='best', fontsize=14)
@@ -571,12 +578,15 @@ def chi_search_multi(
     tmod = model(lam=lam, beta=param[0], kappa=param[1], solver=solver)
     # if model is not physical, store nan
     if (
-        np.max(tmod.a2norm > 3) or
+        np.max(tmod.a2norm) > 3 or
         np.min(tmod.a2norm) < -10 or
         np.mean(np.diff(tmod.a2norm)) > 0.01 or
         np.max(np.diff(tmod.a2norm)) > 0.02
     ):
-        return np.nan, np.nan, np.nan if double_eval else np.nan
+        if double_eval:
+            return np.nan, np.nan, np.nan
+        else:
+            return np.nan
     # else if model is physical, store chi values
     elif acc:
         return tmod.chi_acc
@@ -589,6 +599,7 @@ def chi_search_multi(
             return tmod.chi_int if dm_method == 'int' else tmod.chi_tay
 
 
+@timer
 def chi_search(
         fname: str, length: int = 10, blim: tuple = (2., 4.),
         klim: tuple = (1., 10.), lam: float = 0., dm_effort: bool = False,
@@ -686,7 +697,7 @@ def chi_search(
             total=length**2
             )
         )
-
+        
     # Raise exception if only NaN values were returned
     if np.isnan(chival).all():
         raise Exception('No real chi values found')
@@ -884,13 +895,6 @@ def chi_search(
                 else 'DM_{q}'
             ), rotation='90', labelpad=-1
         )
-        # plt.colorbar(
-        #     im, cax=cax, label=r'$\chi^{{2}}_{{r, {}}}$'.format(
-        #         '\ddot{a}/\ddot{a}_{\mathrm{M}}' if acc
-        #         else 'DM_{E}' if dm_method == 'int'
-        #         else 'DM_{q}'
-        #     ), labelpad=0.05
-        # )
         ax.tick_params(
             axis='both', which='both', direction='in',
             bottom=True, top=True, left=True, right=True
