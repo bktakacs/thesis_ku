@@ -128,21 +128,59 @@ def main():
     #     print(m1.chi_acc, m1.chi_int, m1.chi_tay)
 
     if __name__ == '__main__':
+
+        # data = read_model_data('auto-opt-19-6-dm-1.txt')
+        # b1, k1 = specific_function(data, 0)
+
+        # space = np.linspace(1, 3, 100)
+        # m2 = chi_comp('k', space, method='dm', beta=b1, dm_effort=True)
+
+        # space = np.linspace(2, 3, 100)
+        # m2 = chi_comp('b', space, method='dm', kappa=k1, dm_effort=True)
+
+        # data = read_model_data('auto-opt-19-6-dm-2.txt')
+        # b, k = specific_function(data, 0)
+        # space = np.linspace(10, 20, 100)
+        # m2 = chi_comp('k', space, method='dm', beta=b, dm_method='tay')
+
+        # space = np.linspace(1, 4, 100)
+        # m2 = chi_comp('b', space, method='dm', kappa=k, dm_method='tay')
+
+        # data = read_model_data('auto-opt-19-6-dm-3.txt')
+        # b, k = specific_function(data, 0)
+
+        # space = np.linspace(1, 4, 100)
+        # m2 = chi_comp('k', space, method='dm', beta=b, dm_method='int')
+
+        # space = np.linspace(1, 4, 100)
+        # m2 = chi_comp('b', space, method='dm', kappa=k, dm_method='int')
+
+        m = chi_search(
+            'test_acc', length=100, acc=True, blim=(1, 4), klim=(1e-1, 1e4), 
+        )
+        m.distance_modulus()
+        m.plot('acc')
+        m.plot('dm')
+        m.distance_modulus(effort=True)
+        m.plot('dm')
+        m.chi_value()
+        print(m.chi_acc, m.chi_int, m.chi_tay)
+
         # m1 = auto_optimize(
         #     'auto-opt-20-6-acc-1', it_num=3, length=50, search_method='acc',
         #     beta_lim_init=(1, 4), kappa_lim_init=(0.1, 100),
         #     require_decreasing_chi=False, plot=True
         # )
-        m1 = chi_search(
-            'nosave',
-            acc = True, length=50, blim=(2.0, 4.0), klim=(1.0, 10.0),
-            lam=0.0, dm_effort=False, dm_method='int', 
-        )
-        m1.distance_modulus()
-        m1.plot('acc')
-        m1.plot('dm')
-        m1.chi_value()
-        print(m1.b, m1.k, m1.chi_int, m1.chi_tay, m1.chi_acc)
+        # m1 = chi_search(
+        #     'nosave',
+        #     acc = True, length=50, blim=(2.0, 4.0), klim=(1.0, 10.0),
+        #     lam=0.0, dm_effort=False, dm_method='int', 
+        # )
+        # m1.distance_modulus()
+        # m1.plot('acc')
+        # m1.plot('dm')
+        # m1.chi_value()
+        # print(m1.b, m1.k, m1.chi_int, m1.chi_tay, m1.chi_acc)
 
         # m2 = auto_optimize(
         #     'auto-opt-19-6-dm-5', it_num=3, length=50, search_method='dm',
