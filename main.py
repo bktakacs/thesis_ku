@@ -392,6 +392,32 @@ class model():
 
 
 # Functions
+
+def chi_comp_multi(
+    value: float, parameter: str = 'k',
+    lam: float = 0, beta: float = 3., kappa: float = 1., solver: str = 'BDF',
+    acc: bool = False, dm_effort: bool = False, dm_method: str = 'int',
+    double_eval: bool = False
+):
+    """
+    Multi processing chi comp
+    """
+
+    # Create temporary model
+    tmod = model(
+        lam = value if parameter == 'l' else lam,
+        beta = value if parameter == 'b' else beta,
+        kappa = value if parameter == 'k' else kappa,
+    )
+    # return chi values
+    if acc:
+        return tmod.chi_acc
+    else:
+        tmod.distance_modulus(effort=dm_effort)
+        tmod.chi_value()
+        return tmod.chi_int if dm_method == 'int' else tmod.chi_tay
+
+
 @timer
 def chi_comp(
         parameter: str, space: list, method: str = 'dm', 
@@ -463,27 +489,39 @@ def chi_comp(
     #         array[index] = (temp_mod.chi_int if dm_method == 'int'
     #                         else temp_mod.chi_tay)
 
-    for index, value in enumerate(tqdm(space)):
-        temp_mod = model(
-            lam = value if parameter == 'l' else lam,
-            beta = value if parameter == 'b' else beta,
-            kappa = value if parameter == 'k' else kappa,
-        )
-        if (
-            np.max(temp_mod.a2norm) > 3 or
-            np.min(temp_mod.a2norm) < -10 or
-            np.mean(np.diff(temp_mod.a2norm)) > 0.01 or
-            np.max(np.diff(temp_mod.a2norm)) > 0.02
-        ):
-            nanarray[index] = 1
+    # for index, value in enumerate(tqdm(space)):
+    #     temp_mod = model(
+    #         lam = value if parameter == 'l' else lam,
+    #         beta = value if parameter == 'b' else beta,
+    #         kappa = value if parameter == 'k' else kappa,
+    #     )
+    #     if (
+    #         np.max(temp_mod.a2norm) > 3 or
+    #         np.min(temp_mod.a2norm) < -10 or
+    #         np.mean(np.diff(temp_mod.a2norm)) > 0.01 or
+    #         np.max(np.diff(temp_mod.a2norm)) > 0.02
+    #     ):
+    #         nanarray[index] = 1
 
-        if acc:
-            array[index] = temp_mod.chi_acc
-        else:
-            temp_mod.distance_modulus(effort=dm_effort)
-            temp_mod.chi_value()
-            array[index] = (temp_mod.chi_int if dm_method == 'int'
-                            else temp_mod.chi_tay)
+    #     if acc:
+    #         array[index] = temp_mod.chi_acc
+    #     else:
+    #         temp_mod.distance_modulus(effort=dm_effort)
+    #         temp_mod.chi_value()
+    #         array[index] = (temp_mod.chi_int if dm_method == 'int'
+    #                         else temp_mod.chi_tay)
+
+    cpu_num = multiprocessing.cpu_count()
+    with Pool(cpu_num) as pool:
+        partial_function = partial(
+            chi_comp_multi, parameter=parameter, lam=lam, beta=beta,
+            kappa=kappa, acc=acc, dm_effort=dm_effort, dm_method=dm_method
+        )
+
+        array = list(tqdm(
+            pool.imap(partial_function, space),
+            total=len(space)
+        ))
         
     model_optimized = model(
         lam=space[np.nanargmin(array)] if parameter == 'l' else lam,
@@ -955,9 +993,6 @@ def q_surface(
         raise Exception('blim, klim, and qlim tuples must be of form (a, b) '
                         'where a < b')
     
-    lcdm = model()
-    matter = model(lam=0.)
-
     brange = np.linspace(np.min(blim), np.max(blim), length)
     krange = np.linspace(np.min(klim), np.max(klim), length)
     q_save = np.zeros(length**2)
@@ -981,9 +1016,6 @@ def q_surface(
             kcd.append(temp_mod.k)
             xcd.append(temp_mod.chi_int if dm_method == 'int'
                                         else temp_mod.chi_tay)
-
-            # top_mod = temp_mod if xcd[-1] < current_chi else top_mod
-            # current_chi = xcd[-1] if xcd[-1]< current_chi else current_chi
 
     if len(qcd) < 1:
         raise Exception('No q values found within the range {} < q < {}'
@@ -1055,15 +1087,16 @@ def q_surface(
         plt.show()
 
 
+    m = model(beta=bred[np.argmin(xred)], kappa=kred[np.argmin(xred)],
+                lam=lam)  
+    m.distance_modulus(effort=dm_effort)
+    m.chi_value()
+    
     if mplot:
-        plot_mod = model(
-            beta=bred[np.argmin(xred)], kappa=kred[np.argmin(xred)], lam=lam
-        )                 
-        plot_mod.distance_modulus(effort=dm_effort)
-        plot_mod.plot(which='acc', lcdm=lcdm, matter=matter)
-        plot_mod.plot(which='dm', lcdm=lcdm, matter=matter)
+        m.plot('acc')
+        m.plot('dm')
 
-    return 
+    return m
 
 
 @timer
