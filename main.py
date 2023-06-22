@@ -511,7 +511,9 @@ def chi_comp(
                         else r'$\Omega_{\Lambda}$'
         )
         ylabel = (
-                
+            '\ddot{a}/\ddot{a}_{\mathrm{M}}' if acc
+            else 'DM_{E}' if dm_method == 'int'
+            else 'DM_{q}'
         )
         yscale = 'log' if np.nanmax(array)/np.nanmin(array) > 50 else 'linear'
         plotlab = (
