@@ -90,23 +90,25 @@ class model():
         time_array = np.linspace(0, xmax, xlen)
         # time_array = np.logspace(-5, np.log10(xmax), xlen)
 
-        # integrate modified friedmann equations
+        # Integrate modified friedmann equations
+            # following lines are for solve_ivp
         solution = solve_ivp(
             modified_friedmann, y0=initial_conditions, t_span=(0, xmax),
             t_eval=time_array, args=(self.m, self.r, self.l, self.k, self.p),
             method=solver
         )
-        # following lines are for odeint
+            # following lines are for odeint
         # solution = odeint(
         #     modified_friedmann, y0=initial_conditions, t=time_array,
         #     args=(self.m, self.r, self.l, self.k, self.p), tfirst=True
         # )
     
-        # extract model parameters
+        # Extract model parameters
+            # following lines are for solve_ivp
         self.a  = solution.y[0, :]
         self.a1 = solution.y[1, :]
         self.t  = solution.t
-        # following lines are for odeint
+            # following lines are for odeint
         # self.a  = solution[:, 0]
         # self.a1 = solution[:, 1]
         # self.t  = np.copy(time_array)
@@ -137,7 +139,7 @@ class model():
         self.j = self.a3[-1] * self.a[-1]**2 * self.a1[-1]**-3 # jerk j
         self.s = self.a4[-1] * self.a[-1]**3 * self.a1[-1]**-4 # snap s
 
-        # only normalize if not matter only model
+        # only normalize if not matter only model (avoid recursion)
         if (self.b != 3. or self.k != 0. or lam != 0.):
             self.norm()
 

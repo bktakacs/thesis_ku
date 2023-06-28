@@ -128,6 +128,22 @@ def main():
     #     print(m1.chi_acc, m1.chi_int, m1.chi_tay)
 
     if __name__ == '__main__':
+        
+        # solvers = ('RK45', 'RK23', 'Radau', 'LSODA', 'DOP853')
+        solver = ('DOP853')
+        # for solver in (solvers):
+        print('Solver: {}'.format(solver))
+        m = chi_search(
+            'chi_search-23-6-dm-{}'.format(solver),
+            length=50, blim=(1, 4), klim=(0.1, 100), acc=False,
+            dm_effort=False, dm_method='int', solver=solver,
+        )
+        m.plot('acc')
+        m.distance_modulus(effort=False)
+        m.plot('dm')
+
+
+
 
         # data = read_model_data('auto-opt-19-6-dm-1.txt')
         # b1, k1 = specific_function(data, 0)
@@ -155,16 +171,32 @@ def main():
         # space = np.linspace(1, 4, 100)
         # m2 = chi_comp('b', space, method='dm', kappa=k, dm_method='int')
 
-        m = chi_search(
-            'test_acc', length=100, acc=True, blim=(1, 4), klim=(1e-1, 1e4), 
-        )
-        m.distance_modulus()
-        m.plot('acc')
-        m.plot('dm')
-        m.distance_modulus(effort=True)
-        m.plot('dm')
-        m.chi_value()
-        print(m.chi_acc, m.chi_int, m.chi_tay)
+        # m = chi_search(
+        #     'nosave', length=50, acc=True, blim=(1, 4), klim=(1, 10), 
+        # )
+        # m.distance_modulus()
+        # m.plot('acc')
+        # m.plot('dm')
+        # m.distance_modulus(effort=True)
+        # m.plot('dm')
+        # m.chi_value()
+        # print(m.chi_acc, m.chi_int, m.chi_tay)
+
+
+
+
+        # plt.figure()
+        # plt.plot(m1.a, m1.a2norm, label='beta = 2')
+        # plt.plot(m2.a, m2.a2norm, label='beta = 2.3')
+        # plt.plot(lcdm.a, lcdm.a2norm, label='LCDM', c='k', ls='--')
+        # plt.xlabel(r'$a$')
+        # plt.ylabel(r'$\ddot{a}/\ddot{a}_{\mathrm{M}}$')
+        # plt.ylim([-5, 2])
+        # plt.tick_params(axis='both', which='both', direction='in',
+        #                 bottom=True, top=True, left=True, right=True)
+        # plt.legend(loc='lower left')
+        # plt.grid()
+        # plt.show()
 
         # m1 = auto_optimize(
         #     'auto-opt-20-6-acc-1', it_num=3, length=50, search_method='acc',
