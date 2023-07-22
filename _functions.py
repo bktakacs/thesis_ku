@@ -241,3 +241,12 @@ def highlight_cell(x,y, ax=None, **kwargs):
     return rect
 
 ###############################################################################
+
+def mbcorr_fit(dm: list):
+    func = lambda redshift, absolute_mag: dm + absolute_mag
+    abs_mag, _ = curve_fit(
+        func, z_sn, df['m_b_corr']
+    )
+    m_b_corr = dm + abs_mag[0]
+
+    return m_b_corr, abs_mag[0]
