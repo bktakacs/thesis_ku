@@ -261,11 +261,14 @@ class model():
         # try to interpolate, else nan
         try:
             self.dm_int = np.interp(z_sn, z, dm_int)
+            self.mb_int, self.Mb_int = mbcorr_fit(self.dm_int)
         except:
             self.dm_int = np.nan
+            self.mb_int, self.Mb_int = np.nan, np.nan
 
         # calculate dm_tay
         self.dm_tay = dm_z_o4(q=self.q, j=self.j, s=self.s)
+        self.mb_tay, self.Mb_tay = mbcorr_fit(self.dm_tay)
 
     
     def chi_value(self):
@@ -276,10 +279,12 @@ class model():
         """
 
         self.chi_int = (np.nan if np.isnan(self.dm_int).all()
-                        else rchi2(obs=self.dm_int))
+                        # else rchi2(obs=self.dm_int))
+                        else rchi2(obs=self.mb_int, exp=df['m_b_corr']))
         
         self.chi_tay = (np.nan if np.isnan(self.dm_tay).all()
-                        else rchi2(obs=self.dm_tay))
+                        # else rchi2(obs=self.dm_tay))
+                        else rchi2(obs=self.mb_tay, exp=df['m_b_corr']))
 
 
     def plot(
@@ -342,44 +347,52 @@ class model():
             
             fig = plt.figure(constrained_layout=False)
             frame1 = fig.add_axes((.1, .3, .8, .6))
-            plt.errorbar(z_sn, sndat, yerr=snerr, lw=0.5, ls='', marker='.',
-                         markersize=2, label=r'Pantheon+SH0ES', zorder=0)
+            plt.errorbar(
+                z_sn, df['m_b_corr'], yerr=snerr, lw=0.5, ls='', marker='.',
+                markersize=2, label=r'Pantheon+SH0ES', zorder=0
+            )
 
-            plt.plot(z_sn, dm_astro, c='orange', ls='-',
-                     label=r'$DM$ from flat-$\Lambda$CDM Cosmology, '\
-                    r'$\chi^{{2}}_{{r}}={:.4f}$'.format(rchi2(obs=dm_astro)))
+            mb_astro, Mb_astro = mbcorr_fit(dm_astro)
+            plt.plot(
+                z_sn, mb_astro, c='orange', ls='-',
+                label=r'$m_{{B, \Lambda\mathrm{{CDM}}}}, M_{{B}} = {:.1f}$, $\chi^{{2}}_{{r}}={:.4f}$'.format(
+                Mb_astro, rchi2(obs=mb_astro, exp=df['m_b_corr'])
+                )
+            )
             
-            plt.plot(z_sn, self.dm_int, c='k', ls='-.', label=r'$DM(z, E(z))$,'
-                    r' $\chi^{{2}}_{{r}}={:.4f}$'.format(
-                                                    rchi2(obs=self.dm_int)))
+            plt.plot(
+                z_sn, self.mb_int, c='k', ls='-.',
+                label=r'$m_{{B}}(z, E(z)), M_{{B}}={:.1f}$, $\chi^{{2}}_{{r}}={:.4f}$'.format(
+                self.Mb_int, rchi2(obs=self.mb_int, exp=df['m_b_corr'])
+                )
+            )
             
-            plt.plot(z_sn, self.dm_tay, c='r', ls='--',
-                     label=r'$DM(z, q, j, s)$, '
-                        r'$\chi^{{2}}_{{r}}={:.4f}$'.format(
-                                                    rchi2(obs=self.dm_tay)))
+            plt.plot(
+                z_sn, self.mb_tay, c='r', ls='--',
+                label=r'$m_{{B}}(z, q, j, s), M_{{B}} = {:.1f}$, $\chi^{{2}}_{{r}}={:.4f}$'.format(
+                self.Mb_tay, rchi2(obs=self.mb_tay, exp=df['m_b_corr'])
+                )
+            )
             
-            plt.ylabel(r'$DM$ [mag]')
+            plt.ylabel(r'$m_{B}$ [mag]')
             plt.xscale('log')
             plt.tick_params(axis='both', which='both', direction='in',
                             bottom=True, top=True, left=True, right=True)
             plt.legend()
             plt.grid()
+            plt.ylim([7, 28])
             frame1.set_xticklabels([])
 
             frame2 = fig.add_axes((.1, .1, .8, .2))
             plt.errorbar(
-                z_sn, sndat - dm_astro, yerr=snerr, lw=0.5, ls='', marker='.',
-                markersize=2, label=r'Supernova',zorder=0
+                z_sn, df['m_b_corr'] - mb_astro, yerr=snerr, lw=0.5, ls='',
+                marker='.', markersize=2, label=r'Supernova',zorder=0
             )
-            plt.plot(
-                z_sn, (self.dm_int - dm_astro)/dm_astro*100, c='k', ls='-.'
-            )
-            plt.plot(
-                z_sn, (self.dm_tay - dm_astro)/dm_astro*100, c='r', ls='--'
-            )
+            plt.plot(z_sn, (self.mb_int - mb_astro), c='k', ls='-.')
+            plt.plot(z_sn, (self.mb_tay - mb_astro), c='r', ls='--')
             plt.xlabel(r'$z$')
             plt.xscale('log')
-            plt.ylabel(r'$\%\Delta{DM}_{\mathrm{flat}\Lambda\mathrm{CDM}}$')
+            plt.ylabel(r'$\Delta{m_{B}}_{\Lambda\mathrm{CDM}}$')
             plt.tick_params(
                 axis='both', which='both', direction='in',
                 bottom=True, top=True, left=True, right=True
