@@ -3,7 +3,7 @@
 # Import
 from _icd import *
 from _functions import modified_friedmann, acceleration, dm_z_o4, rchi2,\
-    read_model_data, specific_function, timer, highlight_cell
+    read_model_data, specific_function, timer, highlight_cell, mbcorr_fit
 
 
 # Classes
