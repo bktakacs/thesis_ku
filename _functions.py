@@ -243,10 +243,13 @@ def highlight_cell(x,y, ax=None, **kwargs):
 ###############################################################################
 
 def mbcorr_fit(dm: list):
-    func = lambda redshift, absolute_mag: dm + absolute_mag
-    abs_mag, _ = curve_fit(
-        func, z_sn, df['m_b_corr']
-    )
-    m_b_corr = dm + abs_mag[0]
+    if np.isnan(dm).any():
+        return np.full_like(dm, np.nan), np.nan
+    else:
+        func = lambda dist_mod, abs_mag: dist_mod + abs_mag
+        absolute_mag, _ = curve_fit(
+            func, dm, df['m_b_corr']
+        )
+        m_b_corr = dm + absolute_mag[0]
 
-    return m_b_corr, abs_mag[0]
+        return m_b_corr, absolute_mag[0]
