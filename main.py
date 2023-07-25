@@ -226,16 +226,16 @@ class model():
             integral_f = np.zeros_like(z)
             for index, scale in enumerate(self.a):
                 integral_f[index] = quad(
-                    lambda x, y: y**-2, 0, scale, (self.a1[index],)
+                    lambda x, y: y**-3, 0, scale, (self.a1[index],)
                 )[0]
-            f = (self.a1 / self.a * integral_f)**(self.p)
+            f = (self.a1 / self.a * integral_f)**(1/self.p)
 
             # calculate dl
             integrand = lambda x, m, r, l, f, k: (
-                m * (1 + x) * (1 + k * f) + r * (1 + x)**4 + l
+                m * (1 + x)**3 * (1 + k * f) + r * (1 + x)**4 + l
             )**-0.5
             dl = np.zeros_like(z)
-            for index, redshift in enumerate((z)):
+            for index, redshift in enumerate(z):
                 dl[index] = (1 + redshift) * dh * quad(
                     integrand, 0, redshift, (
                         self.m, self.r, self.l, f[index], self.k
@@ -243,17 +243,9 @@ class model():
                 )[0]
 
         else:
-            # calculate E(z)
-            ez = self.a1 / self.a
-
-            # calculate dl
-            dl = np.zeros_like(z)
-            for index, redshift in enumerate(z):
-                dl[index] = (1 + redshift) * dh * quad(
-                    lambda x, y: y**-0.5, 0, redshift, (ez[index],)
-                )[0]
+            raise Exception("You're wrong")
     
-        # calculate dm
+        # # calculate dm
         dm_int = 5 * np.log10(dl) + 25
         dm_int = np.flip(dm_int[idx0:idxf])
         z = np.flip(z[idx0:idxf])
@@ -261,16 +253,18 @@ class model():
         # try to interpolate, else nan
         try:
             self.dm_int = np.interp(z_sn, z, dm_int)
-            self.mb_int, self.Mb_int = mbcorr_fit(self.dm_int)
         except:
-            self.dm_int = np.nan
-            self.mb_int, self.Mb_int = np.nan, np.nan
+            self.dm_int = np.full_like(z_sn, np.nan)
 
-        # calculate dm_tay
-        self.dm_tay = dm_z_o4(q=self.q, j=self.j, s=self.s)
-        self.mb_tay, self.Mb_tay = mbcorr_fit(self.dm_tay)
+        # calculate mb_fit
+        self.mb_int, self.Mb_int = mbcorr_fit(self.dm_int)
 
     
+        self.chi_int = (np.nan if np.isnan(self.dm_int).all()
+                        # else rchi2(obs=self.dm_int))
+                        else rchi2(obs=self.mb_int, exp=df['m_b_corr']))
+        
+
     def chi_value(self):
         """
         Method to calculate the chi squared value of the model compared to the
@@ -278,13 +272,7 @@ class model():
         in the chi_int and chi_tay attributes respectively
         """
 
-        self.chi_int = (np.nan if np.isnan(self.dm_int).all()
-                        # else rchi2(obs=self.dm_int))
-                        else rchi2(obs=self.mb_int, exp=df['m_b_corr']))
-        
-        self.chi_tay = (np.nan if np.isnan(self.dm_tay).all()
-                        # else rchi2(obs=self.dm_tay))
-                        else rchi2(obs=self.mb_tay, exp=df['m_b_corr']))
+        print('This function no longer does anything. Deprecated.')
 
 
     def plot(
@@ -367,13 +355,6 @@ class model():
                 )
             )
             
-            plt.plot(
-                z_sn, self.mb_tay, c='r', ls='--',
-                label=r'$m_{{B}}(z, q, j, s), M_{{B}} = {:.1f}$, $\chi^{{2}}_{{r}}={:.4f}$'.format(
-                self.Mb_tay, rchi2(obs=self.mb_tay, exp=df['m_b_corr'])
-                )
-            )
-            
             plt.ylabel(r'$m_{B}$ [mag]')
             plt.xscale('log')
             plt.tick_params(axis='both', which='both', direction='in',
@@ -389,7 +370,6 @@ class model():
                 marker='.', markersize=2, label=r'Supernova',zorder=0
             )
             plt.plot(z_sn, (self.mb_int - mb_astro), c='k', ls='-.')
-            plt.plot(z_sn, (self.mb_tay - mb_astro), c='r', ls='--')
             plt.xlabel(r'$z$')
             plt.xscale('log')
             plt.ylabel(r'$\Delta{m_{B}}_{\Lambda\mathrm{CDM}}$')
@@ -423,13 +403,14 @@ def chi_comp_multi(
         lam = value if parameter == 'l' else lam,
         beta = value if parameter == 'b' else beta,
         kappa = value if parameter == 'k' else kappa,
+        solver=solver,
     )
     # return chi values
     if acc:
         return tmod.chi_acc
     else:
         tmod.distance_modulus(effort=dm_effort)
-        tmod.chi_value()
+        # tmod.chi_value()
         return tmod.chi_int if dm_method == 'int' else tmod.chi_tay
 
 
@@ -488,44 +469,6 @@ def chi_comp(
     array = np.zeros_like(space)
     nanarray = np.zeros_like(space)
 
-    # for index, value in enumerate(tqdm(space)):
-    #     temp_mod = model(
-    #         lam = value if parameter == 'l' else lam,
-    #         beta = value if parameter == 'b' else beta,
-    #         kappa = value if parameter == 'k' else kappa,
-    #     )
-    #     if (np.max(temp_mod.a2norm) > 3) or (np.min(temp_mod.a2norm) < -10):
-    #         array[index] = np.nan
-    #     elif acc:
-    #         array[index] = temp_mod.chi_acc
-    #     else:
-    #         temp_mod.distance_modulus(effort=dm_effort)
-    #         temp_mod.chi_value()
-    #         array[index] = (temp_mod.chi_int if dm_method == 'int'
-    #                         else temp_mod.chi_tay)
-
-    # for index, value in enumerate(tqdm(space)):
-    #     temp_mod = model(
-    #         lam = value if parameter == 'l' else lam,
-    #         beta = value if parameter == 'b' else beta,
-    #         kappa = value if parameter == 'k' else kappa,
-    #     )
-    #     if (
-    #         np.max(temp_mod.a2norm) > 3 or
-    #         np.min(temp_mod.a2norm) < -10 or
-    #         np.mean(np.diff(temp_mod.a2norm)) > 0.01 or
-    #         np.max(np.diff(temp_mod.a2norm)) > 0.02
-    #     ):
-    #         nanarray[index] = 1
-
-    #     if acc:
-    #         array[index] = temp_mod.chi_acc
-    #     else:
-    #         temp_mod.distance_modulus(effort=dm_effort)
-    #         temp_mod.chi_value()
-    #         array[index] = (temp_mod.chi_int if dm_method == 'int'
-    #                         else temp_mod.chi_tay)
-
     cpu_num = multiprocessing.cpu_count()
     with Pool(cpu_num) as pool:
         partial_function = partial(
@@ -544,7 +487,7 @@ def chi_comp(
         kappa=space[np.nanargmin(array)] if parameter == 'k' else kappa,
     )
     model_optimized.distance_modulus(effort=dm_effort)
-    model_optimized.chi_value()
+    # model_optimized.chi_value()
 
     print(
         'The lowest chi^2 value is {:.3f} for beta = {:.5f}, k = {:.5f} and '
@@ -599,7 +542,6 @@ def chi_comp(
 
 def chi_search_multi(
     param, lam: float = 0, solver: str = 'BDF', acc: bool = False,
-    dm_effort: bool = False, dm_method: str = 'int', double_eval: bool = False
 ):
     """
     Multi processing chi search
@@ -631,35 +573,18 @@ def chi_search_multi(
     """
 
     tmod = model(lam=lam, beta=param[0], kappa=param[1], solver=solver)
-    # if model is not physical, store nan
-    if (
-        np.max(tmod.a2norm) > 3 or
-        np.min(tmod.a2norm) < -10 or
-        np.mean(np.diff(tmod.a2norm)) > 0.01 or
-        np.max(np.diff(tmod.a2norm)) > 0.02
-    ):
-        if double_eval:
-            return np.nan, np.nan, np.nan
-        else:
-            return np.nan
-    # else if model is physical, store chi values
-    elif acc:
+    if acc:
         return tmod.chi_acc
     else:
-        tmod.distance_modulus(effort=dm_effort)
-        tmod.chi_value()
-        if double_eval:
-            return tmod.chi_int + tmod.chi_tay, tmod.chi_int, tmod.chi_tay
-        else:
-            return tmod.chi_int if dm_method == 'int' else tmod.chi_tay
+        tmod.distance_modulus()
+        return tmod.chi_int
 
 
 @timer
 def chi_search(
         fname: str, length: int = 10, blim: tuple = (2., 4.),
-        klim: tuple = (1., 10.), lam: float = 0., dm_effort: bool = False,
-        dm_method: str = 'int', plot: bool = True, round: int = 1,
-        scale = LogNorm(), double_eval: bool = False, acc: bool = False,
+        klim: tuple = (1., 10.), lam: float = 0., plot: bool = True,
+        round: int = 1, scale = LogNorm(), acc: bool = False,
         fdir: str='../../Data/model_data/', solver: str = 'BDF'
 ):
     """
@@ -685,12 +610,6 @@ def chi_search(
         Upper and lower bounds of kappa. The default is (1., 10.).
     lam : int, optional
         Lambda value to be used for each model. The default is 0.
-    dm_effort : bool, optional
-        Whether to use effort or not in calculation of distance modulus (used
-        later in calculating chi^2). The default is False.
-    dm_method : str, optional
-        'int' or 'tay', which method to use in evaluating distance modulus.
-        The default is 'int'.
     plot : bool, optional
         Plot chi^2 heat map or no. The default is True.
     round : int, optional
@@ -699,9 +618,6 @@ def chi_search(
     scale : matplotlib.colors.Normalize, optional
         Used when plot==True, what scale to use for colour map. The default is
         LogNorm().
-    double_eval : bool, optional
-        Whether to evaluate on both chi^2 values for each model. The default is
-        False. Mutually exclusive with acc.
     acc : bool, optional
         Whether to evaluate on normalized acceleration instead of DM. The
         default is False. Mutually exclusive with double_eval.
@@ -726,9 +642,6 @@ def chi_search(
     else:
         save = True
         fname += '.txt'
-
-    if acc and double_eval:
-        raise Exception('acc and double_eval are mutually exclusive')
   
     if blim[0] > blim[1] or klim[0] > klim[1]:
         raise Exception('blim and klim must be increasing tuples')
@@ -743,8 +656,7 @@ def chi_search(
 
         partial_function = partial(
             chi_search_multi,
-            lam=lam, solver=solver, acc=acc, dm_effort=dm_effort,
-            dm_method=dm_method, double_eval=double_eval
+            lam=lam, solver=solver, acc=acc, 
         )
 
         chival = list(tqdm(
@@ -752,15 +664,12 @@ def chi_search(
             total=length**2
             )
         )
+
+    chival[chival > 1e-2] = np.nan
         
     # Raise exception if only NaN values were returned
     if np.isnan(chival).all():
         raise Exception('No real chi values found')
-    elif double_eval:
-        nan_ratio = np.count_nonzero(np.isnan(chival)) / (3 * len(chival))*100
-        chival_int = [chival[i][1] for i in range(len(chival))]
-        chival_tay = [chival[i][2] for i in range(len(chival))]
-        chival = [chival[i][0] for i in range(len(chival))]
     else:
         nan_ratio = np.count_nonzero(np.isnan(chival)) / len(chival) * 100
     
@@ -771,15 +680,7 @@ def chi_search(
     kappa_low = np.tile(krange, length)[lowest]
 
     # Print results of function call
-    print('The lowest combination of chi^2 values is {:.5f} (int) {:.5f} (tay) '
-          'for beta = {:.3f} & mu = {:.3f} in the ranges\n\t'
-          '{:.2f} < beta < {:.2f} and {:.2f} < mu < {:.2f}\n\t'
-          '{:.1f} % of models had a chi^2 value of NaN. \n'
-          ''.format(
-            chival_int[lowest], chival_tay[lowest], beta_low, kappa_low,
-            np.min(blim), np.max(blim), np.min(klim), np.max(klim), nan_ratio
-          ) if double_eval else
-          'The lowest chi^2 value is {:.5f} for beta = {:.3f} & mu = '
+    print('The lowest chi^2 value is {:.5f} for beta = {:.3f} & mu = '
           '{:.3f} in the range'
           '\n{:.2f} < beta < {:.2f} and {:.2f} < mu < {:.2f}\n\t'
           '{:.1f} % of models had a chi^2 value of NaN. \n'
@@ -797,10 +698,9 @@ def chi_search(
         f_comment = (
             '#Results of "chi_search" called with the following inputs:\n'
             '#acc = {}, length={}, blim=({}, {}), klim=({}, {}), lambda={}, '
-            'effort={}, dm_method={}, double_eval={}, solver={}\n'
-            '#Lowest chi^2 was with beta={} & k={}\n'.format(
+            'solver={}\n#Lowest chi^2 was with beta={} & k={}\n'.format(
                 acc, length, blim[0], blim[1], klim[0], klim[1], lam,
-                dm_effort, dm_method, double_eval, solver, beta_low, kappa_low
+                solver, beta_low, kappa_low
             )
         )
         
@@ -810,107 +710,7 @@ def chi_search(
         )
 
     # Plot heat map of chi values
-    if plot and double_eval:
-        # reshape chi values into 2D array
-        round=1
-        chi_plot_z_int = np.reshape(chival_int, (length, length)).T
-        chi_plot_z_tay = np.reshape(chival_tay, (length, length)).T 
-        chi_plot_z = np.reshape(chival, (length, length)).T
-
-        fig, axes = plt.subplots(
-            nrows=1, ncols=3, figsize=(12, 4), sharex=True, sharey=True,
-            constrained_layout=True
-        )
-        f1 = axes[0]; f2 = axes[1]; f3 = axes[2]
-        cmap = matplotlib.cm.get_cmap('viridis_r').copy()
-        cmap.set_bad(color='r')
-
-        # int
-        im1 = f1.imshow(chi_plot_z_int, cmap=cmap, origin='lower',
-                        interpolation='nearest', norm=scale)
-        for x in product(range(length), range(length)):
-            highlight_cell(x[0], x[1], ax=f1, color='w', linewidth=0.2)
-        highlight_cell(
-            np.array(range(length))[np.where(brange == beta_low)],
-            np.array(range(length))[np.where(krange == kappa_low)],
-            ax=f1, color='k', linewidth=1
-        )
-        f1.set_xticks(
-            np.linspace(0, length-1, 10),
-            np.round(np.linspace(brange[0], brange[-1], 10), round),
-            rotation=45, fontsize=12
-        )
-        f1.set_yticks(
-            np.linspace(0, length-1, 10),
-            np.round(np.linspace(krange[0], krange[-1], 10), round),
-            fontsize=12
-        )
-        f1.set_xlabel(r'$\beta$')
-        f1.set_ylabel(r'$\mu$')
-        f1.set_title(r'Integration method', fontsize=14)
-        f1.tick_params(axis='both', which='both', direction='in',
-                       bottom=True, top=True, left=True, right=True)
-        # f1.grid()
-
-        # tay
-        im2 = f2.imshow(chi_plot_z_tay, cmap=cmap, origin='lower',
-                        interpolation='nearest', norm=scale)
-        for x in product(range(length), range(length)):
-            highlight_cell(x[0], x[1], ax=f2, color='w', linewidth=0.2)
-        highlight_cell(
-            np.array(range(length))[np.where(brange == beta_low)],
-            np.array(range(length))[np.where(krange == kappa_low)],
-            ax=f2, color='k', linewidth=1
-        )
-        f2.set_xticks(
-            np.linspace(0, length-1, 10),
-            np.round(np.linspace(brange[0], brange[-1], 10), round),
-            rotation=45, fontsize=12
-        )
-        f2.set_yticks(
-            np.linspace(0, length-1, 10),
-            np.round(np.linspace(krange[0], krange[-1], 10), round),
-            fontsize=12
-        )
-        f2.set_xlabel(r'$\beta$')
-        # f2.set_ylabel(r'$\mu$')
-        f2.set_title(r'Taylor expansion', fontsize=14)
-        f2.tick_params(axis='both', which='both', direction='in',
-                       bottom=True, top=True, left=True, right=True)
-        # f2.grid()
-
-        # both
-        im3 = f3.imshow(chi_plot_z, cmap=cmap, origin='lower',
-                        interpolation='nearest', norm=scale)
-        for x in product(range(length), range(length)):
-            highlight_cell(x[0], x[1], ax=f3, color='w', linewidth=0.2)
-        highlight_cell(
-            np.array(range(length))[np.where(brange == beta_low)],
-            np.array(range(length))[np.where(krange == kappa_low)],
-            ax=f3, color='k', linewidth=1
-        )
-        f3.set_xticks(
-            np.linspace(0, length-1, 10),
-            np.round(np.linspace(brange[0], brange[-1], 10), round),
-            rotation=45, fontsize=12
-        )
-        f3.set_yticks(
-            np.linspace(0, length-1, 10),
-            np.round(np.linspace(krange[0], krange[-1], 10), round),
-            fontsize=12
-        )
-        f3.set_xlabel(r'$\beta$')
-        # f3.set_ylabel(r'$\mu$')
-        f3.set_title(r'Combined', fontsize=14)
-        f3.tick_params(axis='both', which='both', direction='in',
-                       bottom=True, top=True, left=True, right=True)
-        # f3.grid()
-        plt.colorbar(
-            im3, ax=f3, label=r'$\chi^{2}_{r, DM_{E}+DM_{q}}$', shrink=0.56
-        )
-        plt.show()
-
-    elif plot:
+    if plot:
         chi_plot_z = np.reshape(chival, (length, length)).T
         scale = (LogNorm() if (np.log(np.nanmax(chival)/np.nanmin(chival))) > 1
                  else None)
@@ -918,7 +718,7 @@ def chi_search(
         fig, ax = plt.subplots(figsize=(6, 5), constrained_layout=True)
         cmap = matplotlib.cm.get_cmap('viridis_r').copy()
         # cmap = matplotlib.cm.get_cmap('binary').copy()
-        cmap.set_bad(color='r')
+        cmap.set_bad(color='w')
         im = ax.imshow(chi_plot_z, cmap=cmap, origin='lower',
                        interpolation='nearest', norm=scale)
         for x in product(range(length), range(length)):
@@ -946,8 +746,7 @@ def chi_search(
         cbar.set_label(
             r'$\chi^{{2}}_{{r, {}}}$'.format(
                 '\ddot{a}/\ddot{a}_{\mathrm{M}}' if acc
-                else 'DM_{E}' if dm_method == 'int'
-                else 'DM_{q}'
+                else 'E(z)'
             ), rotation='90', labelpad=-1
         )
         ax.tick_params(
@@ -960,8 +759,7 @@ def chi_search(
 
     # Return the optimized model
     model_optimized = model(beta=beta_low, kappa=kappa_low, lam=lam)
-    model_optimized.distance_modulus(effort=dm_effort)
-    model_optimized.chi_value()
+    model_optimized.distance_modulus()
     
     return model_optimized
 
@@ -1024,7 +822,7 @@ def q_surface(
 
         if (qlim[0] < temp_mod.q < qlim[1]):
             temp_mod.distance_modulus(effort=dm_effort)
-            temp_mod.chi_value()
+            # temp_mod.chi_value()
 
             qcd.append(temp_mod.q)
             bcd.append(temp_mod.b)
@@ -1105,7 +903,7 @@ def q_surface(
     m = model(beta=bred[np.argmin(xred)], kappa=kred[np.argmin(xred)],
                 lam=lam)  
     m.distance_modulus(effort=dm_effort)
-    m.chi_value()
+    # m.chi_value()
     
     if mplot:
         m.plot('acc')
