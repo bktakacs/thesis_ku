@@ -11,8 +11,7 @@ def main():
     if __name__ == '__main__':
 
         m1 = chi_search(
-            'mbfit-tay-1', length=50, blim=(1, 4), klim=(0.1, 10),
-            dm_method='tay', 
+            'paper-rk45-2', length=50, blim=(1.5, 2.5), klim=(6, 8), solver='RK45'
         )
         m1.plot('acc')
         m1.distance_modulus()
@@ -25,6 +24,11 @@ def main():
         # lcdm = model(beta=2.238, kappa=15.687, lam=0.)
         # lcdm = model()
         # lcdm.distance_modulus(effort=True)
+        # lcdm.plot('dm')
+
+        # lcdm.chi_value()
+        # print(lcdm.chi_int)
+        # lcdm.distance_modulus(effort=False)
 
         # fig = plt.figure(constrained_layout=False)
         # frame1 = fig.add_axes((.1, .3, .8, .6))
@@ -42,11 +46,11 @@ def main():
         #         r' $\chi^{{2}}_{{r}}={:.4f}$'.format(
         #                         Mb_int, rchi2(obs=mb_int, exp=df['m_b_corr'])))
         
-        # mb_tay, Mb_tay = mbcorr_fit(lcdm.dm_tay)
-        # plt.plot(z_sn, mb_tay, c='r', ls='--',
-        #             label=r'$m_{{B}}(z, q, j, s), M_{{B}} = {:.1f}$, '
-        #             r'$\chi^{{2}}_{{r}}={:.4f}$'.format(
-        #     Mb_tay, rchi2(obs=mb_tay, exp=df['m_b_corr'])))
+        # # mb_tay, Mb_tay = mbcorr_fit(lcdm.dm_tay)
+        # # plt.plot(z_sn, mb_tay, c='r', ls='--',
+        # #             label=r'$m_{{B}}(z, q, j, s), M_{{B}} = {:.1f}$, '
+        # #             r'$\chi^{{2}}_{{r}}={:.4f}$'.format(
+        # #     Mb_tay, rchi2(obs=mb_tay, exp=df['m_b_corr'])))
         
         # plt.ylabel(r'$m_{B}$ [mag]')
         # plt.xscale('log')
@@ -65,9 +69,9 @@ def main():
         # plt.plot(
         #     z_sn, (mb_int - mb_astro), c='k', ls='-.'
         # )
-        # plt.plot(
-        #     z_sn, (mb_tay - mb_astro), c='r', ls='--'
-        # )
+        # # plt.plot(
+        # #     z_sn, (mb_tay - mb_astro), c='r', ls='--'
+        # # )
         # plt.xlabel(r'$z$')
         # plt.xscale('log')
         # plt.ylabel(r'$\Delta{m_{B}}_{\Lambda\mathrm{CDM}}$')
