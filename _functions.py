@@ -37,14 +37,36 @@ def modified_friedmann(time, var: list, m: float, r: float, l: float, k: float,
         1
     )
 
+    # numerator = (
+    #     np.sign(k) * np.abs(k)**p * np.abs(g_lcdm)**(1 - p) - 
+    #     g_lcdm * var[1]**2 - var[1]**4 * var[0] * p * m**-1 - 
+    #     r * m**-1 * var[1]**2 * var[0]**-1 * p + 
+    #     3 * var[1]**2 * var[0]**3 * l * m**-1 * p
+    # )
+    
+    # denominator = 2 * var[1]**2 * var[0]**2 * p * m**-1 - var[0] * g_lcdm
+
     numerator = (
-        np.sign(k) * np.abs(k)**p * np.abs(g_lcdm)**(1 - p) - 
-        g_lcdm * var[1]**2 - var[1]**4 * var[0] * p * m**-1 - 
-        r * m**-1 * var[1]**2 * var[0]**-1 * p + 
-        3 * var[1]**2 * var[0]**3 * l * m**-1 * p
+        np.sign(k) * np.abs(k)**p * np.abs(g_lcdm)**(1 - p) * m - 
+        g_lcdm * var[1]**2 * m -
+        var[1]**4 * var[0] * p - 
+        r * var[1]**2 * var[0]**-1 * p + 
+        3 * var[1]**2 * var[0]**3 * l * p
     )
     
-    denominator = 2 * var[1]**2 * var[0]**2 * p * m**-1 - var[0] * g_lcdm
+    denominator = 2 * var[1]**2 * var[0]**2 * p - var[0] * g_lcdm * m
+
+    # numerator = (
+    #     np.sign(k) * np.abs(k)**p * (g_lcdm) * m * var[0] - 
+    #     np.abs(g_lcdm)**(p + 1) * var[1]**2 * m * var[0] -
+    #     var[1]**4 * var[0]**2 * p * np.abs(g_lcdm)**p - 
+    #     r * var[1]**2 * p * np.abs(g_lcdm)**p + 
+    #     3 * var[1]**2 * var[0]**4 * l * p * np.abs(g_lcdm)**p
+    # )
+
+    # denominator = (2 * var[1]**2 * var[0]**3 * p * np.abs(g_lcdm)**p -
+    #                var[0]**2 * np.abs(g_lcdm)**(1 + p) * m)
+
     dvar[1] = numerator / denominator
 
     return dvar
@@ -234,8 +256,8 @@ def timer(func):
 
 ###############################################################################
 
-def highlight_cell(x,y, ax=None, **kwargs):
-    rect = plt.Rectangle((x-.5, y-.5), 1,1, fill=False, **kwargs)
+def highlight_cell(x,y, dx, dy, ax=None, **kwargs):
+    rect = plt.Rectangle((x, y), dx,dy, fill=False, **kwargs)
     ax = ax or plt.gca()
     ax.add_patch(rect)
     return rect
