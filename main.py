@@ -343,14 +343,16 @@ class model():
             mb_astro, Mb_astro = mbcorr_fit(dm_astro)
             plt.plot(
                 z_sn, mb_astro, c='orange', ls='-',
-                label=r'$m_{{B, \Lambda\mathrm{{CDM}}}}, M_{{B}} = {:.1f}$, $\chi^{{2}}_{{r}}={:.4f}$'.format(
+                label=r'$m_{{B, \Lambda\mathrm{{CDM}}}}, M_{{B}} = {:.1f}$,'\
+                    r'$\chi^{{2}}_{{r}}={:.4f}$'.format(
                 Mb_astro, rchi2(obs=mb_astro, exp=df['m_b_corr'])
                 )
             )
             
             plt.plot(
                 z_sn, self.mb_int, c='k', ls='-.',
-                label=r'$m_{{B}}(z, E(z)), M_{{B}}={:.1f}$, $\chi^{{2}}_{{r}}={:.4f}$'.format(
+                label=r'$m_{{B}}(z, E(z)), M_{{B}}={:.1f}$,'\
+                    r'$\chi^{{2}}_{{r}}={:.4f}$'.format(
                 self.Mb_int, rchi2(obs=self.mb_int, exp=df['m_b_corr'])
                 )
             )
@@ -648,7 +650,8 @@ def chi_search(
 
     # Create beta and kappa arrays
     brange = np.linspace(np.min(blim), np.max(blim), length)
-    krange = np.linspace(np.min(klim), np.max(klim), length)
+    krange = np.geomspace(np.min(klim), np.max(klim), length)
+    # krange = np.linspace(np.min(klim), np.max(klim), length)
 
     # Parallelize
     cpu_num = multiprocessing.cpu_count()
@@ -665,8 +668,10 @@ def chi_search(
             )
         )
 
-    chival[chival > 1e-2] = np.nan
-        
+    chi_cutoff = 0.035
+    chival = np.array(chival)
+    chival[chival > chi_cutoff] = np.nan
+
     # Raise exception if only NaN values were returned
     if np.isnan(chival).all():
         raise Exception('No real chi values found')
@@ -715,45 +720,32 @@ def chi_search(
         scale = (LogNorm() if (np.log(np.nanmax(chival)/np.nanmin(chival))) > 1
                  else None)
 
-        fig, ax = plt.subplots(figsize=(6, 5), constrained_layout=True)
+        fig, ax = plt.subplots(figsize=(7, 5), constrained_layout=True)
+        ax.set_yscale('log')
         cmap = matplotlib.cm.get_cmap('viridis_r').copy()
-        # cmap = matplotlib.cm.get_cmap('binary').copy()
         cmap.set_bad(color='w')
-        im = ax.imshow(chi_plot_z, cmap=cmap, origin='lower',
-                       interpolation='nearest', norm=scale)
-        for x in product(range(length), range(length)):
-            highlight_cell(x[0], x[1], ax=ax, color='w', linewidth=0.5)
+        im = ax.pcolormesh(
+            brange, krange, chi_plot_z, norm=None, edgecolors='w',
+            cmap='viridis_r'
+        )
+        index = np.argmin(np.abs(krange - kappa_low))
         highlight_cell(
-            np.array(range(length))[np.where(brange == beta_low)],
-            np.array(range(length))[np.where(krange == kappa_low)],
-            ax=ax, color='k', linewidth=2
-        )
-        ax.set_xticks(
-            np.linspace(0, length-1, 10),
-            np.round(np.linspace(brange[0], brange[-1], 10), round),
-            rotation=45, fontsize=14
-        )
-        ax.set_yticks(
-            np.linspace(0, length-1, 10),
-            np.round(np.linspace(krange[0], krange[-1], 10), round),
-            fontsize=14
+            beta_low-0.5*np.diff(brange)[0],
+            kappa_low-0.5*(krange[index] - krange[index-1]),
+            np.diff(brange)[0],
+            (krange[index+1] - krange[index]),
+            ax=ax, color='k', linewidth=1
         )
         ax.set_xlabel(r'$\beta$')
         ax.set_ylabel(r'$\mu$')
-        divider = make_axes_locatable(ax)
-        cax = divider.append_axes("right", size="5%", pad=0.08)
-        cbar = fig.colorbar(im, cax=cax)
-        cbar.set_label(
-            r'$\chi^{{2}}_{{r, {}}}$'.format(
-                '\ddot{a}/\ddot{a}_{\mathrm{M}}' if acc
-                else 'E(z)'
-            ), rotation='90', labelpad=-1
-        )
+        fig.colorbar(im, ax=ax, label=r'$\chi^{{2}}_{{r, {}}}$'.format(
+            '\ddot{a}/\ddot{a}_{\mathrm{M}}' if acc
+            else 'E(z)'
+        ))
         ax.tick_params(
             axis='both', which='both', direction='in',
             bottom=True, top=True, left=True, right=True
         )
-        # ax.grid()
         plt.show()
 
 
