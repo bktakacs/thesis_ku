@@ -15,12 +15,16 @@ def main():
         # # k = np.logspace(-1, 3, 50)
         # k = np.geomspace(0.1, 1000, 50)
 
-        # data = read_model_data('new-friedmann-1.txt')
-        # chival = np.array(data['chi'])
+        # data = read_model_data('new-friedmann-before30.txt')
+        # b, k = specific_function(data, 0)
+        # m = model(beta=b, kappa=k, lam=0.)
+        # m.plot('acc')
+        # m.distance_modulus()
+        # m.plot('dm')
+
         # brange = np.unique(np.array(data['beta']))
         # krange = np.unique(np.array(data['kappa']))
         # length = int(np.sqrt(len(chival)))
-        # beta_low, kappa_low = specific_function(data, 0)
         # acc = False
         # round = 1
 
@@ -58,13 +62,32 @@ def main():
         # )
         # plt.show()
 
-        m1 = chi_search(
-            # 'nosave', length=50, blim=(1, 4), klim=(0.1, 10), solver='BDF',
-            'new-friedmann-before30', length=50, blim=(1, 4), klim=(0.1, 1000),
-            solver='BDF', acc=False,
-        )
+        pass    
 
-        # m = model(beta=0.6, kappa=1, lam=0.)
+        # m1 = chi_search(
+        #     # 'nosave', length=50, blim=(1, 4), klim=(0.1, 10), solver='BDF',
+        #     'new-friedmann-pre30-mult-a-1', length=50, blim=(1, 4), klim=(0.1, 1000),
+        #     solver='BDF', acc=False,
+        # )
+        # m1.plot('acc')
+        # m1.distance_modulus()
+        # m1.plot('dm')
+
+        # m2 = chi_search(
+        #     'new-friedmann-eq30-rk45-1', length=50, blim=(1, 4), klim=(0.1, 1000),
+        #     solver='RK45', acc=False,
+        # )
+        # m2.plot('acc')
+        # m2.distance_modulus()
+        # m2.plot('dm')
+
+
+        # m = model(beta=1.979591836734693855, kappa=15.99858719606057278, lam=0.)
+        # m = model(beta=1.612244897959183687, kappa=86.85113737513520960, lam=0.)
+        # m = model(beta=2.224489795918367374, kappa=10.98541141987558412, lam=0.)
+        # m = model()
         # m.plot('acc')
+        # m.distance_modulus()
+        # m.plot('dm')
 
 main()
