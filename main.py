@@ -382,8 +382,8 @@ class model():
             plt.tick_params(axis='x', pad=7)
             extraticks = [-1, 1]
             plt.yticks(list(plt.yticks()[0]) + extraticks)
-            plt.ylim([-2, 2])
-            # plt.ylim([-1, 1])
+            # plt.ylim([-2, 2])
+            plt.ylim([-1, 1])
             plt.grid(which='major', axis='both')
             plt.show()
 
