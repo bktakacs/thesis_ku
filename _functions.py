@@ -37,15 +37,18 @@ def modified_friedmann(time, var: list, m: float, r: float, l: float, k: float,
         1
     )
 
+        # eq 30, division by mass
     # numerator = (
     #     np.sign(k) * np.abs(k)**p * np.abs(g_lcdm)**(1 - p) - 
-    #     g_lcdm * var[1]**2 - var[1]**4 * var[0] * p * m**-1 - 
+    #     g_lcdm * var[1]**2 -
+    #     var[1]**4 * var[0] * p * m**-1 - 
     #     r * m**-1 * var[1]**2 * var[0]**-1 * p + 
     #     3 * var[1]**2 * var[0]**3 * l * m**-1 * p
     # )
     
     # denominator = 2 * var[1]**2 * var[0]**2 * p * m**-1 - var[0] * g_lcdm
 
+        # eq 30, no division by mass
     numerator = (
         np.sign(k) * np.abs(k)**p * np.abs(g_lcdm)**(1 - p) * m - 
         g_lcdm * var[1]**2 * m -
@@ -56,6 +59,7 @@ def modified_friedmann(time, var: list, m: float, r: float, l: float, k: float,
     
     denominator = 2 * var[1]**2 * var[0]**2 * p - var[0] * g_lcdm * m
 
+        # pre eq 30
     # numerator = (
     #     np.sign(k) * np.abs(k)**p * (g_lcdm) * m * var[0] - 
     #     np.abs(g_lcdm)**(p + 1) * var[1]**2 * m * var[0] -
@@ -66,6 +70,18 @@ def modified_friedmann(time, var: list, m: float, r: float, l: float, k: float,
 
     # denominator = (2 * var[1]**2 * var[0]**3 * p * np.abs(g_lcdm)**p -
     #                var[0]**2 * np.abs(g_lcdm)**(1 + p) * m)
+    
+        # pre eq 30, but multiplied with a
+    # numerator = (
+    #     np.sign(k) * np.abs(k)**p * (g_lcdm) * m - 
+    #     np.abs(g_lcdm)**(p + 1) * var[1]**2 * m -
+    #     var[1]**4 * var[0]**1 * p * np.abs(g_lcdm)**p - 
+    #     r * var[1]**2 * var[0]**-1 * p * np.abs(g_lcdm)**p + 
+    #     3 * var[1]**2 * var[0]**3 * l * p * np.abs(g_lcdm)**p
+    # )
+
+    # denominator = (2 * var[1]**2 * var[0]**2 * p * np.abs(g_lcdm)**p -
+    #                var[0]**1 * np.abs(g_lcdm)**(1 + p) * m)
 
     dvar[1] = numerator / denominator
 
