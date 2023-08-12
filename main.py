@@ -2,7 +2,7 @@
 
 # Import
 from _icd import *
-from _functions import modified_friedmann, acceleration, dm_z_o4, rchi2,\
+from _functions import modified_friedmann, acceleration, dm_z_o4, rchi2,  \
     read_model_data, specific_function, timer, highlight_cell, mbcorr_fit
 
 
@@ -174,9 +174,7 @@ class model():
             self.chi_acc = rchi2(obs=a2norm_intp, exp=lcdm.a2norm)
 
     
-    def distance_modulus(
-            self, effort: bool = True
-    ):
+    def distance_modulus(self):
         """
         distance_modulus() method which calculates the distance modulus of
         scale factor values calculated in the initialization in two ways.
@@ -184,85 +182,75 @@ class model():
 
         Parameters
         ----------
-        effort : bool, optional
-            if True, uses the "true" method of calculating the distance
-            modulus, if False, uses a faster method. The default is True.
+        self : object
+            model object
 
         Returns
         -------
-        dm : array
-            distance modulus array
+        apparent and absolute magnitudes
         
-        Note on effort parameter:
-        "True" way is calculating f and using the integrand function. "False"
-        way calculates E(z) simply integrates that. It is a bit mysterious
-        however because it uses a function which returns x**(-0.5) when it
-        should just be x**(-1). For some reason though, -0.5 just works.
+        # Note on effort parameter:
+        # "True" way is calculating f and using the integrand function. "False"
+        # way calculates E(z) simply integrates that. It is a bit mysterious
+        # however because it uses a function which returns x**(-0.5) when it
+        # should just be x**(-1). For some reason though, -0.5 just works.
         
-        The distance modulus is calculated through two methods, here called
-        integration and taylor: DM through integration is calculated through a
-        series of equations as follows: dc = dh * int_0^z dz/E(z) where
-        E(z) = sqrt(m(1+z)(1+kf) + r(1+z)^4 + l) ; dl = (1+z) * dh ;
-        dm = 5 * np.log10(dl) + 25 (for dl given in Mpc). Because z from the
-        model will not exactly equal z from the SN data, we interpolate along z
-        from SNe
+        # The distance modulus is calculated through two methods, here called
+        # integration and taylor: DM through integration is calculated through a
+        # series of equations as follows: dc = dh * int_0^z dz/E(z) where
+        # E(z) = sqrt(m(1+z)(1+kf) + r(1+z)^4 + l) ; dl = (1+z) * dh ;
+        # dm = 5 * np.log10(dl) + 25 (for dl given in Mpc). Because z from the
+        # model will not exactly equal z from the SN data, we interpolate along z
+        # from SNe
         
-        DM through taylor is calculated using a Taylor approximation of the
-        scale factor which is a long equation that's written below
+        # DM through taylor is calculated using a Taylor approximation of the
+        # scale factor which is a long equation that's written below
 
-        At the end we add the dm_int and dm_tay attributes corresponding to the
-        DM calculated from integration and taylor respectively
+        # At the end we add the dm_int and dm_tay attributes corresponding to the
+        # DM calculated from integration and taylor respectively
         """
-
-        if type(effort) != bool:
-            raise ValueError('effort must be boolean')
 
         z = (1 / self.a - 1)
         idx0 = np.argmin(np.abs(z - z_sn[-1]))
         idxf = np.argmin(np.abs(z - z_sn[0]))
 
-        if effort:
-            # calculate f
-            integral_f = np.zeros_like(z)
-            for index, scale in enumerate(self.a):
-                integral_f[index] = quad(
-                    lambda x, y: y**-3, 0, scale, (self.a1[index],)
-                )[0]
-            f = (self.a1 / self.a * integral_f)**(1/self.p)
+        # calculate f
+        integral_f = np.zeros_like(z)
+        for index, scale in enumerate(self.a):
+            integral_f[index] = quad(
+                lambda x, y: y**-3, 0, scale, (self.a1[index],)
+            )[0]
+        f = (self.a1 / self.a * integral_f)**(1/self.p)
 
-            # calculate dl
-            integrand = lambda x, m, r, l, f, k: (
-                m * (1 + x)**3 * (1 + k * f) + r * (1 + x)**4 + l
-            )**-0.5
-            dl = np.zeros_like(z)
-            for index, redshift in enumerate(z):
-                dl[index] = (1 + redshift) * dh * quad(
-                    integrand, 0, redshift, (
-                        self.m, self.r, self.l, f[index], self.k
-                    )
-                )[0]
-
-        else:
-            raise Exception("You're wrong")
+        # calculate dl
+        integrand = lambda x, m, r, l, f, k: (
+            m * (1 + x)**3 * (1 + k * f) + r * (1 + x)**4 + l
+        )**-0.5
+        dl = np.zeros_like(z)
+        for index, redshift in enumerate(z):
+            dl[index] = (1 + redshift) * dh * quad(
+                integrand, 0, redshift, (
+                    self.m, self.r, self.l, f[index], self.k
+                )
+            )[0]
     
         # # calculate dm
-        dm_int = 5 * np.log10(dl) + 25
-        dm_int = np.flip(dm_int[idx0:idxf])
+        dm = 5 * np.log10(dl) + 25
+        dm = np.flip(dm[idx0:idxf])
         z = np.flip(z[idx0:idxf])
 
         # try to interpolate, else nan
         try:
-            self.dm_int = np.interp(z_sn, z, dm_int)
+            self.dm = np.interp(z_sn, z, dm)
         except:
-            self.dm_int = np.full_like(z_sn, np.nan)
+            self.dm = np.full_like(z_sn, np.nan)
 
         # calculate mb_fit
-        self.mb_int, self.Mb_int = mbcorr_fit(self.dm_int)
+        self.app_mag, self.abs_mag = mbcorr_fit(self.dm)
 
-    
-        self.chi_int = (np.nan if np.isnan(self.dm_int).all()
-                        # else rchi2(obs=self.dm_int))
-                        else rchi2(obs=self.mb_int, exp=df['m_b_corr']))
+        # calculate chi squared
+        self.chi_int = (np.nan if np.isnan(self.dm).all()
+                        else rchi2(obs=self.app_mag, exp=df['m_b_corr']))
         
 
     def chi_value(self):
@@ -350,10 +338,10 @@ class model():
             )
             
             plt.plot(
-                z_sn, self.mb_int, c='k', ls='-.',
+                z_sn, self.app_mag, c='k', ls='-.',
                 label=r'$m_{{B}}(z, E(z)), M_{{B}}={:.1f}$,'\
                     r'$\chi^{{2}}_{{r}}={:.4f}$'.format(
-                self.Mb_int, rchi2(obs=self.mb_int, exp=df['m_b_corr'])
+                self.abs_mag, rchi2(obs=self.app_mag, exp=df['m_b_corr'])
                 )
             )
             
@@ -371,7 +359,7 @@ class model():
                 z_sn, df['m_b_corr'] - mb_astro, yerr=snerr, lw=0.5, ls='',
                 marker='.', markersize=2, label=r'Supernova',zorder=0
             )
-            plt.plot(z_sn, (self.mb_int - mb_astro), c='k', ls='-.')
+            plt.plot(z_sn, (self.app_mag - mb_astro), c='k', ls='-.')
             plt.xlabel(r'$z$')
             plt.xscale('log')
             plt.ylabel(r'$\Delta{m_{B}}_{\Lambda\mathrm{CDM}}$')
@@ -394,7 +382,6 @@ def chi_comp_multi(
     value: float, parameter: str = 'k',
     lam: float = 0, beta: float = 3., kappa: float = 1., solver: str = 'BDF',
     acc: bool = False, dm_effort: bool = False, dm_method: str = 'int',
-    double_eval: bool = False
 ):
     """
     Multi processing chi comp
@@ -559,35 +546,29 @@ def chi_search_multi(
     acc : bool, optional
         Whether to evaluate on normalized acceleration instead of DM. The
         default is False. Mutually exclusive with double_eval.
-    dm_effort : bool, optional
-        Whether to use effort or not in calculation of distance modulus.
-        The default is False.
-    dm_method : str, optional
-        'int' or 'tay', which method to use in evaluating distance modulus.
-        The default is 'int'.
-    double_eval : bool, optional
-        Whether to evaluate on both chi^2 values for each model. The default is
-        False. Mutually exclusive with acc.
 
     Returns
     -------
     chival : float
+        chi^2 value of model
+    abs_mag : float
+        fitted absolute magnitude of model
     """
 
     tmod = model(lam=lam, beta=param[0], kappa=param[1], solver=solver)
     if acc:
-        return tmod.chi_acc
+        return tmod.chi_acc, 0
     else:
         tmod.distance_modulus()
-        return tmod.chi_int
+        return tmod.chi_int, tmod.abs_mag
 
 
 @timer
 def chi_search(
         fname: str, length: int = 10, blim: tuple = (2., 4.),
         klim: tuple = (1., 10.), lam: float = 0., plot: bool = True,
-        round: int = 1, scale = LogNorm(), acc: bool = False,
-        fdir: str='../../Data/model_data/', solver: str = 'BDF'
+        chi_cutoff: float = 0.05, acc: bool = False, solver: str = 'BDF',
+        fdir: str = '../../Data/model_data/'
 ):
     """
     chi_search() function. Calculates chi^2 value for models with different
@@ -657,20 +638,34 @@ def chi_search(
     cpu_num = multiprocessing.cpu_count()
     with Pool(cpu_num) as pool:
 
-        partial_function = partial(
-            chi_search_multi,
-            lam=lam, solver=solver, acc=acc, 
-        )
+        partial_function = partial(chi_search_multi, lam=lam,
+                                   solver=solver, acc=acc, )
 
-        chival = list(tqdm(
-            pool.imap(partial_function, product(brange, krange)), 
-            total=length**2
+        loop_results = np.array(
+            list(
+                tqdm(
+                    pool.imap(partial_function, product(brange, krange)), 
+                    total=length**2
+                )
             )
         )
+    
+    # separate chi and absolute magnitude values
+    chival = loop_results[:, 0]
+    absolute_mags = loop_results[:, 1]
 
-    chi_cutoff = 0.035
-    chival = np.array(chival)
+    # mask to mark where absolute magnitude is less than -19.5
+    mask_lower = np.zeros_like(absolute_mags)
+    mask_lower[(absolute_mags < -19.5) & (chival < chi_cutoff)] = 1
+    mask_lower = np.reshape(mask_lower, (length, length)).T
+    # same for abs mag higher than -19
+    mask_upper = np.zeros_like(absolute_mags)
+    mask_upper[(absolute_mags > -19) & (chival < chi_cutoff)] = 1
+    mask_upper = np.reshape(mask_upper, (length, length)).T
+    
+    # cut off chi values
     chival[chival > chi_cutoff] = np.nan
+    absolute_mags[chival > chi_cutoff] = np.nan
 
     # Raise exception if only NaN values were returned
     if np.isnan(chival).all():
@@ -692,7 +687,8 @@ def chi_search(
           ''.format(
                 chi_low, beta_low, kappa_low, np.min(blim), np.max(blim),
                 np.min(klim), np.max(klim), nan_ratio
-          ))
+          )
+        )
     
     # Save chi, beta, kappa values to file
     if save:
@@ -717,10 +713,8 @@ def chi_search(
     # Plot heat map of chi values
     if plot:
         chi_plot_z = np.reshape(chival, (length, length)).T
-        scale = (LogNorm() if (np.log(np.nanmax(chival)/np.nanmin(chival))) > 1
-                 else None)
 
-        fig, ax = plt.subplots(figsize=(7, 5), constrained_layout=True)
+        fig, ax = plt.subplots(figsize=(7, 5), constrained_layout=False)
         ax.set_yscale('log')
         cmap = matplotlib.cm.get_cmap('viridis_r').copy()
         cmap.set_bad(color='w')
@@ -728,6 +722,8 @@ def chi_search(
             brange, krange, chi_plot_z, norm=None, edgecolors='w',
             cmap='viridis_r'
         )
+
+        # highlight lowest chi2 cell
         index = np.argmin(np.abs(krange - kappa_low))
         highlight_cell(
             beta_low-0.5*np.diff(brange)[0],
@@ -736,12 +732,29 @@ def chi_search(
             (krange[index+1] - krange[index]),
             ax=ax, color='k', linewidth=1
         )
+        
+        for coord in product(range(length), range(length)):
+            x = coord[0]
+            y = coord[1]
+            if mask_lower[x, y] == 1:
+                ax.text(
+                    x=brange[y], y=krange[x], s='+',
+                    ha='center', va='center', 
+                    fontsize=6
+                )
+            elif mask_upper[x, y] == 1:
+                ax.text(
+                    x=brange[y], y=krange[x], s=r'-',
+                    ha='center', 
+                    fontsize=8
+                    # va='center',
+                )
+            else:
+                pass
+
         ax.set_xlabel(r'$\beta$')
         ax.set_ylabel(r'$\mu$')
-        fig.colorbar(im, ax=ax, label=r'$\chi^{{2}}_{{r, {}}}$'.format(
-            '\ddot{a}/\ddot{a}_{\mathrm{M}}' if acc
-            else 'E(z)'
-        ))
+        fig.colorbar(im, ax=ax, label=r'$\chi^{2}$')
         ax.tick_params(
             axis='both', which='both', direction='in',
             bottom=True, top=True, left=True, right=True
