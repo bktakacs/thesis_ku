@@ -272,11 +272,23 @@ def timer(func):
 
 ###############################################################################
 
-def highlight_cell(x,y, dx, dy, ax=None, **kwargs):
-    rect = plt.Rectangle((x, y), dx,dy, fill=False, **kwargs)
+def highlight_cell(x, y, dx, dy, ax=None, **kwargs):
+    rect = plt.Rectangle((x, y), dx, dy, fill=False, **kwargs)
     ax = ax or plt.gca()
     ax.add_patch(rect)
     return rect
+
+###############################################################################
+
+def plus_cell(x, y, dx, dy, ax=None, **kwargs):
+    """
+    Deprecated, don't use
+    """
+    print('Deprecated function')
+    # plus = plt.Line2D([x - dx/2, x + dx/2], [y - dy/2, y + dy/2], **kwargs)
+    # ax = ax or plt.gca()
+    # ax.add_line(plus)
+    # return plus
 
 ###############################################################################
 
